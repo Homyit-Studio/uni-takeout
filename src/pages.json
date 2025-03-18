@@ -40,7 +40,7 @@
 			}
 		},
 		{
-			"path": "pages/adress/index",
+			"path": "pages/address/index",
 			"style": {
 				"navigationBarTitleText": "地址"
 			}

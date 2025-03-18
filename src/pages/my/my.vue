@@ -16,23 +16,26 @@
         <!-- 功能区域 -->
         <view class="function-box">
             <view class="function-row">
-                <view class="function-item" @click="goToPage('/pages/user/coupon')">
+                <view class="function-item" @click="goToPage('/pages/coupon/index')">
                     <uni-icons type="gift" size="28" color="#ff5500"></uni-icons>
                     <text>我的优惠券</text>
                 </view>
-                <view class="function-item" @click="goToPage('/pages/user/address')">
+                <view class="function-item" @click="goToPage('/pages/address/index')">
                     <uni-icons type="location" size="28" color="#1296db"></uni-icons>
                     <text>我的地址</text>
                 </view>
-                <view class="function-item" @click="goToStoreApply" v-if="!userInfo.isStore">
+                <!-- v-if="!userInfo.isStore" 权限判断-->
+                <view class="function-item" @click="goToMerchant">
                     <uni-icons type="shop" size="28" color="#4caf50"></uni-icons>
                     <text>店铺入驻</text>
                 </view>
-                <view class="function-item" @click="goToStoreManage" v-if="userInfo.isStore">
+                <!-- v-if="userInfo.isStore" 权限判断 -->
+                <view class="function-item" @click="goToMerchantManage">
                     <uni-icons type="shop-filled" size="28" color="#4caf50"></uni-icons>
                     <text>商户入口</text>
                 </view>
-                <view class="function-item" @click="goToAdminPanel" v-if="userInfo.isAdmin">
+                <!-- v-if="userInfo.isAdmin" 权限判断 -->
+                <view class="function-item" @click="goToAdministrator">
                     <uni-icons type="settings" size="28" color="#673ab7"></uni-icons>
                     <text>管理员入口</text>
                 </view>
@@ -107,21 +110,21 @@ const goToPage = (url) => {
     })
 }
 
-const goToStoreApply = () => {
+const goToMerchant = () => {
     uni.navigateTo({
-        url: '/pages/user/store-apply'
+        url: '/pages/merchant/index'
     })
 }
 
-const goToStoreManage = () => {
+const goToMerchantManage = () => {
     uni.navigateTo({
-        url: '/pages/user/store-manage'
+        url: '/pages/merchant_manage/index'
     })
 }
 
-const goToAdminPanel = () => {
+const goToAdministrator = () => {
     uni.navigateTo({
-        url: '/pages/user/admin'
+        url: '/pages/administrator/index'
     })
 }
 
