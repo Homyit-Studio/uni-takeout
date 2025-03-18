@@ -1,21 +1,23 @@
 <template>
   <view class="container">
     <!-- 顶部安全区域 -->
-    <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+    <!-- <view class="status-bar" ></view> -->
 
-    <!-- 搜索栏占位，用于计算吸顶位置 -->
-    <view class="search-bar-anchor" ref="searchBarAnchor"></view>
-
-    <!-- 搜索栏 -->
-    <view class="search-bar" :class="{ 'fixed': isSearchBarFixed }" :style="fixedStyle">
-      <view class="search-input" @click="goToSearch">
-        <uni-icons type="search" size="18" color="#999"></uni-icons>
-        <text class="placeholder">搜索商家、美食</text>
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <view class="nav-content">
+        <text class="app-name">团快拼</text>
+        <view class="search-wrapper" @click="goToSearch">
+          <view class="search-input">
+            <uni-icons type="search" size="16" color="#999"></uni-icons>
+            <text class="placeholder">搜索商家、美食</text>
+          </view>
+        </view>
       </view>
     </view>
 
     <!-- 内容区域 -->
-    <view class="content">
+    <view class="content" :style="{ paddingTop: totalNavHeight + 'px' }">
       <view class="section-title">热门商家</view>
       <view class="store-list">
         <view class="store-item" v-for="(store, index) in hotStores" :key="index" @click="goToStoreDetail(store.id)">
@@ -54,6 +56,11 @@ const searchBarTop = ref(0)
 const fixedStyle = computed(() => ({
   top: isSearchBarFixed.value ? `${statusBarHeight.value}px` : 'auto'
 }))
+
+// 离导航栏的高度
+const navContentHeight = 88; // 单位rpx
+const navContentHeightPx = ref(uni.upx2px(navContentHeight));
+const totalNavHeight = computed(() => statusBarHeight.value + navContentHeightPx.value);
 
 // 生命周期
 onMounted(() => {
@@ -113,7 +120,7 @@ const refreshHotStores = () => {
 
 const goToSearch = () => {
   uni.navigateTo({
-    url: '/pages/store/search'
+    url: '/pages/search/index'
   })
 }
 
@@ -146,7 +153,7 @@ onReachBottom(() => {
 })
 </script>
 
-<style>
+<style scoped>
 .container {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -154,7 +161,8 @@ onReachBottom(() => {
 
 .status-bar {
   width: 100%;
-  background-color: #ffffff;
+  background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
+  /* background-color: ; */
 }
 
 .search-bar-anchor {
@@ -201,6 +209,7 @@ onReachBottom(() => {
   position: relative;
   z-index: 1;
   padding: 20rpx;
+  padding-top: 0;
 }
 
 .section-title {
@@ -278,5 +287,51 @@ onReachBottom(() => {
   padding: 20rpx 0;
   color: #999;
   font-size: 24rpx;
+}
+
+.custom-nav {
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 0 0 10rpx 10rpx;
+  position: fixed;
+  z-index: 1000;
+  background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  height: 80rpx;
+}
+
+.app-name {
+  color: #ffffff;
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-right: 24rpx;
+  padding-left: 20rpx;
+}
+
+.search-wrapper {
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.search-input {
+  border-radius: 36rpx;
+  height: 64rpx;
+  width: 400rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.placeholder {
+  margin-left: 12rpx;
+  color: #999;
+  font-size: 26rpx;
 }
 </style>

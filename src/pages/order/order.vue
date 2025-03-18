@@ -286,7 +286,7 @@ onPullDownRefresh(() => {
     padding-right: calc(20rpx + env(safe-area-inset-right));
     /* 兼容 iOS >= 11.2 */
     background-color: #f5f5f5;
-    height: calc(100vh - 200rpx);
+    height: calc(100vh - 250rpx);
     /* 添加具体高度，200rpx 为顶部区域高度 */
 }
 
