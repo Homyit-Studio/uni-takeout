@@ -1,10 +1,8 @@
 <template>
     <view class="container">
         <!-- 顶部安全区域 -->
-        <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
-
         <!-- 用户信息区域 -->
-        <view class="user-info" @click="goToUserProfile">
+        <view class="user-info" :style="{ paddingTop: statusBarHeight + 'px' }" @click="goToUserProfile">
             <image class="avatar" :src="userInfo.avatar || '/static/default-avatar.png'" mode="aspectFill"></image>
             <view class="user-detail">
                 <text class="username">{{ userInfo.nickname || '点击登录' }}</text>
@@ -17,26 +15,26 @@
         <view class="function-box">
             <view class="function-row">
                 <view class="function-item" @click="goToPage('/pages/coupon/index')">
-                    <uni-icons type="gift" size="28" color="#ff5500"></uni-icons>
+                    <uni-icons type="gift" size="28" color="#FFA99F"></uni-icons>
                     <text>我的优惠券</text>
                 </view>
                 <view class="function-item" @click="goToPage('/pages/address/index')">
-                    <uni-icons type="location" size="28" color="#1296db"></uni-icons>
+                    <uni-icons type="location" size="32" color="#FFA99F"></uni-icons>
                     <text>我的地址</text>
                 </view>
                 <!-- v-if="!userInfo.isStore" 权限判断-->
                 <view class="function-item" @click="goToMerchant">
-                    <uni-icons type="shop" size="28" color="#4caf50"></uni-icons>
+                    <uni-icons type="shop" size="32" color="#FFA99F"></uni-icons>
                     <text>店铺入驻</text>
                 </view>
                 <!-- v-if="userInfo.isStore" 权限判断 -->
                 <view class="function-item" @click="goToMerchantManage">
-                    <uni-icons type="shop-filled" size="28" color="#4caf50"></uni-icons>
+                    <uni-icons type="shop-filled" size="32" color="#FFA99F"></uni-icons>
                     <text>商户入口</text>
                 </view>
                 <!-- v-if="userInfo.isAdmin" 权限判断 -->
                 <view class="function-item" @click="goToAdministrator">
-                    <uni-icons type="settings" size="28" color="#673ab7"></uni-icons>
+                    <uni-icons type="settings" size="32" color="#FFA99F"></uni-icons>
                     <text>管理员入口</text>
                 </view>
             </view>
@@ -190,7 +188,7 @@ onPullDownRefresh(() => {
 })
 </script>
 
-<style>
+<style scoped>
 .container {
     width: 100vw;
     display: flex;
@@ -198,16 +196,11 @@ onPullDownRefresh(() => {
     height: 100vh;
 }
 
-.status-bar {
-    width: 100%;
-    background-color: #1296db;
-}
-
 .user-info {
     display: flex;
     align-items: center;
     padding: 30rpx 20rpx;
-    background-color: #1296db;
+    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
 }
 
 .avatar {

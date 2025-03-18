@@ -3,8 +3,27 @@
     <!-- 顶部安全区域 -->
     <!-- <view class="status-bar" ></view> -->
 
-    <!-- 自定义导航栏 -->
-    <view class="custom-nav" :style="{ paddingTop: statusBarHeight + 'px' }">
+    <!-- 原始导航栏 -->
+    <view class="original-nav" :style="{
+      paddingTop: statusBarHeight + 'px',
+      opacity: 1 - fixedNavOpacity
+    }">
+      <view class="nav-content">
+        <text class="app-name">团快拼</text>
+        <view class="search-wrapper" @click="goToSearch">
+          <view class="search-input">
+            <uni-icons type="search" size="16" color="#999"></uni-icons>
+            <text class="placeholder">搜索商家、美食</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 固定导航栏（初始隐藏） -->
+    <view class="fixed-nav" :style="{
+      paddingTop: statusBarHeight + 'px',
+      opacity: fixedNavOpacity,
+    }">
       <view class="nav-content">
         <text class="app-name">团快拼</text>
         <view class="search-wrapper" @click="goToSearch">
@@ -42,6 +61,24 @@
 import { ref, onMounted, computed } from 'vue'
 import { onPageScroll, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 
+// 新增导航栏控制状态
+const fixedNavOpacity = ref(0)
+const scrollThreshold = ref(0)
+
+onMounted(() => {
+  // 获取原始导航栏位置
+  const query = uni.createSelectorQuery()
+  query.select('.original-nav').boundingClientRect(rect => {
+    scrollThreshold.value = rect.height - statusBarHeight.value
+  }).exec()
+})
+
+onPageScroll(({ scrollTop }) => {
+  // 计算导航栏透明度
+  const progress = Math.min(scrollTop / 50, 1)
+  fixedNavOpacity.value = progress
+})
+
 // 响应式状态
 const statusBarHeight = ref(0)
 const hotStores = ref([])
@@ -58,7 +95,7 @@ const fixedStyle = computed(() => ({
 }))
 
 // 离导航栏的高度
-const navContentHeight = 88; // 单位rpx
+const navContentHeight = 80; // 单位rpx
 const navContentHeightPx = ref(uni.upx2px(navContentHeight));
 const totalNavHeight = computed(() => statusBarHeight.value + navContentHeightPx.value);
 
@@ -126,7 +163,7 @@ const goToSearch = () => {
 
 const goToStoreDetail = (storeId) => {
   uni.navigateTo({
-    url: `/pages/store/detail?id=${storeId}`
+    url: `/pages/merchant_detail/index?id=${storeId}`
   })
 }
 
@@ -144,7 +181,6 @@ onPageScroll(({ scrollTop }) => {
   // 修改滚动监听逻辑
   isSearchBarFixed.value = scrollTop >= searchBarTop.value - statusBarHeight.value
 })
-
 // 使用onReachBottom替代scrolltolower
 onReachBottom(() => {
   if (!hasMore.value) return
@@ -153,10 +189,40 @@ onReachBottom(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .container {
   min-height: 100vh;
   background-color: #f5f5f5;
+
+  /* 原始导航栏 */
+  .original-nav {
+    position: relative; // 改为固定定位
+    z-index: 1; // 确保在固定导航栏下面
+    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
+  }
+
+  /* 固定导航栏 */
+  .fixed-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
+    // transition: transform 0.3s ease, opacity 0.3s ease;
+    // box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+
+    // &::before {
+    //   content: '';
+    //   position: absolute;
+    //   top: 0;
+    //   left: 0;
+    //   right: 0;
+    //   bottom: 0;
+    //   z-index: -1;
+    // }
+  }
+
 }
 
 .status-bar {
