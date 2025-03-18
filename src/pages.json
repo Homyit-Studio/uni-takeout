@@ -26,6 +26,66 @@
 				"navigationBarTitleText": "我的",
 				"navigationStyle": "default"
 			}
+		},
+		{
+			"path": "pages/search/index",
+			"style": {
+				"navigationBarTitleText": "搜索"
+			}
+		},
+		{
+			"path": "pages/coupon/index",
+			"style": {
+				"navigationBarTitleText": "优惠券列表"
+			}
+		},
+		{
+			"path": "pages/adress/index",
+			"style": {
+				"navigationBarTitleText": "地址"
+			}
+		},
+		{
+			"path": "pages/merchant/index",
+			"style": {
+				"navigationBarTitleText": "商户"
+			}
+		},
+		{
+			"path": "pages/administrator/index",
+			"style": {
+				"navigationBarTitleText": "管理员"
+			}
+		},
+		{
+			"path": "pages/merchant_detail/index",
+			"style": {
+				"navigationBarTitleText": "商铺详情"
+			}
+		},
+		{
+			"path": "pages/go_shopping/index",
+			"style": {
+				"navigationBarTitleText": "确认订单"
+			}
+		},
+		{
+			"path": "pages/merchant_manage/index",
+			"style": {
+				"navigationBarTitleText": "商铺管理"
+			}
+		},
+		{
+			"path": "pages/launch_lucky/index",
+			"style": {
+				"navigationBarTitleText": "抽奖发布"
+			}
+		},
+		{
+			"path": "pages/product_manage/index",
+			"style": {
+				"navigationBarTitleText": "商品管理"
+			}
 		}
 	],
 	"globalStyle": {
