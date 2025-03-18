@@ -3,17 +3,19 @@
     <!-- 顶部安全区域 -->
     <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
 
+    <!-- 搜索栏占位，用于计算吸顶位置 -->
+    <view class="search-bar-anchor" ref="searchBarAnchor"></view>
+
     <!-- 搜索栏 -->
-    <view class="search-bar" @click="goToSearch">
-      <view class="search-input">
+    <view class="search-bar" :class="{ 'fixed': isSearchBarFixed }" :style="fixedStyle">
+      <view class="search-input" @click="goToSearch">
         <uni-icons type="search" size="18" color="#999"></uni-icons>
         <text class="placeholder">搜索商家、美食</text>
       </view>
     </view>
 
-    <!-- 热门商品展示 -->
-    <scroll-view class="hot-stores" scroll-y @scrolltolower="loadMoreHotStores" @refresherrefresh="refreshHotStores"
-      refresher-enabled :refresher-triggered="isRefreshing" enable-back-to-top>
+    <!-- 内容区域 -->
+    <view class="content">
       <view class="section-title">热门商家</view>
       <view class="store-list">
         <view class="store-item" v-for="(store, index) in hotStores" :key="index" @click="goToStoreDetail(store.id)">
@@ -30,12 +32,13 @@
       </view>
       <view class="loading-more" v-if="hasMore">加载更多...</view>
       <view class="no-more" v-else>没有更多了</view>
-    </scroll-view>
+    </view>
   </view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { onPageScroll, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 
 // 响应式状态
 const statusBarHeight = ref(0)
@@ -44,39 +47,55 @@ const page = ref(1)
 const pageSize = ref(10)
 const hasMore = ref(true)
 const isRefreshing = ref(false)
+const isSearchBarFixed = ref(false)
+
+// 添加搜索栏位置相关的响应式状态
+const searchBarTop = ref(0)
+const fixedStyle = computed(() => ({
+  top: isSearchBarFixed.value ? `${statusBarHeight.value}px` : 'auto'
+}))
 
 // 生命周期
 onMounted(() => {
   statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
   loadHotStores()
+  // 获取搜索栏的初始位置
+  const query = uni.createSelectorQuery()
+  query.select('.search-bar-anchor').boundingClientRect(rect => {
+    if (rect) {
+      searchBarTop.value = rect.top
+    }
+  }).exec()
 })
 
 // 方法
 const loadHotStores = () => {
-  setTimeout(() => {
-    const mockData = Array.from({ length: 10 }, (_, i) => ({
-      id: i + (page.value - 1) * pageSize.value,
-      name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
-      description: '特色美食，欢迎品尝',
-      image: '/static/goods.png',
-      hotProduct: {
-        name: '招牌菜品',
-        price: Math.floor(Math.random() * 50 + 10)
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const mockData = Array.from({ length: 10 }, (_, i) => ({
+        id: i + (page.value - 1) * pageSize.value,
+        name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
+        description: '特色美食，欢迎品尝',
+        image: '/static/goods.png',
+        hotProduct: {
+          name: '招牌菜品',
+          price: Math.floor(Math.random() * 50 + 10)
+        }
+      }))
+
+      if (page.value === 1) {
+        hotStores.value = mockData
+      } else {
+        hotStores.value = [...hotStores.value, ...mockData]
       }
-    }))
 
-    if (page.value === 1) {
-      hotStores.value = mockData
-    } else {
-      hotStores.value = [...hotStores.value, ...mockData]
-    }
+      if (page.value >= 3) {
+        hasMore.value = false
+      }
 
-    if (page.value >= 3) {
-      hasMore.value = false
-    }
-
-    isRefreshing.value = false
-  }, 1000)
+      resolve()
+    }, 1000)
+  })
 }
 
 const loadMoreHotStores = () => {
@@ -103,13 +122,34 @@ const goToStoreDetail = (storeId) => {
     url: `/pages/store/detail?id=${storeId}`
   })
 }
+
+// 下拉刷新
+onPullDownRefresh(() => {
+  page.value = 1
+  hasMore.value = true
+  loadHotStores().then(() => {
+    uni.stopPullDownRefresh()
+  })
+})
+
+// 监听页面滚动
+onPageScroll(({ scrollTop }) => {
+  // 修改滚动监听逻辑
+  isSearchBarFixed.value = scrollTop >= searchBarTop.value - statusBarHeight.value
+})
+
+// 使用onReachBottom替代scrolltolower
+onReachBottom(() => {
+  if (!hasMore.value) return
+  page.value++
+  loadHotStores()
+})
 </script>
 
 <style>
 .container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
+  background-color: #f5f5f5;
 }
 
 .status-bar {
@@ -117,9 +157,30 @@ const goToStoreDetail = (storeId) => {
   background-color: #ffffff;
 }
 
+.search-bar-anchor {
+  height: 0;
+  position: relative;
+  z-index: 1;
+}
+
 .search-bar {
+  position: relative;
   padding: 20rpx;
   background-color: #ffffff;
+  z-index: 100;
+}
+
+.search-bar.fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.search-bar-placeholder {
+  height: 88rpx;
+  /* 搜索栏高度 */
 }
 
 .search-input {
@@ -136,11 +197,10 @@ const goToStoreDetail = (storeId) => {
   font-size: 28rpx;
 }
 
-.hot-stores {
-  flex: 1;
+.content {
+  position: relative;
+  z-index: 1;
   padding: 20rpx;
-  height: calc(100vh - 200rpx);
-  /* 添加具体高度，200rpx 为顶部区域高度 */
 }
 
 .section-title {
@@ -149,7 +209,15 @@ const goToStoreDetail = (storeId) => {
   margin-bottom: 20rpx;
 }
 
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
 .store-list {
+  margin-top: 20rpx;
   display: flex;
   flex-direction: column;
   gap: 30rpx;

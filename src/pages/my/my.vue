@@ -42,9 +42,7 @@
         <!-- 热门商品推荐 -->
         <view class="recommend-section">
             <view class="section-title">为您推荐</view>
-            <scroll-view class="hot-stores" scroll-y @scrolltolower="loadMoreHotStores"
-                @refresherrefresh="refreshHotStores" refresher-enabled :refresher-triggered="isRefreshing"
-                :refresher-threshold="100" refresher-background="#f5f5f5" enable-back-to-top>
+            <scroll-view class="hot-stores" scroll-y @scrolltolower="loadMoreHotStores" enable-back-to-top>
                 <view class="store-list">
                     <view class="store-item" v-for="(store, index) in hotStores" :key="index"
                         @click="goToStoreDetail(store.id)">
@@ -68,6 +66,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 
 // 响应式状态
 const statusBarHeight = ref(0)
@@ -126,31 +125,35 @@ const goToAdminPanel = () => {
     })
 }
 
+// 修改loadHotStores返回Promise
 const loadHotStores = () => {
-    setTimeout(() => {
-        const mockData = Array.from({ length: 10 }, (_, i) => ({
-            id: i + (page.value - 1) * pageSize.value,
-            name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
-            description: '特色美食，欢迎品尝',
-            image: '/static/goods.png',  // 修改这里
-            hotProduct: {
-                name: '招牌菜品',
-                price: Math.floor(Math.random() * 50 + 10)
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const mockData = Array.from({ length: 10 }, (_, i) => ({
+                id: i + (page.value - 1) * pageSize.value,
+                name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
+                description: '特色美食，欢迎品尝',
+                image: '/static/goods.png',  // 修改这里
+                hotProduct: {
+                    name: '招牌菜品',
+                    price: Math.floor(Math.random() * 50 + 10)
+                }
+            }))
+
+            if (page.value === 1) {
+                hotStores.value = mockData
+            } else {
+                hotStores.value = [...hotStores.value, ...mockData]
             }
-        }))
 
-        if (page.value === 1) {
-            hotStores.value = mockData
-        } else {
-            hotStores.value = [...hotStores.value, ...mockData]
-        }
+            if (page.value >= 3) {
+                hasMore.value = false
+            }
 
-        if (page.value >= 3) {
-            hasMore.value = false
-        }
-
-        isRefreshing.value = false
-    }, 1000)
+            isRefreshing.value = false
+            resolve()
+        }, 1000)
+    })
 }
 
 const loadMoreHotStores = () => {
@@ -173,14 +176,23 @@ const goToStoreDetail = (storeId) => {
         url: `/pages/store/detail?id=${storeId}`
     })
 }
+
+// 添加页面级下拉刷新
+onPullDownRefresh(() => {
+    page.value = 1
+    hasMore.value = true
+    loadHotStores().then(() => {
+        uni.stopPullDownRefresh()
+    })
+})
 </script>
 
 <style>
 .container {
+    width: 100vw;
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background-color: #f5f5f5;
 }
 
 .status-bar {

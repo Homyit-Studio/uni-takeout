@@ -17,8 +17,7 @@
         </view>
 
         <!-- 订单列表 -->
-        <scroll-view class="order-list" scroll-y @scrolltolower="loadMoreOrders" @refresherrefresh="refreshOrders"
-            refresher-enabled :refresher-triggered="isRefreshing" enable-back-to-top>
+        <scroll-view class="order-list" scroll-y @scrolltolower="loadMoreOrders" enable-back-to-top>
             <block v-if="orders.length > 0">
                 <view class="order-item" v-for="(order, index) in orders" :key="index"
                     @click="viewOrderDetail(order.id)">
@@ -65,6 +64,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 
 // 响应式状态
 const statusBarHeight = ref(0)
@@ -88,6 +88,7 @@ const orderStatusText = ref({
 // 生命周期
 onMounted(() => {
     statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    console.log(statusBarHeight.value)
     loadOrders()
 })
 
@@ -102,50 +103,53 @@ const switchTab = (index) => {
 }
 
 const loadOrders = () => {
-    setTimeout(() => {
-        const statusMap = ['all', 'pending', 'paid', 'shipped', 'delivered', 'refunded']
-        const currentStatus = statusMap[currentTab.value]
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const statusMap = ['all', 'pending', 'paid', 'shipped', 'delivered', 'refunded']
+            const currentStatus = statusMap[currentTab.value]
 
-        let mockData = []
-        for (let i = 0; i < pageSize.value; i++) {
-            const orderIndex = i + (page.value - 1) * pageSize.value
-            const statuses = ['pending', 'paid', 'shipped', 'delivered', 'completed', 'refunded', 'canceled']
-            let status = statuses[Math.floor(Math.random() * statuses.length)]
+            let mockData = []
+            for (let i = 0; i < pageSize.value; i++) {
+                const orderIndex = i + (page.value - 1) * pageSize.value
+                const statuses = ['pending', 'paid', 'shipped', 'delivered', 'completed', 'refunded', 'canceled']
+                let status = statuses[Math.floor(Math.random() * statuses.length)]
 
-            if (currentStatus !== 'all' && status !== currentStatus) {
-                status = currentStatus
+                if (currentStatus !== 'all' && status !== currentStatus) {
+                    status = currentStatus
+                }
+
+                const order = {
+                    id: `order${orderIndex}`,
+                    storeName: `商家${orderIndex % 5 + 1}`,
+                    goodsName: `美食套餐${orderIndex}`,
+                    goodsCount: Math.floor(Math.random() * 5) + 1,
+                    goodsImage: '/static/goods.png',
+                    amount: Math.floor(Math.random() * 100) + 20,
+                    status: status,
+                    createTime: `2023-${Math.floor(Math.random() * 12) + 1}-${Math.floor(Math.random() * 28) + 1}`
+                }
+
+                mockData.push(order)
             }
 
-            const order = {
-                id: `order${orderIndex}`,
-                storeName: `商家${orderIndex % 5 + 1}`,
-                goodsName: `美食套餐${orderIndex}`,
-                goodsCount: Math.floor(Math.random() * 5) + 1,
-                goodsImage: '/static/goods.png',
-                amount: Math.floor(Math.random() * 100) + 20,
-                status: status,
-                createTime: `2023-${Math.floor(Math.random() * 12) + 1}-${Math.floor(Math.random() * 28) + 1}`
+            if (currentStatus !== 'all') {
+                mockData = mockData.filter(order => order.status === currentStatus)
             }
 
-            mockData.push(order)
-        }
+            if (page.value === 1) {
+                orders.value = mockData
+            } else {
+                orders.value = [...orders.value, ...mockData]
+            }
 
-        if (currentStatus !== 'all') {
-            mockData = mockData.filter(order => order.status === currentStatus)
-        }
+            if (page.value >= 3) {
+                hasMore.value = false
+            }
 
-        if (page.value === 1) {
-            orders.value = mockData
-        } else {
-            orders.value = [...orders.value, ...mockData]
-        }
-
-        if (page.value >= 3) {
-            hasMore.value = false
-        }
-
-        isRefreshing.value = false
-    }, 1000)
+            isRefreshing.value = false
+            resolve()
+        }, 1000)
+    })
 }
 
 const loadMoreOrders = () => {
@@ -204,10 +208,22 @@ const reviewOrder = (orderId) => {
         url: `/pages/order/review?id=${orderId}`
     })
 }
+
+// 添加页面级下拉刷新
+onPullDownRefresh(() => {
+    page.value = 1
+    hasMore.value = true
+    orders.value = []
+    loadOrders().then(() => {
+        uni.stopPullDownRefresh()
+    })
+})
+
 </script>
 
-<style>
+<style scoped>
 .container {
+    width: 100vw;
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -264,6 +280,7 @@ const reviewOrder = (orderId) => {
 .order-list {
     flex: 1;
     padding: 20rpx;
+    width: calc(100vw - 40rpx);
     padding-right: calc(20rpx + constant(safe-area-inset-right));
     /* 兼容 iOS < 11.2 */
     padding-right: calc(20rpx + env(safe-area-inset-right));

@@ -16,4 +16,22 @@ onHide(() => {
 
 <style>
 /*每个页面公共css */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  -webkit-touch-callout: none;
+  background-color: #f5f5f5;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  color: transparent;
+  background-color: transparent;
+
+}
 </style>
