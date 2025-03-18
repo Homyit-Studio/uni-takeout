@@ -3,8 +3,25 @@
     <!-- 顶部安全区域 -->
     <!-- <view class="status-bar" ></view> -->
 
-    <!-- 自定义导航栏 -->
-    <view class="custom-nav" :style="{ paddingTop: statusBarHeight + 'px' }">
+    <!-- 原始导航栏 -->
+    <view class="original-nav" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <view class="nav-content">
+        <text class="app-name">团快拼</text>
+        <view class="search-wrapper" @click="goToSearch">
+          <view class="search-input">
+            <uni-icons type="search" size="16" color="#999"></uni-icons>
+            <text class="placeholder">搜索商家、美食</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 固定导航栏（初始隐藏） -->
+    <view class="fixed-nav" :style="{
+      paddingTop: statusBarHeight + 'px',
+      opacity: fixedNavOpacity,
+      transform: `translateY(${fixedNavVisible ? '0' : '-100%'})`
+    }">
       <view class="nav-content">
         <text class="app-name">团快拼</text>
         <view class="search-wrapper" @click="goToSearch">
@@ -41,6 +58,26 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { onPageScroll, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+
+// 新增导航栏控制状态
+const fixedNavOpacity = ref(0)
+const fixedNavVisible = ref(false)
+const scrollThreshold = ref(0)
+
+onMounted(() => {
+  // 获取原始导航栏位置
+  const query = uni.createSelectorQuery()
+  query.select('.original-nav').boundingClientRect(rect => {
+    scrollThreshold.value = rect.height - statusBarHeight.value
+  }).exec()
+})
+
+onPageScroll(({ scrollTop }) => {
+  // 计算固定导航栏透明度
+  const progress = Math.min(scrollTop / 50, 1) // 降低阈值使导航栏更快显示
+  fixedNavOpacity.value = progress
+  fixedNavVisible.value = scrollTop > 0 // 只要有滚动就显示
+})
 
 // 响应式状态
 const statusBarHeight = ref(0)
@@ -153,10 +190,41 @@ onReachBottom(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .container {
   min-height: 100vh;
   background-color: #f5f5f5;
+
+  /* 原始导航栏 */
+  .original-nav {
+    position: relative;
+    z-index: 1;
+    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
+  }
+
+  /* 固定导航栏 */
+  .fixed-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background-color: #fff;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
+      z-index: -1;
+    }
+  }
+
 }
 
 .status-bar {
