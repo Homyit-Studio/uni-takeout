@@ -22,7 +22,7 @@ body {
   box-sizing: border-box;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   -webkit-touch-callout: none;
-  background-color: #f5f5f5;
+  background-color: #f9f9f9;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 

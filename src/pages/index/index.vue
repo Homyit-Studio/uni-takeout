@@ -164,6 +164,7 @@ const goToSearch = () => {
 const goToStoreDetail = (storeId) => {
   uni.navigateTo({
     url: `/pages/merchant_detail/index?id=${storeId}`
+    // url: `/pages/merchant_detail/index`
   })
 }
 

@@ -63,7 +63,9 @@
 		{
 			"path": "pages/merchant_detail/index",
 			"style": {
-				"navigationBarTitleText": "商铺详情"
+				"navigationBarTitleText": "商铺详情",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
