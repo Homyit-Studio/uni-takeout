@@ -12,10 +12,10 @@
                     <text :class="['action-text', { 'active': address.isDefault }]">默认</text>
                 </view>
                 <view class="action-item" @click="openEditModal(index)">
-                    <text class="action-text">修改</text>
+                    <text class="action-text" style="color: #8fc2eb;">修改</text>
                 </view>
                 <view class="action-item" @click="deleteAddress(index)">
-                    <text class="action-text">删除</text>
+                    <text class="action-text" style="color: red;">删除</text>
                 </view>
             </view>
         </view>
