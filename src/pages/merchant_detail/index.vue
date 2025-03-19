@@ -1,12 +1,13 @@
 <template>
   <view class="page">
     <!-- 顶部导航栏 -->
-    <view class="nav_bar" :style="{ 'height': statusBarHeight + 'px', 'backgroundColor': backgroundColor }">
-      <view class="state_height"></view>
-      <view class="nav_bar_inner" :style="{ 'height': statusBarHeight / 2 + 'px' }">
-        <u-icon :name="backIcon" :color="backIconColor" size="20" @click="onBack()"></u-icon>
-        <view class="">
+    <view class="nav_bar" :style="{ paddingTop: statusBarHeight + 'px', 'backgroundColor': backgroundColor }">
+      <!-- <view class="state_height"></view> -->
+      <view class="nav_bar_inner">
+        <view class=" nav-icon" @click="onBack()">
+          <uni-icons :type="backIcon" :color="backIconColor" size="30"></uni-icons>
         </view>
+        <view></view>
       </view>
     </view>
     <!-- 顶部区域背景 -->
@@ -14,25 +15,23 @@
 
     </view>
     <!-- tab切换 -->
-    <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 'px' }">
-      <u-tabs :list="list4" lineWidth="20" lineHeight="7" :lineColor="`url(${lineBg}) 100% 100%`" :activeStyle="{
-        color: '#303133',
-        fontWeight: 'bold',
-        transform: 'scale(1.05)'
-      }" :inactiveStyle="{
-        color: '#606266',
-        transform: 'scale(1)'
-      }" itemStyle="padding-left: 15px; padding-right: 15px; height: 50px;" @change="onChangeTab">
-      </u-tabs>
+    <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 30 + 'px' }">
+      <!-- 替换u-tabs为自定义tab -->
+      <view class="tab-list">
+        <view v-for="(item, index) in list4" :key="index" class="tab-item" :class="{ active: tabIndex === index }"
+          @click="onChangeTab({ index })">
+          {{ item.name }}
+        </view>
+      </view>
     </view>
 
     <template v-if="tabIndex == 0">
       <!-- 广告位置 -->
       <view class="advert_area area_height" data-type="1">
         <view class="img_box">
-          <u--image :showLoading="true"
-            src="https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg"
-            width="100%" height="80px" :radius="10"></u--image>
+          <!-- <image class="store-image" style="width: 100%;" mode="aspectFill"
+            src="https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg">
+          </image> -->
         </view>
       </view>
 
@@ -55,12 +54,16 @@
             <view class="content">
               <view class="product_item" v-for="(cell, cIndex) in item.list" :key="cIndex">
                 <image :src="cell.img" mode="aspectFill" class="product_img"></image>
-                <view class="prodcut_info">
-                  <view class="name">
-                    {{ cell.name }}
-                  </view>
-                  <view class="price">
-                    ￥{{ cell.price }}
+                <view class="product_info">
+                  <view class="name">{{ cell.name }}</view>
+                  <view class="price-action">
+                    <text class="price">￥{{ cell.price }}</text>
+                    <!-- 添加数量控制 -->
+                    <view class="action-buttons">
+                      <text class="btn minus" @click.stop="decreaseCount(cell)">-</text>
+                      <text class="count">{{ cell.count || 0 }}</text>
+                      <text class="btn plus" @click.stop="increaseCount(cell)">+</text>
+                    </view>
                   </view>
                 </view>
               </view>
@@ -80,43 +83,68 @@
     </view>
 
 
-    <!-- 底部区域 -->
+    <!-- 底部购物车 -->
     <view class="foot">
       <view class="inner">
-        <view class="icon_box" @click="onShowCart()">
-          <u-icon name="shopping-cart" color="#e93323" size="32"></u-icon>
+        <view class="cart-left" @click="onShowCart()">
+          <view class="icon-box">
+            <text class="iconfont icon-cart"></text>
+            <view class="badge" v-if="cartCount > 0">{{ cartCount }}</view>
+          </view>
+          <view class="price-box">
+            <text class="total-price">￥{{ totalPrice }}</text>
+            <text class="tip">另需配送费{{ deliveryFee }}元</text>
+          </view>
         </view>
-        <view class="">
-          <u-button text="去结算" type="primary" iconColor="#e93323" shape="circle" :customStyle="{
-            width: '120px',
-            backgroundColor: '#e93323',
-            borderColor: '#e93323'
-          }"></u-button>
-        </view>
-      </view>
-    </view>
-    <!-- 购物车弹窗 -->
-    <slide-popup ref="slide_cart" :showClose="false">
-      <view class="cart_list">
-        <view class="cart_item" v-for="(item, index) in 20" :key="index">
-          {{ index }}
+        <view class="submit-btn" :class="{ disabled: totalPrice < minDeliveryPrice }" @click="onSubmit">
+          {{ totalPrice < minDeliveryPrice ? `¥${minDeliveryPrice}起送` : '去结算' }} </view>
         </view>
       </view>
-    </slide-popup>
+      <!-- 购物车弹窗 -->
+      <uni-popup ref="popup" type="bottom" background-color="#fff">
+        <view class="cart_list">
+          <view class="cart-header">
+            <text class="title">购物车</text>
+            <text class="clear" @click="clearCart">清空购物车</text>
+          </view>
+          <scroll-view scroll-y class="cart-content">
+            <view v-if="cartList.length > 0">
+              <view class="cart_item" v-for="(item, index) in cartList" :key="index">
+                <image :src="item.img" mode="aspectFill" class="cart-img"></image>
+                <view class="cart-info">
+                  <text class="name">{{ item.name }}</text>
+                  <view class="price-wrap">
+                    <text class="price">￥{{ item.price }}</text>
+                    <view class="action-buttons">
+                      <text class="btn minus" @click.stop="decreaseCount(item)">-</text>
+                      <text class="count">{{ item.count }}</text>
+                      <text class="btn plus" @click.stop="increaseCount(item)">+</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <view v-else class="empty-cart">
+              <text>购物车是空的</text>
+            </view>
+          </scroll-view>
+        </view>
+      </uni-popup>
 
-  </view>
+    </view>
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, onMounted } from 'vue'
+import { ref, reactive, nextTick, onMounted, computed } from 'vue'
+import { onPageScroll } from '@dcloudio/uni-app' // 添加这行
 
 // 响应式数据
 const windowHeight = uni.getSystemInfoSync().windowHeight
 const scrollHeight = ref(uni.getSystemInfoSync().windowHeight)
-const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight + 44)
+const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight)
 const backgroundColor = ref("rgba(255,255,255,0)")
 const backIconColor = ref("#fff")
-const backIcon = ref("arrow-left")
+const backIcon = ref("back") // 将 "arrow-left" 改为 "back"
 const allAreaHeight = ref(0)
 const topList = ref([])
 const currentIndex = ref(0)
@@ -393,11 +421,17 @@ const list4 = reactive([{
 const lineBg = "data:image/png;base64,..."
 
 // slide-popup ref
-const slide_cart = ref(null)
+const popup = ref(null)
+
+// 新增购物车相关数据
+const cartCount = ref(0)
+const totalPrice = ref(0)
+const deliveryFee = ref(5)
+const minDeliveryPrice = ref(20)
 
 // 页面滚动事件处理
-function onPageScroll(e) {
-  let opacity = (e.scrollTop / 100).toFixed(2)
+onPageScroll(({ scrollTop }) => {
+  let opacity = (scrollTop / 100).toFixed(2)
   backgroundColor.value = "rgba(255,255,255," + (opacity >= 1 ? 1 : opacity) + ")"
   backIconColor.value = opacity >= 1 ? "#000" : "#fff"
 
@@ -407,8 +441,8 @@ function onPageScroll(e) {
   })
 
   if (!isClick.value) {
-    let scrollTop = parseInt(e.scrollTop)
-    for (var i = 0; i < topList.value.length; i++) {
+    scrollTop = parseInt(scrollTop)
+    for (let i = 0; i < topList.value.length; i++) {
       if (scrollTop >= topList.value[i].top && scrollTop <= topList.value[i].bottom) {
         currentIndex.value = i
         leftScrollTop.value = rightItemHeight.value * i
@@ -416,7 +450,7 @@ function onPageScroll(e) {
       }
     }
   }
-}
+})
 
 // 获取右边内容距离顶部的距离
 function getTop() {
@@ -455,12 +489,56 @@ function onChangeCate(item, index) {
 
 // 显示购物车弹窗
 function onShowCart() {
-  slide_cart.value.open()
+  if (cartCount.value > 0) {
+    popup.value.open()
+  } else {
+    uni.showToast({
+      title: '购物车是空的',
+      icon: 'none'
+    })
+  }
 }
 
 // 切换tab
 function onChangeTab(data) {
   tabIndex.value = data.index
+}
+
+// 增减商品数量
+function increaseCount(item) {
+  if (!item.count) item.count = 0
+  item.count++
+  updateCart()
+}
+
+function decreaseCount(item) {
+  if (!item.count) return
+  item.count--
+  updateCart()
+}
+
+// 更新购物车
+function updateCart() {
+  let count = 0
+  let price = 0
+  productList.forEach(cate => {
+    cate.list.forEach(item => {
+      if (item.count) {
+        count += item.count
+        price += item.price * item.count
+      }
+    })
+  })
+  cartCount.value = count
+  totalPrice.value = price
+}
+
+// 提交订单
+function onSubmit() {
+  if (totalPrice.value < minDeliveryPrice.value) return
+  uni.navigateTo({
+    url: '/pages/go_shopping/index'
+  })
 }
 
 // 返回上一级
@@ -473,6 +551,38 @@ function onBack() {
     uni.navigateBack()
   }
 }
+
+// 清空购物车
+function clearCart() {
+  uni.showModal({
+    title: '提示',
+    content: '确定要清空购物车吗？',
+    success: (res) => {
+      if (res.confirm) {
+        productList.forEach(cate => {
+          cate.list.forEach(item => {
+            item.count = 0
+          })
+        })
+        updateCart()
+        popup.value.close()
+      }
+    }
+  })
+}
+
+// 计算购物车列表
+const cartList = computed(() => {
+  const list = []
+  productList.forEach(cate => {
+    cate.list.forEach(item => {
+      if (item.count && item.count > 0) {
+        list.push(item)
+      }
+    })
+  })
+  return list
+})
 
 // 生命周期
 onMounted(() => {
@@ -505,7 +615,7 @@ onMounted(() => {
   if (getCurrentPages().length == 1) {
     backIcon.value = "home"
   } else {
-    backIcon.value = "arrow-left"
+    backIcon.value = "back"  // 将 "arrow-left" 改为 "back"
   }
 })
 </script>
@@ -542,7 +652,7 @@ view {
 
   .nav_bar_inner {
     display: flex;
-    padding: 0 20rpx;
+    padding: 20rpx 20rpx;
     align-items: center;
     justify-content: space-between;
   }
@@ -551,21 +661,21 @@ view {
 .top_area {
   height: 380rpx;
   background-color: #fff;
-  background-image: url('https://cdn.uviewui.com/uview/swiper/swiper1.png');
+  background-image: url('https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
 }
 
 .advert_area {
-  height: 200rpx;
+  height: 300rpx;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
 
   .img_box {
-    width: 94%;
+    width: 100%;
   }
 }
 
@@ -576,6 +686,38 @@ view {
   background: #fff;
   box-shadow: 0 3px 10px -4px rgba(0, 0, 0, 0.2);
   z-index: 999;
+}
+
+.tab-list {
+  display: flex;
+  height: 100%;
+
+  .tab-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28rpx;
+    color: #666;
+    position: relative;
+
+    &.active {
+      color: #333;
+      font-weight: bold;
+
+      &:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40rpx;
+        height: 4rpx;
+        background: #e93323;
+        border-radius: 2rpx;
+      }
+    }
+  }
 }
 
 // .swiper_wrap {}
@@ -643,7 +785,7 @@ view {
           border-radius: 6rpx;
         }
 
-        .prodcut_info {
+        .product_info {
           flex: 1;
           padding-left: 20rpx;
         }
@@ -683,15 +825,204 @@ view {
     align-items: center;
     justify-content: center;
   }
+
+  .cart-left {
+    display: flex;
+    align-items: center;
+
+    .icon-box {
+      position: relative;
+      margin-right: 20rpx;
+
+      .badge {
+        position: absolute;
+        top: -10rpx;
+        right: -10rpx;
+        min-width: 32rpx;
+        height: 32rpx;
+        border-radius: 16rpx;
+        background: #e93323;
+        color: #fff;
+        font-size: 20rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 6rpx;
+      }
+    }
+
+    .price-box {
+      .total-price {
+        font-size: 36rpx;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .tip {
+        font-size: 22rpx;
+        color: #999;
+        margin-left: 10rpx;
+      }
+    }
+  }
+
+  .submit-btn {
+    width: 200rpx;
+    height: 72rpx;
+    background: #e93323;
+    color: #fff;
+    border-radius: 36rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28rpx;
+
+    &.disabled {
+      background: #ccc;
+    }
+  }
 }
 
 .cart_list {
-  padding-bottom: calc(constant(safe-area-inset-bottom) + 100rpx);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 100rpx);
+  max-height: 60vh;
+
+  .cart-header {
+    padding: 20rpx;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1rpx solid #eee;
+
+    .title {
+      font-size: 32rpx;
+      font-weight: bold;
+    }
+
+    .clear {
+      color: #999;
+      font-size: 28rpx;
+    }
+  }
+
+  .cart-content {
+    max-height: calc(60vh - 100rpx);
+  }
 
   .cart_item {
-    height: 120rpx;
-    border-bottom: 1px solid #eee;
+    display: flex;
+    padding: 20rpx;
+    border-bottom: 1rpx solid #eee;
+
+    .cart-img {
+      width: 120rpx;
+      height: 120rpx;
+      border-radius: 6rpx;
+    }
+
+    .cart-info {
+      flex: 1;
+      margin-left: 20rpx;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      .name {
+        font-size: 28rpx;
+      }
+
+      .price-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .price {
+          color: #e93323;
+          font-size: 32rpx;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+
+  .empty-cart {
+    padding: 40rpx;
+    text-align: center;
+    color: #999;
+  }
+}
+
+/* 替换组件相关样式 */
+.nav-icon {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx; // 增加点击区域
+}
+
+/* 商品卡片样式优化 */
+.product_item {
+  margin: 20rpx 0;
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+
+  .product_img {
+    width: 160rpx;
+    height: 160rpx;
+    border-radius: 8rpx;
+  }
+
+  .product_info {
+    padding: 16rpx;
+
+    .name {
+      font-size: 28rpx;
+      font-weight: 500;
+      margin-bottom: 16rpx;
+    }
+
+    .price-action {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .price {
+        color: #e93323;
+        font-size: 32rpx;
+        font-weight: bold;
+      }
+
+      .action-buttons {
+        display: flex;
+        align-items: center;
+
+        .btn {
+          width: 44rpx;
+          height: 44rpx;
+          border-radius: 50%;
+          background: #f5f5f5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          &.minus {
+            color: #999;
+          }
+
+          &.plus {
+            background: #e93323;
+            color: #fff;
+          }
+        }
+
+        .count {
+          margin: 0 20rpx;
+          font-size: 28rpx;
+        }
+      }
+    }
   }
 }
 </style>
