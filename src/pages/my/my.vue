@@ -2,7 +2,7 @@
     <view class="container">
         <!-- 顶部安全区域 -->
         <!-- 用户信息区域 -->
-        <view class="user-info" :style="{ paddingTop: statusBarHeight + 'px' }" @click="goToUserProfile">
+        <view class="user-info" :style="{ paddingTop: statusBarHeight + 44 + 'px' }" @click="goToUserProfile">
             <image class="avatar" :src="userInfo.avatar || '/static/default-avatar.png'" mode="aspectFill"></image>
             <view class="user-detail">
                 <text class="username">{{ userInfo.nickname || '点击登录' }}</text>
