@@ -4,7 +4,7 @@
         <view class="add-button">
             <button class="primary-button" @click="openAddLotteryDialog">+ 添加抽奖</button>
         </view>
-
+        
         <!-- 抽奖列表 -->
         <view class="lottery-list">
             <view v-if="lotteryList.length === 0" class="empty-tip">暂无抽奖活动</view>

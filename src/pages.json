@@ -103,6 +103,12 @@
 			"style": {
 				"navigationBarTitleText": "营收细则"
 			}
+		},
+		{
+			"path": "pages/merchant_approval/index",
+			"style": {
+				"navigationBarTitleText": "商户入驻审核"
+			}
 		}
 	],
 	"globalStyle": {
