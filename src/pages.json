@@ -45,13 +45,13 @@
 		{
 			"path": "pages/address/index",
 			"style": {
-				"navigationBarTitleText": "地址"
+				"navigationBarTitleText": "地址管理"
 			}
 		},
 		{
 			"path": "pages/merchant/index",
 			"style": {
-				"navigationBarTitleText": "商户"
+				"navigationBarTitleText": "商铺入驻"
 			}
 		},
 		{
