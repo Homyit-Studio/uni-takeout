@@ -43,13 +43,13 @@ export default {
             let url = '';
             switch (section) {
                 case 'manageProducts':
-                    url = '/pages/manage-products/index';
+                    url = '/pages/product_manage/index';
                     break;
                 case 'publishLottery':
-                    url = '/pages/publish-lottery/index';
+                    url = '/pages/publish_lottery/index';
                     break;
                 case 'revenueDetails':
-                    url = '/pages/revenue-details/index';
+                    url = '/pages/revenue_details/index';
                     break;
             }
             uni.navigateTo({

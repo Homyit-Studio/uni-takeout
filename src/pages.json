@@ -89,6 +89,18 @@
 			"style": {
 				"navigationBarTitleText": "商品管理"
 			}
+		},
+		{
+			"path": "pages/publish_lottery/index",
+			"style": {
+				"navigationBarTitleText": "发布抽奖"
+			}
+		},
+		{
+			"path": "pages/revenue_details/index",
+			"style": {
+				"navigationBarTitleText": "营收细则"
+			}
 		}
 	],
 	"globalStyle": {
