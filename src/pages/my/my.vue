@@ -169,6 +169,10 @@ const showRoleSwitcher = () => {
         success: (res) => {
             userRole.value = roles[res.tapIndex]
             uni.setStorageSync('userRole', userRole.value)
+            uni.showToast({
+                title: `已切换为${roleText.value}`,
+                icon: 'none'
+            })
         }
     })
 }
@@ -541,7 +545,7 @@ $secondary-color: #FFA99F;
                     -webkit-line-clamp: 2;
                     line-clamp: 2;
                     overflow: hidden;
-                    height: 50rpx;
+                    // height: 50rpx;
                 }
 
                 .price-line {

@@ -32,15 +32,15 @@
 
         <!-- 是否有食品安全许可证 -->
         <view class="input-item">
-           <view class="label"><span class="required">*</span>是否有食品安全许可证</view>
-        <radio-group v-model="hasFoodSafetyLicense" class="radio-group">
-            <label class="radio-item">
-                <radio value="有" class="radio-input" />有
-            </label>
-            <label class="radio-item">
-                <radio value="无" class="radio-input" />无
-            </label>
-        </radio-group>
+            <view class="label"><span class="required">*</span>是否有食品安全许可证</view>
+            <radio-group :ref="hasFoodSafetyLicense" class="radio-group">
+                <label class="radio-item">
+                    <radio value="有" class="radio-input" />有
+                </label>
+                <label class="radio-item">
+                    <radio value="无" class="radio-input" />无
+                </label>
+            </radio-group>
         </view>
 
         <!-- 其他问题和备注 -->
@@ -111,7 +111,7 @@ export default {
             });
             uni.showToast({
                 title: '提交成功',
-                icon:'success'
+                icon: 'success'
             });
         }
     }
@@ -185,7 +185,8 @@ image {
 .radio-group {
     display: flex;
     align-items: center;
-    gap: 20px; /* 调整两个选项之间的间距 */
+    gap: 20px;
+    /* 调整两个选项之间的间距 */
 }
 
 .radio-item {
@@ -196,7 +197,8 @@ image {
 }
 
 .radio-input {
-    margin-right: 8px; /* 调整 radio 按钮和文字之间的间距 */
+    margin-right: 8px;
+    /* 调整 radio 按钮和文字之间的间距 */
 }
 
 .submit-btn {
