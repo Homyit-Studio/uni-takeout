@@ -21,19 +21,39 @@
     <!-- 账单列表 -->
     <view class="bill-list">
       <!-- 无数据提示 -->
-      <view v-if="!loading && billList.length === 0" class="empty-tip">
+      <view v-if="!loading && groupedBillList.length === 0" class="empty-tip">
         <text>暂无收支数据</text>
       </view>
 
-      <!-- 账单列表 -->
-      <view v-for="(item, index) in billList" :key="index" class="bill-item">
-        <view class="content">
-          <text class="description">{{ item.description }}</text>
-          <text class="date">{{ item.date }}</text>
+      <!-- 按月分组展示 -->
+      <view v-for="(group, index) in groupedBillList" :key="index" class="month-group">
+        <!-- 月份分割 -->
+        <view class="month-divider">
+          <text class="month-text">{{ group.month }}</text>
         </view>
-        <text :class="['amount', item.type]">
-          {{ item.type === 'income' ? '+' : '-' }}￥{{ item.amount }}
-        </text>
+
+        <!-- 当月收支统计 -->
+        <view class="month-statistic">
+          <view class="statistic">
+            <text class="label">当月收入</text>
+            <text class="amount income">+￥{{ group.monthIncome }}</text>
+          </view>
+          <view class="statistic">
+            <text class="label">当月支出</text>
+            <text class="amount expense">-￥{{ group.monthExpense }}</text>
+          </view>
+        </view>
+
+        <!-- 当月账单列表 -->
+        <view v-for="(item, subIndex) in group.items" :key="subIndex" class="bill-item">
+          <view class="content">
+            <text class="description">{{ item.description }}</text>
+            <text class="date">{{ item.date }}</text>
+          </view>
+          <text :class="['amount', item.type]">
+            {{ item.type === 'income'? '+' : '-' }}￥{{ item.amount }}
+          </text>
+        </view>
       </view>
     </view>
   </view>
@@ -46,6 +66,7 @@ export default {
       totalIncome: 0, // 总收入，初始为 0
       totalExpense: 0, // 总支出，初始为 0
       billList: [], // 账单列表，初始为空
+      groupedBillList: [], // 按月分组的账单列表
       loading: true, // 加载状态，初始为 true
     };
   },
@@ -61,6 +82,41 @@ export default {
         .reduce((sum, item) => sum + item.amount, 0);
     },
 
+    // 计算每个月的收入和支出
+    calculateMonthTotals() {
+      this.groupedBillList.forEach((group) => {
+        group.monthIncome = group.items
+          .filter((item) => item.type === 'income')
+          .reduce((sum, item) => sum + item.amount, 0);
+        group.monthExpense = group.items
+          .filter((item) => item.type === 'expense')
+          .reduce((sum, item) => sum + item.amount, 0);
+      });
+    },
+
+    // 按月份分组账单数据
+    groupBillByMonth() {
+      const grouped = {};
+      this.billList.forEach((item) => {
+        const month = item.date.slice(0, 7); // 提取年月，例如 "2023-10"
+        if (!grouped[month]) {
+          grouped[month] = [];
+        }
+        grouped[month].push(item);
+      });
+
+      // 转换为数组并按月份排序
+      this.groupedBillList = Object.keys(grouped)
+        .sort((a, b) => b.localeCompare(a)) // 按月份倒序排列
+        .map((month) => ({
+          month: `${month}月`, // 格式化月份显示
+          items: grouped[month],
+        }));
+
+      // 计算每个月的收入和支出
+      this.calculateMonthTotals();
+    },
+
     // 模拟获取数据
     async fetchBillData() {
       // 模拟异步请求
@@ -71,6 +127,8 @@ export default {
           { type: 'expense', amount: 1000, date: '2023-10-02', description: '采购成本' },
           { type: 'income', amount: 7000, date: '2023-10-03', description: '服务收入' },
           { type: 'expense', amount: 2000, date: '2023-10-04', description: '运营费用' },
+          { type: 'income', amount: 3000, date: '2023-09-15', description: '广告收入' },
+          { type: 'expense', amount: 1500, date: '2023-09-20', description: '设备维护' },
         ];
 
         // 更新账单列表
@@ -78,6 +136,9 @@ export default {
 
         // 计算总收入和总支出
         this.calculateTotals();
+
+        // 按月份分组
+        this.groupBillByMonth();
 
         // 关闭加载状态
         this.loading = false;
@@ -172,6 +233,29 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 月份分割 */
+.month-divider {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #eee;
+}
+
+.month-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 当月收支统计 */
+.month-statistic {
+  display: flex;
+  justify-content: space-around;
+  background-color: #f9f9f9;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/* 账单项 */
 .bill-item {
   display: flex;
   align-items: center;

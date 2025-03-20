@@ -109,6 +109,12 @@
 			"style": {
 				"navigationBarTitleText": "商户入驻审核"
 			}
+		},
+		{
+			"path": "pages/approval_list/index",
+			"style": {
+				"navigationBarTitleText": "商铺申请审核列表"
+			}
 		}
 	],
 	"globalStyle": {
