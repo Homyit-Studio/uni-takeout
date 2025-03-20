@@ -1,83 +1,222 @@
 <template>
     <view class="container">
-        <!-- 顶部安全区域 -->
-        <!-- 用户信息区域 -->
-        <view class="user-info" :style="{ paddingTop: statusBarHeight + 44 + 'px' }" @click="goToUserProfile">
-            <image class="avatar" :src="userInfo.avatar || '/static/default-avatar.png'" mode="aspectFill"></image>
-            <view class="user-detail">
-                <text class="username">{{ userInfo.nickname || '点击登录' }}</text>
-                <text class="user-id" v-if="userInfo.id">ID: {{ userInfo.id }}</text>
-            </view>
-            <uni-icons type="right" size="20" color="#999"></uni-icons>
-        </view>
-
-        <!-- 功能区域 -->
-        <view class="function-box">
-            <view class="function-row">
-                <view class="function-item" @click="goToPage('/pages/coupon/index')">
-                    <uni-icons type="gift" size="28" color="#FFA99F"></uni-icons>
-                    <text>我的优惠券</text>
-                </view>
-                <view class="function-item" @click="goToPage('/pages/address/index')">
-                    <uni-icons type="location" size="32" color="#FFA99F"></uni-icons>
-                    <text>我的地址</text>
-                </view>
-                <!-- v-if="!userInfo.isStore" 权限判断-->
-                <view class="function-item" @click="goToMerchant">
-                    <uni-icons type="shop" size="32" color="#FFA99F"></uni-icons>
-                    <text>店铺入驻</text>
-                </view>
-                <!-- v-if="userInfo.isStore" 权限判断 -->
-                <view class="function-item" @click="goToMerchantManage">
-                    <uni-icons type="shop-filled" size="32" color="#FFA99F"></uni-icons>
-                    <text>商户入口</text>
-                </view>
-                <!-- v-if="userInfo.isAdmin" 权限判断 -->
-                <view class="function-item" @click="goToAdministrator">
-                    <uni-icons type="settings" size="32" color="#FFA99F"></uni-icons>
-                    <text>管理员入口</text>
-                </view>
-            </view>
-        </view>
-
-        <!-- 热门商品推荐 -->
-        <view class="recommend-section">
-            <view class="section-title">为您推荐</view>
-            <scroll-view class="hot-stores" scroll-y @scrolltolower="loadMoreHotStores" enable-back-to-top>
-                <view class="store-list">
-                    <view class="store-item" v-for="(store, index) in hotStores" :key="index"
-                        @click="goToStoreDetail(store.id)">
-                        <image class="store-image" :src="store.image" mode="aspectFill"></image>
-                        <view class="store-info">
-                            <view class="store-name">{{ store.name }}</view>
-                            <view class="store-desc">{{ store.description }}</view>
-                            <view class="hot-product">
-                                <text class="hot-product-name">热门: {{ store.hotProduct.name }}</text>
-                                <text class="hot-product-price">¥{{ store.hotProduct.price }}</text>
-                            </view>
+        <!-- 用户信息卡片 -->
+        <view class="user-card" :style="{ paddingTop: statusBarHeight + 'px' }">
+            <view class="card-content" @click="goToUserProfile">
+                <image class="avatar" :src="userInfo.avatar" mode="aspectFill"></image>
+                <view class="user-meta">
+                    <view class="name-line">
+                        <text class="username">{{ userInfo.nickname || '点击登录' }}</text>
+                        <view class="role-tag" :class="roleClass" @click.stop="showRoleSwitcher">
+                            {{ roleText }}
+                            <uni-icons type="bottom" color="#fff" size="20" />
+                        </view>
+                    </view>
+                    <view class="user-stats">
+                        <view class="stat-item" @click="goToPage('/pages/order/list?type=1')">
+                            <text class="stat-value">{{ orderStats.unpaid }}</text>
+                            <text class="stat-label">待付款</text>
+                        </view>
+                        <view class="stat-item" @click="goToPage('/pages/order/list?type=2')">
+                            <text class="stat-value">{{ orderStats.undelivered }}</text>
+                            <text class="stat-label">待收货</text>
+                        </view>
+                        <view class="stat-item" @click="goToPage('/pages/wallet/index')">
+                            <text class="stat-value">¥{{ walletBalance }}</text>
+                            <text class="stat-label">我的余额</text>
                         </view>
                     </view>
                 </view>
-                <view class="loading-more" v-if="hasMore">加载更多...</view>
-                <view class="no-more" v-else>没有更多了</view>
+                <uni-icons type="right" size="20" color="rgba(255,255,255,0.8)" style="margin-top: 30rpx;"></uni-icons>
+            </view>
+        </view>
+
+        <!-- 核心功能入口 -->
+        <view class="core-functions">
+            <view class="func-grid">
+                <view class="func-item" @click="goToPage('/pages/group/list')">
+                    <view class="icon-box group">
+                        <uni-icons type="flag-filled" size="32" color="#fff"></uni-icons>
+                    </view>
+                    <text>我的拼团</text>
+                </view>
+                <view class="func-item" @click="goToPage('/pages/order/list')">
+                    <view class="icon-box order">
+                        <uni-icons type="cart-filled" size="32" color="#fff"></uni-icons>
+                    </view>
+                    <text>全部订单</text>
+                </view>
+                <view class="func-item" @click="goToPage('/pages/coupon/index')">
+                    <view class="icon-box coupon">
+                        <uni-icons type="gift-filled" size="32" color="#fff"></uni-icons>
+                    </view>
+                    <text>优惠券</text>
+                </view>
+                <view class="func-item" @click="goToPage('/pages/address/index')">
+                    <view class="icon-box address">
+                        <uni-icons type="location-filled" size="32" color="#fff"></uni-icons>
+                    </view>
+                    <text>收货地址</text>
+                </view>
+            </view>
+        </view>
+
+        <!-- 商家管理入口 -->
+        <view class="merchant-entry" v-if="showMerchantEntry">
+            <view class="entry-card" @click="handleMerchantEntry">
+                <view class="card-content">
+                    <uni-icons type="shop-filled" size="44" color="#FF719A"></uni-icons>
+                    <view class="text-content">
+                        <text class="title">{{ merchantEntryText }}</text>
+                        <text class="subtitle">{{ merchantEntrySub }}</text>
+                    </view>
+                </view>
+                <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
+            </view>
+        </view>
+
+        <!-- 限时抢购 -->
+        <view class="flash-sale">
+            <view class="section-header">
+                <text class="title">限时抢购</text>
+                <view class="countdown">
+                    <text class="time">{{ countdown.hours }}</text>
+                    <text>:</text>
+                    <text class="time">{{ countdown.minutes }}</text>
+                    <text>:</text>
+                    <text class="time">{{ countdown.seconds }}</text>
+                </view>
+            </view>
+            <scroll-view class="product-list" scroll-x>
+                <view class="product-item" v-for="item in 4" :key="item">
+                    <image class="product-image" src="/static/demo-product.jpg"></image>
+                    <view class="product-info">
+                        <text class="name">爆款套餐 {{ item }}</text>
+                        <view class="price-line">
+                            <text class="price">¥{{ 39.9 - item * 5 }}</text>
+                            <text class="original-price">¥59.9</text>
+                        </view>
+                        <view class="progress-bar">
+                            <view class="progress" :style="{ width: `${70 - item * 10}%` }"></view>
+                            <text class="progress-text">已抢{{ 70 - item * 10 }}%</text>
+                        </view>
+                    </view>
+                </view>
             </scroll-view>
         </view>
     </view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { onPullDownRefresh } from '@dcloudio/uni-app'
+import { ref, computed, onMounted } from 'vue'
 
-// 响应式状态
+// 用户角色状态
+const userRole = ref(uni.getStorageSync('userRole') || 'user')
+
+// 初始化用户信息
 const statusBarHeight = ref(0)
-const userInfo = ref({
-    id: '12345',
-    nickname: '测试用户',
-    avatar: '/static/images/default-avatar.png',
-    isStore: true,
-    isAdmin: true
+const userInfo = ref({})
+const orderStats = ref({ unpaid: 2, undelivered: 1 })
+const walletBalance = ref(158.50)
+const countdown = ref({ hours: '02', minutes: '30', seconds: '45' })
+
+// 计算属性
+const roleText = computed(() => {
+    return {
+        user: '普通用户',
+        merchant: '商家用户',
+        admin: '平台管理员'
+    }[userRole.value]
 })
+
+const roleClass = computed(() => `role-${userRole.value}`)
+
+const showMerchantEntry = computed(() => ['merchant', 'admin'].includes(userRole.value))
+
+const merchantEntryText = computed(() => {
+    return userRole.value === 'admin' ? '平台管理中心' : '店铺管理后台'
+})
+
+const merchantEntrySub = computed(() => {
+    return userRole.value === 'admin' ? '查看平台运营数据' : '处理待办订单和商品'
+})
+
+// 生命周期
+onMounted(() => {
+    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    loadUserInfo()
+})
+
+// 方法
+const loadUserInfo = async () => {
+    const res = await mockFetchUserInfo()
+    userInfo.value = res
+    // 初始化角色（优先本地存储）
+    if (!uni.getStorageSync('userRole')) {
+        userRole.value = res.isAdmin ? 'admin' : res.isStore ? 'merchant' : 'user'
+        uni.setStorageSync('userRole', userRole.value)
+    }
+}
+
+const showRoleSwitcher = () => {
+    const roles = ['user']
+    if (userInfo.value.isStore) roles.push('merchant')
+    if (userInfo.value.isAdmin) roles.push('admin')
+
+    uni.showActionSheet({
+        itemList: roles.map(r => `切换为${r === 'admin' ? '管理员' : r === 'merchant' ? '商家' : '普通用户'}`),
+        success: (res) => {
+            userRole.value = roles[res.tapIndex]
+            uni.setStorageSync('userRole', userRole.value)
+        }
+    })
+}
+
+const handleMerchantEntry = () => {
+    const urlMap = {
+        admin: '/pages/administrator/index',
+        merchant: '/pages/merchant_manage/index'
+    }
+    uni.navigateTo({ url: urlMap[userRole.value] })
+}
+
+
+const availableRoles = computed(() => {
+    const roles = ['user']
+    if (userInfo.value.isStore) roles.push('merchant')
+    if (userInfo.value.isAdmin) roles.push('admin')
+    return roles
+})
+
+
+const mockFetchUserInfo = () => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve({
+                id: '12345',
+                nickname: '测试用户',
+                avatar: '/static/default-avatar.png',
+                isStore: true,
+                isAdmin: true
+            })
+        }, 1000)
+    })
+}
+// 修改获取用户信息方法
+const getUserInfo = async () => {
+    // 模拟从接口获取用户信息
+    const res = await mockFetchUserInfo()
+    userInfo.value = res
+    // 设置用户角色（根据实际接口字段调整）
+    userRole.value = res.role || 'user'
+
+    // 如果需要保持旧版兼容
+    if (res.isAdmin) userRole.value = 'admin'
+    else if (res.isStore) userRole.value = 'merchant'
+}
+
+
 const hotStores = ref([])
 const page = ref(1)
 const pageSize = ref(10)
@@ -91,14 +230,10 @@ onMounted(() => {
     getUserInfo()
 })
 
-// 方法
-const getUserInfo = () => {
-    // 实际项目中应该从后端API获取
-}
 
 const goToUserProfile = () => {
     uni.navigateTo({
-        url: '/pages/user/profile'
+        url: '/pages/GetUserPhone/GetUserPhoneIndex'
     })
 }
 
@@ -188,158 +323,267 @@ onPullDownRefresh(() => {
 })
 </script>
 
-<style scoped>
+
+<style scoped lang="scss">
+$primary-color: #FF719A;
+$secondary-color: #FFA99F;
+
 .container {
-    width: 100vw;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+    background: #f8f9fb;
+    min-height: 100vh;
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    padding: 30rpx 20rpx;
-    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
+.user-card {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    padding: 30rpx 30rpx 60rpx;
+    border-radius: 0 0 40rpx 40rpx;
+    box-shadow: 0 10rpx 30rpx rgba(255, 113, 154, 0.2);
+
+    .card-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    .avatar {
+        width: 120rpx;
+        height: 120rpx;
+        border-radius: 50%;
+        border: 4rpx solid rgba(255, 255, 255, 0.3);
+    }
+
+    .user-meta {
+        flex: 1;
+        margin-left: 30rpx;
+
+        .name-line {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20rpx;
+
+            .username {
+                font-size: 40rpx;
+                color: #fff;
+                font-weight: 600;
+                margin-right: 20rpx;
+            }
+
+            .role-tag {
+                font-size: 24rpx;
+                padding: 8rpx 20rpx;
+                border-radius: 40rpx;
+                background: rgba(255, 255, 255, 0.2);
+                color: #fff;
+
+                &.role-admin {
+                    background: rgba(255, 87, 34, 0.2);
+                }
+            }
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 40rpx;
+
+            .stat-item {
+                .stat-value {
+                    font-size: 36rpx;
+                    color: #fff;
+                    font-weight: 600;
+                    display: block;
+                }
+
+                .stat-label {
+                    font-size: 24rpx;
+                    color: rgba(255, 255, 255, 0.8);
+                }
+            }
+        }
+    }
 }
 
-.avatar {
-    width: 120rpx;
-    height: 120rpx;
-    border-radius: 60rpx;
-    border: 4rpx solid rgba(255, 255, 255, 0.3);
+.core-functions {
+    padding: 30rpx;
+
+    .func-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20rpx;
+        background: #fff;
+        padding: 30rpx;
+        border-radius: 24rpx;
+        box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.05);
+
+        .func-item {
+            text-align: center;
+
+            .icon-box {
+                width: 80rpx;
+                height: 80rpx;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 15rpx;
+
+                &.group {
+                    background: #FF719A;
+                }
+
+                &.order {
+                    background: #7FB5FF;
+                }
+
+                &.coupon {
+                    background: #FFC107;
+                }
+
+                &.address {
+                    background: #4CAF50;
+                }
+            }
+
+            text {
+                font-size: 26rpx;
+                color: #666;
+            }
+        }
+    }
 }
 
-.user-detail {
-    flex: 1;
-    margin-left: 20rpx;
+.merchant-entry {
+    padding: 0 30rpx;
+    margin-top: 20rpx;
+
+    .entry-card {
+        background: #fff;
+        border-radius: 24rpx;
+        padding: 30rpx;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+
+        .card-content {
+            display: flex;
+            align-items: center;
+
+            .text-content {
+                margin-left: 20rpx;
+
+                .title {
+                    font-size: 32rpx;
+                    font-weight: 500;
+                    color: $primary-color;
+                }
+
+                .subtitle {
+                    font-size: 24rpx;
+                    color: #999;
+                }
+            }
+        }
+    }
 }
 
-.username {
-    font-size: 32rpx;
-    font-weight: bold;
-    color: #ffffff;
-    margin-bottom: 10rpx;
-}
+.flash-sale {
+    padding: 30rpx;
 
-.user-id {
-    font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.8);
-}
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30rpx;
 
-.function-box {
-    margin: 20rpx;
-    background-color: #ffffff;
-    border-radius: 12rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-}
+        .title {
+            font-size: 36rpx;
+            font-weight: 600;
+        }
 
-.function-row {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 20rpx 0;
-}
+        .countdown {
+            display: flex;
+            align-items: center;
+            color: $primary-color;
 
-.function-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 25%;
-    padding: 20rpx 0;
-}
+            .time {
+                background: rgba(255, 113, 154, 0.1);
+                padding: 8rpx 16rpx;
+                border-radius: 8rpx;
+                margin: 0 6rpx;
+                font-weight: 500;
+            }
+        }
+    }
 
-.function-item text {
-    font-size: 24rpx;
-    margin-top: 16rpx;
-    color: #333;
-}
+    .product-list {
+        white-space: nowrap;
 
-.recommend-section {
-    margin: 20rpx;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 380rpx);
-    /* 调整高度计算 */
-    overflow: hidden;
-    /* 添加此行 */
-}
+        .product-item {
+            display: inline-block;
+            width: 280rpx;
+            margin-right: 20rpx;
+            background: #fff;
+            border-radius: 16rpx;
+            overflow: hidden;
 
-.section-title {
-    font-size: 32rpx;
-    font-weight: bold;
-    margin-bottom: 20rpx;
-}
+            .product-image {
+                width: 100%;
+                height: 280rpx;
+            }
 
-.hot-stores {
-    flex: 1;
-    height: 100%;
-    /* 修改为100% */
-    border-radius: 12rpx;
-    background-color: #ffffff;
-    padding: 20rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-}
+            .product-info {
+                padding: 10rpx 10rpx 40rpx 10rpx;
 
-.store-list {
-    display: flex;
-    flex-direction: column;
-    gap: 30rpx;
-}
+                .name {
+                    font-size: 28rpx;
+                    display: -webkit-box;
+                    -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2;
+                    line-clamp: 2;
+                    overflow: hidden;
+                    height: 50rpx;
+                }
 
-.store-item {
-    display: flex;
-    background-color: #ffffff;
-    padding: 20rpx;
-    border-bottom: 1rpx solid #f0f0f0;
-}
+                .price-line {
+                    margin: 15rpx 0;
 
-.store-image {
-    width: 160rpx;
-    height: 160rpx;
-    border-radius: 8rpx;
-    margin-right: 20rpx;
-}
+                    .price {
+                        color: $primary-color;
+                        font-size: 32rpx;
+                        font-weight: 600;
+                    }
 
-.store-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
+                    .original-price {
+                        color: #999;
+                        font-size: 24rpx;
+                        text-decoration: line-through;
+                        margin-left: 15rpx;
+                    }
+                }
 
-.store-name {
-    font-size: 30rpx;
-    font-weight: bold;
-}
+                .progress-bar {
+                    height: 8rpx;
+                    background: #eee;
+                    border-radius: 4rpx;
+                    position: relative;
 
-.store-desc {
-    font-size: 24rpx;
-    color: #666;
-    margin: 10rpx 0;
-}
+                    .progress {
+                        height: 100%;
+                        background: $primary-color;
+                        border-radius: 4rpx;
+                        transition: width 0.3s;
+                    }
 
-.hot-product {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 24rpx;
-}
-
-.hot-product-name {
-    color: #333;
-}
-
-.hot-product-price {
-    color: #ff5500;
-    font-weight: bold;
-}
-
-.loading-more,
-.no-more {
-    text-align: center;
-    padding: 20rpx 0;
-    color: #999;
-    font-size: 24rpx;
+                    .progress-text {
+                        position: absolute;
+                        right: 0;
+                        top: 12rpx;
+                        font-size: 20rpx;
+                        color: #666;
+                    }
+                }
+            }
+        }
+    }
 }
 </style>

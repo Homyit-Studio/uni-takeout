@@ -54,6 +54,11 @@
         "setting": {
             "urlCheck": false
         },
+        // "permission": {
+        //     "scope.userFuzzyLocation": {
+        //         "desc": "位置信息效果展示"
+        //     }
+        // },后期补充
         "usingComponents": true
     },
     "mp-alipay": {

@@ -1,10 +1,7 @@
 <template>
     <view class="container">
-        <!-- 顶部安全区域 -->
-        <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
-
         <!-- 页面标题 -->
-        <view class="header">
+        <view class="header" :style="{ paddingTop: statusBarHeight + 8 + 'px' }">
             <text class="title">我的订单</text>
         </view>
 
@@ -229,20 +226,18 @@ onPullDownRefresh(() => {
     height: 100vh;
 }
 
-.status-bar {
-    width: 100%;
-    background-color: #ffffff;
-}
 
 .header {
     padding: 20rpx;
-    background-color: #ffffff;
+    /* display: flex; */
     text-align: center;
+    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
 }
 
 .title {
     font-size: 36rpx;
     font-weight: bold;
+    color: #ffffff;
 }
 
 .tabs {
@@ -261,7 +256,7 @@ onPullDownRefresh(() => {
 }
 
 .tab-item.active {
-    color: #1296db;
+    color: #333;
     font-weight: bold;
 }
 
@@ -273,7 +268,7 @@ onPullDownRefresh(() => {
     transform: translateX(-50%);
     width: 60rpx;
     height: 6rpx;
-    background-color: #1296db;
+    background-color: #FFE29F;
     border-radius: 3rpx;
 }
 
@@ -417,8 +412,8 @@ onPullDownRefresh(() => {
 }
 
 .empty-icon {
-    width: 180rpx;
-    height: 180rpx;
+    width: 300rpx;
+    height: 300rpx;
     margin-bottom: 20rpx;
 }
 

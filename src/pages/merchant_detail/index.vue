@@ -7,7 +7,6 @@
         <view class=" nav-icon" @click="onBack()">
           <uni-icons :type="backIcon" :color="backIconColor" size="30"></uni-icons>
         </view>
-        <view></view>
       </view>
     </view>
     <!-- 顶部区域背景 -->
@@ -15,7 +14,7 @@
 
     </view>
     <!-- tab切换 -->
-    <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 32 + 'px' }">
+    <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 40 + 'px' }">
       <!-- 替换u-tabs为自定义tab -->
       <view class="tab-list">
         <view v-for="(item, index) in list4" :key="index" class="tab-item" :class="{ active: tabIndex === index }"
