@@ -61,22 +61,39 @@
             </view>
         </view>
 
-        <!-- 商家管理入口 -->
-        <view class="merchant-entry" v-if="showMerchantEntry">
-            <view class="entry-card" @click="handleMerchantEntry">
-                <view class="card-content">
-                    <uni-icons type="shop-filled" size="44" color="#FF719A"></uni-icons>
-                    <view class="text-content">
-                        <text class="title">{{ merchantEntryText }}</text>
-                        <text class="subtitle">{{ merchantEntrySub }}</text>
+        <!-- 商家入口 -->
+        <view class="merchant-entry-group">
+            <!-- 普通用户显示入驻入口 -->
+            <view class="merchant-entry" v-if="userRole === 'user'">
+                <view class="entry-card apply-card" @click="goToMerchant">
+                    <view class="card-content">
+                        <uni-icons type="shop" size="44" color="#FF719A"></uni-icons>
+                        <view class="text-content">
+                            <text class="title">商家快速入驻</text>
+                            <text class="subtitle">立即开启您的线上店铺</text>
+                        </view>
                     </view>
+                    <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
                 </view>
-                <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
+            </view>
+
+            <!-- 商家/管理员显示管理入口 -->
+            <view class="merchant-entry" v-else-if="showMerchantEntry">
+                <view class="entry-card" @click="handleMerchantEntry">
+                    <view class="card-content">
+                        <uni-icons type="shop-filled" size="44" color="#FF719A"></uni-icons>
+                        <view class="text-content">
+                            <text class="title">{{ merchantEntryText }}</text>
+                            <text class="subtitle">{{ merchantEntrySub }}</text>
+                        </view>
+                    </view>
+                    <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
+                </view>
             </view>
         </view>
 
         <!-- 限时抢购 -->
-        <view class="flash-sale">
+        <view class="flash-sale" v-if="userRole !== 'admin'">
             <view class="section-header">
                 <text class="title">限时抢购</text>
                 <view class="countdown">
@@ -184,6 +201,7 @@ const handleMerchantEntry = () => {
     }
     uni.navigateTo({ url: urlMap[userRole.value] })
 }
+
 
 
 const availableRoles = computed(() => {
@@ -455,35 +473,46 @@ $secondary-color: #FFA99F;
     }
 }
 
-.merchant-entry {
+.merchant-entry-group {
     padding: 0 30rpx;
-    margin-top: 20rpx;
 
-    .entry-card {
-        background: #fff;
-        border-radius: 24rpx;
-        padding: 30rpx;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+    .merchant-entry {
+        margin-top: 20rpx;
 
-        .card-content {
+        .apply-card {
+            background: linear-gradient(135deg, rgba(255, 113, 154, 0.1) 0%, rgba(255, 169, 159, 0.1) 100%);
+
+            .title {
+                color: #FF719A !important;
+            }
+        }
+
+        .entry-card {
+            background: #fff;
+            border-radius: 24rpx;
+            padding: 30rpx;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 
-            .text-content {
-                margin-left: 20rpx;
+            .card-content {
+                display: flex;
+                align-items: center;
 
-                .title {
-                    font-size: 32rpx;
-                    font-weight: 500;
-                    color: $primary-color;
-                }
+                .text-content {
+                    margin-left: 20rpx;
 
-                .subtitle {
-                    font-size: 24rpx;
-                    color: #999;
+                    .title {
+                        font-size: 32rpx;
+                        font-weight: 500;
+                        color: $primary-color;
+                    }
+
+                    .subtitle {
+                        font-size: 24rpx;
+                        color: #999;
+                    }
                 }
             }
         }
