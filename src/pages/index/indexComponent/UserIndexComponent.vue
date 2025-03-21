@@ -1,108 +1,111 @@
 <template>
     <view class="container">
-        <!-- 导航栏 -->
+        <!-- 顶部导航栏 -->
         <view class="nav-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
             <view class="nav-content">
-                <view cla>
+                <view class="nav-left">
                     <text class="app-name">校园购</text>
                     <view class="location-icon" @click="goToAddress">
-                        <uni-icons type="location" size="16" color="#fff"></uni-icons>
-                        <text
-                            style="font-size: 24rpx; color: #f6f6f6;width: 150rpx;overflow: hidden;text-overflow:ellipsis;white-space:nowrap;">收货地址收货地址收货地址收货地址</text>
-                        <uni-icons type="down" size="14" color="#fff"></uni-icons>
+                        <uni-icons type="location-filled" size="18" color="#fff"></uni-icons>
+                        <text class="address-text">浙江大学紫金港校区niaa</text>
+                        <uni-icons type="arrowdown" size="14" color="#fff"></uni-icons>
                     </view>
                 </view>
-
                 <view class="search-wrapper" @click="goToSearch">
                     <view class="search-input">
-                        <uni-icons type="search" size="16" color="#999" style="margin-left: 30rpx;"></uni-icons>
+                        <uni-icons type="search" size="18" color="#999"></uni-icons>
                         <text class="placeholder">搜索商家、美食</text>
                     </view>
                 </view>
+                <view class="nav-right">
+                    <!-- <uni-icons type="search" size="18" color="#999"></uni-icons> -->
+                </view>
             </view>
-
         </view>
-        <!-- 动态地址相关获取待补充 -->
-        <!-- <div class="OurAddress" @click="chooseLocation">
-        <view class="address-content">
-          <view class="location-icon">
-            <uni-icons type="location" size="20" color="#fff"></uni-icons>
-          </view>
-          <view class="address-info">
-            <view class="current-address">{{ address || '正在获取地址...' }}</view>
-            <view class="address-tip">{{ addressTip }}</view>
-          </view>
-          <view class="arrow-icon">
-            <uni-icons type="right" size="16" color="#fff"></uni-icons>
-          </view>
-        </view>
-      </div> -->
 
         <!-- 轮播图 -->
-        <swiper class="banner-swiper" :indicator-dots="true" indicator-active-color="#fff" :autoplay="true"
-            :interval="3000" :circular="true" :duration="1000">
+        <swiper class="banner-swiper" :autoplay="true" :circular="true" indicator-active-color="#FF719A">
             <swiper-item v-for="(item, index) in bannerList" :key="index">
                 <image :src="item.image" mode="aspectFill" class="banner-image" />
             </swiper-item>
         </swiper>
+
         <!-- 标签栏 -->
-        <view class="tabs" :style="tabsStyle">
-            <view class="tab-item" v-for="(tab, index) in tabs" :key="index" :class="{ active: currentTab === index }"
-                @click="switchTab(index)">
-                {{ tab.name }}
-                <view class="tab-line" v-if="currentTab === index"></view>
+        <view class="tabs-container" :style="tabsStyle">
+            <view class="tabs">
+                <view v-for="(tab, index) in tabs" :key="index" class="tab-item"
+                    :class="{ active: currentTab === index }" @click="switchTab(index)">
+                    {{ tab.name }}
+                    <view class="tab-line" v-if="currentTab === index"></view>
+                </view>
             </view>
         </view>
 
         <!-- 内容区域 -->
         <view class="content">
-            <!-- 热门商家内容 -->
+            <!-- 热门拼团 -->
             <view v-show="currentTab === 0" class="tab-content">
-                <view class="product-list">
-                    <view class="product-item" v-for="(product, index) in hotProducts" :key="index"
+                <view class="group-list">
+                    <view class="group-card" v-for="(product, index) in hotProducts" :key="index"
                         @click="goToStoreDetail(product.id)">
-                        <view style="display: flex;width: 100%;">
-                            <image :src="product.头像" mode="scaleToFill"
-                                style="margin: 20rpx; width: 80rpx;height: 80rpx;" />
-                            <text style="margin: 20rpx 0;">{{ product.店铺 }}</text>
+                        <view class="store-header">
+                            <image class="store-avatar" :src="product.头像" mode="aspectFill"></image>
+                            <text class="store-name">{{ product.店铺 }}</text>
+                            <view class="group-tag">3人团</view>
                         </view>
-                        <hr
-                            style="margin:10rpx 10rpx 30rpx 10rpx;width: 95%; border: none; border-bottom: 1rpx solid #f0f0f0;" />
-
-                        <view class="product-info">
-                            <text class="product-name">{{ product.name }}</text>
-                            <scroll-view class="product-images" scroll-x="true" show-scrollbar="false">
-                                <view class="image-container">
+                        <view style="overflow: hidden;">
+                            <scroll-view class="product-scroll" scroll-x>
+                                <view class="product-images">
                                     <image class="product-image" v-for="(img, imgIndex) in product.images"
                                         :key="imgIndex" :src="img" mode="aspectFill"></image>
                                 </view>
                             </scroll-view>
-                            <text class="product-price">¥{{ product.price }}</text>
                         </view>
-                    </view>
-                </view>
-            </view>
-
-            <!-- 热门商品内容 -->
-            <view v-show="currentTab === 1" class="tab-content">
-                <view class="store-list">
-                    <view class="store-item" v-for="(store, index) in hotStores" :key="index"
-                        @click="goToProduct(store.id)">
-                        <image class="store-image" :src="store.image" mode="aspectFill"></image>
-                        <view class="store-info">
-                            <view class="store-name">{{ store.name }}</view>
-                            <view class="store-desc">{{ store.description }}</view>
-                            <view class="hot-product">
-                                <text class="hot-product-name">热门: {{ store.hotProduct.name }}</text>
-                                <text class="hot-product-price">¥{{ store.hotProduct.price }}</text>
+                        <view class="product-footer">
+                            <text class="product-name">{{ product.name }}</text>
+                            <view class="price-section">
+                                <text class="current-price">¥{{ product.price }}</text>
+                                <text class="original-price">¥{{ product.price + 5 }}</text>
+                                <text class="sales">已拼{{ 235 + index * 15 }}件</text>
                             </view>
                         </view>
                     </view>
                 </view>
             </view>
 
-            <view class="loading-more" v-if="hasMore && hotProducts.length > 0">加载更多...</view>
-            <view class="no-more" v-if="!hasMore && hotProducts.length > 0">没有更多了</view>
+            <!-- 热门商铺 -->
+            <view v-show="currentTab === 1" class="tab-content">
+                <view class="store-list">
+                    <view class="store-card" v-for="(store, index) in hotStores" :key="index"
+                        @click="goToProduct(store.id)">
+                        <image class="store-cover" :src="store.image" mode="aspectFill"></image>
+                        <view class="store-info">
+                            <view class="store-header">
+                                <text class="store-name">{{ store.name }}</text>
+                                <view class="rating">
+                                    <uni-icons type="star-filled" size="16" color="#FFB400"></uni-icons>
+                                    <text>4.8</text>
+                                </view>
+                            </view>
+                            <text class="store-desc">{{ store.description }}</text>
+                            <view class="promotion-tag">
+                                <text>满30减5</text>
+                                <text>新用户立减8元</text>
+                            </view>
+                            <view class="hot-product">
+                                <text class="product-name">{{ store.hotProduct.name }}</text>
+                                <text class="product-price">¥{{ store.hotProduct.price }}</text>
+                            </view>
+                        </view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 加载状态 -->
+            <view class="loading-status">
+                <text v-if="hasMore && hotProducts.length > 0">正在加载更多...</text>
+                <text v-else-if="!hasMore && hotProducts.length > 0">—— 已经到底啦 ——</text>
+            </view>
         </view>
     </view>
 </template>
@@ -113,7 +116,7 @@ import { onPageScroll, onReachBottom } from '@dcloudio/uni-app'
 
 // 轮播图数据
 const bannerList = ref([
-    { image: '/static/banner1.png' },
+    // { image: '/static/banner1.png' },
     { image: '/static/banner2.png' },
     { image: '/static/banner3.png' }
 ])
@@ -326,426 +329,315 @@ const getUserRole = async () => {
 </script>
 
 <style scoped lang="scss">
+$primary-color: #FF5500;
+$secondary-color: #FFA99F;
+
+.container {
+    background: #f8f9fb;
+    min-height: 100vh;
+}
+
+.nav-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    // padding-bottom: 20rpx;
+
+    .nav-content {
+        display: flex;
+        align-items: center;
+        // padding: 0 30rpx;
+    }
+
+    .nav-left {
+        flex: 1;
+        margin-right: -30rpx;
+    }
+
+    .app-name {
+        color: #fff;
+        font-size: 40rpx;
+        font-weight: 700;
+        margin-bottom: 10rpx;
+        margin-left: 50rpx;
+    }
+
+    .location-icon {
+        display: flex;
+        align-items: center;
+
+        .address-text {
+            color: #fff;
+            font-size: 26rpx;
+            margin: 0 10rpx;
+            max-width: 200rpx;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .search-wrapper {
+        flex: 1;
+        // width: 300rpx;
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 40rpx;
+            height: 60rpx;
+            display: flex;
+            align-items: center;
+            padding: 0 30rpx;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            .placeholder {
+                color: #666;
+                font-size: 26rpx;
+                margin-left: 15rpx;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+    }
+
+    .nav-right {
+        flex: 1;
+        text-align: right;
+        margin-left: -50rpx;
+    }
+}
+
 .banner-swiper {
-    width: 95%;
-    height: 300rpx;
-    margin: 20rpx;
+    height: 320rpx;
+    margin: 30rpx;
+    border-radius: 20rpx;
+    overflow: hidden;
 
     .banner-image {
-        border-radius: 20rpx;
         width: 100%;
         height: 100%;
     }
 }
 
-
-.nav-bar {
+.tabs-container {
+    background: #fff;
     position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
-}
-
-.tabs {
-    display: flex;
-    position: sticky;
-    border-radius: 10rpx;
-    height: 74rpx;
-    background: #ffffff;
-    box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+    padding: 0 30rpx;
     z-index: 99;
-    width: 95%;
-    margin: 20rpx;
-    transition: all 0.3s;
-}
 
-.tab-item {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 28rpx;
-    width: 40rpx;
-    color: #333;
-    position: relative;
+    .tabs {
+        display: flex;
+        border-bottom: 2rpx solid #f0f0f0;
 
-    &.active {
-        color: #ff5500;
-        font-weight: bold;
-    }
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            font-size: 32rpx;
+            color: #666;
+            padding: 25rpx 0;
+            position: relative;
 
-    .tab-line {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 40rpx;
-        height: 4rpx;
-        background: #ff5500;
-        border-radius: 2rpx;
+            &.active {
+                color: $primary-color;
+                font-weight: 500;
+
+                .tab-line {
+                    position: absolute;
+                    bottom: -2rpx;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 60rpx;
+                    height: 4rpx;
+                    background: $primary-color;
+                    border-radius: 2rpx;
+                }
+            }
+        }
     }
 }
 
 .content {
-    position: relative;
-    transition: all 0.3s;
+    padding: 30rpx;
 }
 
-.tab-content {
-    // padding: 20rpx;
-    min-height: calc(100vh - 200rpx);
-}
+/* 拼团列表样式 */
+.group-list {
+    .group-card {
+        background: #fff;
+        border-radius: 20rpx;
+        margin-bottom: 30rpx;
+        box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.03);
 
-.content-swiper {
-    width: 100%;
-}
+        .store-header {
+            display: flex;
+            align-items: center;
+            padding: 25rpx;
 
-.tab-content {
-    height: 100%;
-    // padding: 20rpx;
-    box-sizing: border-box;
-}
+            .store-avatar {
+                width: 60rpx;
+                height: 60rpx;
+                border-radius: 12rpx;
+                margin-right: 20rpx;
+            }
 
-.sticky-container {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
-}
+            .store-name {
+                font-size: 30rpx;
+                font-weight: 500;
+                flex: 1;
+            }
 
-.main-nav {
-    padding: 20rpx 30rpx;
-    display: flex;
-    align-items: center;
-}
+            .group-tag {
+                background: #FFF0F3;
+                color: $primary-color;
+                font-size: 24rpx;
+                padding: 8rpx 20rpx;
+                border-radius: 40rpx;
+            }
+        }
 
-.tab-indicator {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 50%;
-    height: 4rpx;
-    background: #FF5500;
-    transition: transform 0.3s ease;
-}
+        .product-scroll {
+            padding: 0 25rpx;
+            z-index: -1;
 
-.content-swiper {
-    flex: 1;
-}
+            .product-images {
+                display: flex;
+                gap: 20rpx;
 
-.scroll-view {
-    height: 100%;
-    padding: 20rpx;
-    box-sizing: border-box;
-}
+                .product-image {
+                    width: 220rpx;
+                    height: 220rpx;
+                    border-radius: 12rpx;
+                    flex-shrink: 0;
+                }
+            }
+        }
 
-.container {
-    min-height: 100vh;
-    position: relative;
-    background-color: #f7f7f7;
+        .product-footer {
+            padding: 25rpx;
 
-    .sticky-nav {
-        position: sticky;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 100;
-        background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
+            .product-name {
+                font-size: 28rpx;
+                color: #333;
+                margin-bottom: 15rpx;
+                display: block;
+            }
+
+            .price-section {
+                display: flex;
+                align-items: center;
+
+                .current-price {
+                    color: $primary-color;
+                    font-size: 36rpx;
+                    font-weight: 600;
+                    margin-right: 15rpx;
+                }
+
+                .original-price {
+                    color: #999;
+                    font-size: 24rpx;
+                    text-decoration: line-through;
+                    margin-right: auto;
+                }
+
+                .sales {
+                    color: #666;
+                    font-size: 24rpx;
+                }
+            }
+        }
     }
-
 }
 
-.status-bar {
-    width: 100%;
-    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
-    /* background-color: ; */
-}
-
-.search-bar-anchor {
-    height: 0;
-    position: relative;
-    z-index: 1;
-}
-
-.search-bar {
-    position: relative;
-    padding: 20rpx;
-    background-color: #ffffff;
-    z-index: 100;
-}
-
-.search-bar.fixed {
-    position: fixed;
-    left: 0;
-    right: 0;
-    background-color: #ffffff;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-}
-
-.search-bar-placeholder {
-    height: 80rpx;
-    /* 搜索栏高度 */
-}
-
-.placeholder {
-    margin-left: 10rpx;
-    color: #999;
-    font-size: 28rpx;
-}
-
-.content {
-    position: relative;
-    z-index: 1;
-    padding: 20rpx;
-    padding-top: 0;
-}
-
-.section-title {
-    font-size: 32rpx;
-    font-weight: bold;
-    margin-bottom: 20rpx;
-}
-
-::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
-    color: transparent;
-}
-
+/* 店铺列表样式 */
 .store-list {
-    margin-top: 20rpx;
-    display: flex;
-    flex-direction: column;
-    gap: 30rpx;
+    .store-card {
+        background: #fff;
+        border-radius: 20rpx;
+        margin-bottom: 30rpx;
+        overflow: hidden;
+        box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.03);
+
+        .store-cover {
+            width: 100%;
+            height: 300rpx;
+        }
+
+        .store-info {
+            padding: 25rpx;
+
+            .store-header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 15rpx;
+
+                .store-name {
+                    font-size: 32rpx;
+                    font-weight: 500;
+                }
+
+                .rating {
+                    display: flex;
+                    align-items: center;
+                    color: #FFB400;
+                    font-size: 26rpx;
+
+                    text {
+                        margin-left: 8rpx;
+                    }
+                }
+            }
+
+            .store-desc {
+                color: #666;
+                font-size: 26rpx;
+                margin-bottom: 20rpx;
+            }
+
+            .promotion-tag {
+                display: flex;
+                gap: 15rpx;
+                margin-bottom: 20rpx;
+
+                text {
+                    background: #FFF0F3;
+                    color: $primary-color;
+                    font-size: 22rpx;
+                    padding: 6rpx 15rpx;
+                    border-radius: 6rpx;
+                }
+            }
+
+            .hot-product {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding-top: 20rpx;
+                border-top: 2rpx solid #f8f8f8;
+
+                .product-name {
+                    color: #666;
+                    font-size: 26rpx;
+                }
+
+                .product-price {
+                    color: $primary-color;
+                    font-size: 32rpx;
+                    font-weight: 600;
+                }
+            }
+        }
+    }
 }
 
-.store-item {
-    display: flex;
-    background-color: #ffffff;
-    border-radius: 12rpx;
-    padding: 20rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-}
-
-.store-image {
-    width: 160rpx;
-    height: 160rpx;
-    border-radius: 8rpx;
-    margin-right: 20rpx;
-}
-
-.store-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.store-name {
-    font-size: 30rpx;
-    font-weight: bold;
-}
-
-.store-desc {
-    font-size: 24rpx;
-    color: #666;
-    margin: 10rpx 0;
-}
-
-.hot-product {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 24rpx;
-}
-
-.hot-product-name {
-    color: #333;
-}
-
-.hot-product-price {
-    color: #ff5500;
-    font-weight: bold;
-}
-
-.loading-more,
-.no-more {
+.loading-status {
     text-align: center;
-    padding: 20rpx 0;
-    color: #999;
-    font-size: 24rpx;
-}
-
-.custom-nav {
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    padding: 0 0 10rpx 10rpx;
-    position: fixed;
-    z-index: 1000;
-    background-image: linear-gradient(-225deg, #FFE29F 0%, #FFA99F 48%, #FF719A 100%);
-}
-
-.nav-content {
-    display: flex;
-    align-items: center;
-    height: 80rpx;
-
-
-}
-
-.app-name {
-    color: #ffffff;
-    font-size: 32rpx;
-    font-weight: 700;
-    // margin-right: 24rpx;
-    padding-left: 50rpx;
-    // font-family:;
-}
-
-.search-wrapper {
-    flex: 1;
-    // margin-right: 20rpx;
-    // height: 88rpx;
-}
-
-.search-input {
-    border-radius: 36rpx;
-    height: 60rpx;
-    width: 300rpx;
-    // margin: 44rpx;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    // justify-content: center;
-    background-color: rgba(255, 255, 255, 0.9);
-}
-
-.location-icon {
-    display: flex;
-    align-items: center;
-    color: #fff;
-    font-size: 28rpx;
-    height: 30;
-    margin-right: 20rpx;
-}
-
-.placeholder {
-    margin-left: 12rpx;
+    padding: 40rpx 0;
     color: #999;
     font-size: 26rpx;
-}
-
-.categories {
-    display: flex;
-    gap: 20rpx;
-}
-
-.category-item {
-    flex: 1;
-    background-color: #fff;
-    border-radius: 12rpx;
-    padding: 20rpx;
-}
-
-.product-list {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    gap: 20rpx;
-    margin-top: 20rpx;
-}
-
-.product-item {
-    background: #fff;
-    border-radius: 12rpx;
-    overflow: hidden;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-}
-
-.product-image {
-    width: 200rpx;
-    height: 200rpx;
-    margin: 5rpx;
-    box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;
-    // object-fit: cover;
-}
-
-.product-info {
-    display: flex;
-    flex-direction: column;
-    padding: 0 16rpx 16rpx 16rpx;
-}
-
-.product-name {
-    font-size: 28rpx;
-    color: #333;
-    margin-bottom: 8rpx;
-}
-
-.product-price {
-    font-size: 32rpx;
-    color: #ff5500;
-    font-weight: bold;
-}
-
-.product-images {
-    width: 100%;
-    white-space: nowrap;
-    margin: 10rpx 0;
-
-    .image-container {
-        display: inline-flex;
-        padding: 10rpx;
-    }
-
-    .product-image {
-        width: 200rpx;
-        height: 200rpx;
-        margin-right: 10rpx;
-        flex-shrink: 0;
-        border-radius: 8rpx;
-
-        &:last-child {
-            margin-right: 0;
-        }
-    }
-}
-
-.OurAddress {
-    padding: 20rpx 30rpx;
-    background-color: #ff5500;
-
-    .address-content {
-        display: flex;
-        align-items: center;
-
-        .location-icon {
-            margin-right: 20rpx;
-        }
-
-        .address-info {
-            flex: 1;
-
-            .current-address {
-                color: #fff;
-                font-size: 32rpx;
-                font-weight: bold;
-                margin-bottom: 4rpx;
-            }
-
-            .address-tip {
-                color: rgba(255, 255, 255, 0.8);
-                font-size: 24rpx;
-            }
-        }
-
-        .arrow-icon {
-            margin-left: 20rpx;
-        }
-    }
 }
 </style>

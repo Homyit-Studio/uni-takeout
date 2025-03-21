@@ -121,6 +121,12 @@
 			"style": {
 				"navigationBarTitleText": "商铺申请审核列表"
 			}
+		},
+		{
+			"path": "pages/orderDetail/OrderDetailIndex",
+			"style": {
+				"navigationBarTitleText": "OrderDetailIndex"
+			}
 		}
 	],
 	"globalStyle": {

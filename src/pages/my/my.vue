@@ -67,7 +67,7 @@
             <view class="merchant-entry" v-if="userRole === 'user'">
                 <view class="entry-card apply-card" @click="goToMerchant">
                     <view class="card-content">
-                        <uni-icons type="shop" size="44" color="#FF719A"></uni-icons>
+                        <uni-icons type="shop" size="44" color="#FF5500"></uni-icons>
                         <view class="text-content">
                             <text class="title">商家快速入驻</text>
                             <text class="subtitle">立即开启您的线上店铺</text>
@@ -81,7 +81,7 @@
             <view class="merchant-entry" v-else-if="showMerchantEntry">
                 <view class="entry-card" @click="handleMerchantEntry">
                     <view class="card-content">
-                        <uni-icons type="shop-filled" size="44" color="#FF719A"></uni-icons>
+                        <uni-icons type="shop-filled" size="44" color="#FF5500"></uni-icons>
                         <view class="text-content">
                             <text class="title">{{ merchantEntryText }}</text>
                             <text class="subtitle">{{ merchantEntrySub }}</text>
@@ -123,7 +123,6 @@
         </view>
     </view>
 </template>
-
 <script setup>
 import { onPullDownRefresh } from '@dcloudio/uni-app'
 import { ref, computed, onMounted } from 'vue'
@@ -162,30 +161,77 @@ const merchantEntrySub = computed(() => {
 // 生命周期
 onMounted(() => {
     statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
-    loadUserInfo()
+    getUserInfo() // 移除 loadUserInfo 调用，只使用 getUserInfo
+    loadHotStores()
 })
 
 // 方法
-const loadUserInfo = async () => {
-    const res = await mockFetchUserInfo()
-    userInfo.value = res
-    // 初始化角色（优先本地存储）
-    if (!uni.getStorageSync('userRole')) {
-        userRole.value = res.isAdmin ? 'admin' : res.isStore ? 'merchant' : 'user'
-        uni.setStorageSync('userRole', userRole.value)
-    }
-}
-
 const showRoleSwitcher = () => {
+    // 首先检查本地存储的角色权限
     const roles = ['user']
-    if (userInfo.value.isStore) roles.push('merchant')
-    if (userInfo.value.isAdmin) roles.push('admin')
+    // 只有在本地存储中是商家或接口返回isStore时才能切换到商家角色
+    if (userInfo.value.isStore) {
+        roles.push('merchant')
+    }
+    // 只有在本地存储中是管理员或接口返回isAdmin时才能切换到管理员角色
+    if (userInfo.value.isAdmin) {
+        roles.push('admin')
+    }
 
     uni.showActionSheet({
         itemList: roles.map(r => `切换为${r === 'admin' ? '管理员' : r === 'merchant' ? '商家' : '普通用户'}`),
         success: (res) => {
+            // console.log(res)
             userRole.value = roles[res.tapIndex]
             uni.setStorageSync('userRole', userRole.value)
+            // 切换角色后重新
+            uni.reLaunch({ url: '/pages/my/my' })
+            const data = uni.getStorageSync("userRole")
+            if (data === 'admin') {
+                // uni.showTabBar()
+                uni.setTabBarItem({
+                    index: 1,
+                    text: '订单管理',
+                    iconPath: '/static/tabbar/order.png',
+                    selectedIconPath: '/static/tabbar/order-active.png',
+                    visible: false
+                })
+                uni.setTabBarItem({
+                    index: 0,
+                    text: '管理控制台',
+                    iconPath: '/static/tabbar/home.png',
+                    selectedIconPath: '/static/tabbar/home-active.png',
+                    // visible: false
+                })
+            } else if (data === 'merchant') {
+                uni.setTabBarItem({
+                    index: 1,
+                    text: '订单管理',
+                    iconPath: '/static/tabbar/order.png',
+                    selectedIconPath: '/static/tabbar/order-active.png'
+                })
+                uni.setTabBarItem({
+                    index: 0,
+                    text: '店铺管理',
+                    iconPath: '/static/tabbar/home.png',
+                    selectedIconPath: '/static/tabbar/home-active.png',
+                    // visible: false
+                })
+            } else {
+                uni.setTabBarItem({
+                    index: 1,
+                    text: '订单',
+                    iconPath: '/static/tabbar/order.png',
+                    selectedIconPath: '/static/tabbar/order-active.png'
+                })
+                uni.setTabBarItem({
+                    index: 0,
+                    text: '首页',
+                    iconPath: '/static/tabbar/home.png',
+                    selectedIconPath: '/static/tabbar/home-active.png',
+                    // visible: false
+                })
+            }
             uni.showToast({
                 title: `已切换为${roleText.value}`,
                 icon: 'none'
@@ -227,15 +273,30 @@ const mockFetchUserInfo = () => {
 }
 // 修改获取用户信息方法
 const getUserInfo = async () => {
-    // 模拟从接口获取用户信息
-    const res = await mockFetchUserInfo()
-    userInfo.value = res
-    // 设置用户角色（根据实际接口字段调整）
-    userRole.value = res.role || 'user'
-
-    // 如果需要保持旧版兼容
-    if (res.isAdmin) userRole.value = 'admin'
-    else if (res.isStore) userRole.value = 'merchant'
+    try {
+        // 模拟从接口获取用户信息
+        const res = await mockFetchUserInfo()
+        userInfo.value = res
+        // 设置用户角色（优先使用本地存储的角色）
+        const storedRole = uni.getStorageSync('userRole')
+        if (storedRole) {
+            userRole.value = storedRole
+        } else {
+            // 如果本地没有存储角色，则根据用户权限设置
+            if (res.isAdmin) {
+                userRole.value = 'admin'
+            } else if (res.isStore) {
+                userRole.value = 'merchant'
+            } else {
+                userRole.value = 'user'
+            }
+            // 将新设置的角色保存到本地
+            uni.setStorageSync('userRole', userRole.value)
+        }
+    } catch (error) {
+        console.error('获取用户信息失败', error)
+        userRole.value = 'user'
+    }
 }
 
 
@@ -245,15 +306,9 @@ const pageSize = ref(10)
 const hasMore = ref(true)
 const isRefreshing = ref(false)
 
-// 生命周期
-onMounted(() => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
-    loadHotStores()
-    getUserInfo()
-})
-
-
 const goToUserProfile = () => {
+    uni.login
+
     uni.navigateTo({
         url: '/pages/GetUserPhone/GetUserPhoneIndex'
     })
@@ -347,7 +402,7 @@ onPullDownRefresh(() => {
 
 
 <style scoped lang="scss">
-$primary-color: #FF719A;
+$primary-color: #FF5500;
 $secondary-color: #FFA99F;
 
 .container {
@@ -394,6 +449,8 @@ $secondary-color: #FFA99F;
                 font-size: 24rpx;
                 padding: 8rpx 20rpx;
                 border-radius: 40rpx;
+                display: flex;
+                align-items: center;
                 background: rgba(255, 255, 255, 0.2);
                 color: #fff;
 
@@ -449,7 +506,7 @@ $secondary-color: #FFA99F;
                 margin: 0 auto 15rpx;
 
                 &.group {
-                    background: #FF719A;
+                    background: #FF5500;
                 }
 
                 &.order {
@@ -483,7 +540,7 @@ $secondary-color: #FFA99F;
             background: linear-gradient(135deg, rgba(255, 113, 154, 0.1) 0%, rgba(255, 169, 159, 0.1) 100%);
 
             .title {
-                color: #FF719A !important;
+                color: #FF5500 !important;
             }
         }
 
