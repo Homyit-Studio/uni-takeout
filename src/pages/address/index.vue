@@ -127,7 +127,8 @@ export default {
 <style scoped>
 .address-container {
     padding: 20px;
-    padding-bottom: 80px; /* 为底部按钮留出空间 */
+    padding-bottom: 80px;
+    /* 为底部按钮留出空间 */
 }
 
 .address-card {
@@ -176,7 +177,7 @@ export default {
 }
 
 .action-text.active {
-    color: #ff9a9e;
+    color: #ff5500d2;
     font-weight: bold;
 }
 
@@ -185,7 +186,7 @@ export default {
     bottom: 20px;
     left: 20px;
     right: 20px;
-    background-color: #ff9a9e;
+    background-color: #ff5500cb;
     color: #fff;
     text-align: center;
     padding: 15px;
@@ -254,7 +255,7 @@ export default {
 }
 
 .modal-button.confirm {
-    background-color: #ff9a9e;
+    background-color: #FF5500;
     color: #fff;
 }
 </style>

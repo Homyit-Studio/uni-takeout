@@ -30,6 +30,10 @@
             </swiper-item>
         </swiper>
 
+        <!-- 选择取餐方式 -->
+        <view class="choice-container">
+        </view>
+
         <!-- 标签栏 -->
         <view class="tabs-container" :style="tabsStyle">
             <view class="tabs">
@@ -47,7 +51,7 @@
             <view v-show="currentTab === 0" class="tab-content">
                 <view class="group-list">
                     <view class="group-card" v-for="(product, index) in hotProducts" :key="index"
-                        @click="goToStoreDetail(product.id)">
+                        @click="goToProduct(product.id)">
                         <view class="store-header">
                             <image class="store-avatar" :src="product.头像" mode="aspectFill"></image>
                             <text class="store-name">{{ product.店铺 }}</text>
@@ -77,7 +81,7 @@
             <view v-show="currentTab === 1" class="tab-content">
                 <view class="store-list">
                     <view class="store-card" v-for="(store, index) in hotStores" :key="index"
-                        @click="goToProduct(store.id)">
+                        @click="goToStoreDetail(store.id)">
                         <image class="store-cover" :src="store.image" mode="aspectFill"></image>
                         <view class="store-info">
                             <view class="store-header">
@@ -125,7 +129,7 @@ const bannerList = ref([
 // 标签页配置
 const tabs = [
     { name: '热门拼团' },
-    { name: '热门商铺' }
+    { name: '附近商铺' }
 ]
 
 const statusBarHeight = ref(0)
@@ -284,7 +288,7 @@ const goToSearch = () => {
 // 跳转到商家详情
 const goToStoreDetail = (storeId) => {
     uni.navigateTo({
-        url: `/pages/merchant_detail/index?id=${storeId}`
+        url: `/pages/merchantDetail/index?id=${storeId}`
         // url: `/pages/merchant_detail/index`
     })
 }
@@ -292,7 +296,7 @@ const goToStoreDetail = (storeId) => {
 // 添加跳转到商品详情的方法
 const goToProduct = (productId) => {
     uni.navigateTo({
-        url: `/pages/product_detail/index?id=${productId}`
+        url: `/pages/productDetail/ProductDetailIndex?id=${productId}`
     })
 }
 
@@ -352,7 +356,7 @@ $secondary-color: #FFA99F;
 
     .nav-left {
         flex: 1;
-        margin-right: -30rpx;
+        margin-right: -50rpx;
     }
 
     .app-name {
@@ -412,7 +416,7 @@ $secondary-color: #FFA99F;
 }
 
 .banner-swiper {
-    height: 320rpx;
+    height: 240rpx;
     margin: 30rpx;
     border-radius: 20rpx;
     overflow: hidden;

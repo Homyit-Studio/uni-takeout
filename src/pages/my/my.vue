@@ -2,45 +2,53 @@
     <view class="container">
         <!-- 用户信息卡片 -->
         <view class="user-card" :style="{ paddingTop: statusBarHeight + 'px' }">
-            <view class="card-content" @click="goToUserProfile">
-                <image class="avatar" :src="userInfo.avatar" mode="aspectFill"></image>
+            <view class="card-content">
+                <image class="avatar" :src="userInfo.avatar" mode="aspectFill" @click="goToUserProfile"></image>
                 <view class="user-meta">
                     <view class="name-line">
-                        <text class="username">{{ userInfo.nickname || '点击登录' }}</text>
+                        <text class="username">{{ userInfo.nickname || '点击头像登录' }}</text>
                         <view class="role-tag" :class="roleClass" @click.stop="showRoleSwitcher">
                             {{ roleText }}
                             <uni-icons type="bottom" color="#fff" size="20" />
                         </view>
                     </view>
-                    <view class="user-stats">
-                        <view class="stat-item" @click="goToPage('/pages/order/list?type=1')">
+                    <view class="user-stats" @click="goToTabbarPage('/pages/order/order')">
+                        <view class="stat-item">
                             <text class="stat-value">{{ orderStats.unpaid }}</text>
                             <text class="stat-label">待付款</text>
                         </view>
-                        <view class="stat-item" @click="goToPage('/pages/order/list?type=2')">
+                        <view class="stat-item">
                             <text class="stat-value">{{ orderStats.undelivered }}</text>
                             <text class="stat-label">待收货</text>
                         </view>
-                        <view class="stat-item" @click="goToPage('/pages/wallet/index')">
+                        <!-- <view class="stat-item" @click="goToPage('/pages/wallet/index')">
                             <text class="stat-value">¥{{ walletBalance }}</text>
                             <text class="stat-label">我的余额</text>
-                        </view>
+                        </view> -->
                     </view>
                 </view>
-                <uni-icons type="right" size="20" color="rgba(255,255,255,0.8)" style="margin-top: 30rpx;"></uni-icons>
+                <uni-icons @click="goToUserProfile" type="right" size="20" color="rgba(255,255,255,0.8)"
+                    style="margin-top: 60rpx;"></uni-icons>
             </view>
         </view>
 
         <!-- 核心功能入口 -->
         <view class="core-functions">
+
+            <!-- 版本切换按钮 -->
+            <view class="version-switch" @click="toggleVersion">
+                {{ currentVersion }} <uni-icons type="tune-filled" size="16" color="#fff"></uni-icons>
+            </view>
+
+
             <view class="func-grid">
-                <view class="func-item" @click="goToPage('/pages/group/list')">
+                <view class="func-item" @click="goToPage('/pages/group/order')">
                     <view class="icon-box group">
                         <uni-icons type="flag-filled" size="32" color="#fff"></uni-icons>
                     </view>
                     <text>我的拼团</text>
                 </view>
-                <view class="func-item" @click="goToPage('/pages/order/list')">
+                <view class="func-item" @click="goToTabbarPage('/pages/order/order')">
                     <view class="icon-box order">
                         <uni-icons type="cart-filled" size="32" color="#fff"></uni-icons>
                     </view>
@@ -134,8 +142,23 @@ const userRole = ref(uni.getStorageSync('userRole') || 'user')
 const statusBarHeight = ref(0)
 const userInfo = ref({})
 const orderStats = ref({ unpaid: 2, undelivered: 1 })
-const walletBalance = ref(158.50)
+// const walletBalance = ref(158.50)
 const countdown = ref({ hours: '02', minutes: '30', seconds: '45' })
+
+// 版本信息
+const currentVersion = ref('校园版')
+const itemList = ['校园版', '社会版']
+const toggleVersion = () => {
+    uni.showActionSheet({
+        itemList: ['校园版', '社会版'],
+        success: (res) => {
+            currentVersion.value = itemList[res.tapIndex]
+            uni.setStorageSync('appVersion', currentVersion.value)
+            uni.showToast({ title: `切换至${currentVersion.value}` })
+        }
+    })
+}
+
 
 // 计算属性
 const roleText = computed(() => {
@@ -320,6 +343,11 @@ const goToPage = (url) => {
     })
 }
 
+const goToTabbarPage = (url) => {
+    uni.switchTab({
+        url
+    })
+}
 const goToMerchant = () => {
     uni.navigateTo({
         url: '/pages/merchant/index'
@@ -439,7 +467,7 @@ $secondary-color: #FFA99F;
             margin-bottom: 20rpx;
 
             .username {
-                font-size: 40rpx;
+                font-size: 30rpx;
                 color: #fff;
                 font-weight: 600;
                 margin-right: 20rpx;
@@ -483,6 +511,24 @@ $secondary-color: #FFA99F;
 
 .core-functions {
     padding: 30rpx;
+
+
+    position: relative; // 使子元素绝对定位生效
+
+    .version-switch {
+        position: absolute;
+        right: 40rpx;
+        top: 20rpx;
+        padding: 0 20rpx;
+        color: #ffffff;
+        font-size: 26rpx;
+        display: flex;
+        align-items: center;
+        border-radius: 20rpx;
+        background-color: #ff5500b0;
+        cursor: pointer;
+    }
+
 
     .func-grid {
         display: grid;

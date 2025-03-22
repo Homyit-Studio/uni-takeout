@@ -61,7 +61,7 @@
 			}
 		},
 		{
-			"path": "pages/merchant_detail/index",
+			"path": "pages/merchantDetail/index",
 			"style": {
 				"navigationBarTitleText": "商铺详情",
 				"navigationStyle": "custom",
@@ -69,7 +69,7 @@
 			}
 		},
 		{
-			"path": "pages/go_shopping/index",
+			"path": "pages/GoShopping/index",
 			"style": {
 				"navigationBarTitleText": "确认订单"
 			}
@@ -125,7 +125,21 @@
 		{
 			"path": "pages/orderDetail/OrderDetailIndex",
 			"style": {
-				"navigationBarTitleText": "OrderDetailIndex"
+				"navigationBarTitleText": "订单详情"
+			}
+		},
+		{
+			"path": "pages/productManage/ProductManageIndex",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true,
+				"navigationBarTitleText": "商品管理"
+			}
+		},
+		{
+			"path": "pages/productDetail/ProductDetailIndex",
+			"style": {
+				"navigationBarTitleText": "拼团详情"
 			}
 		}
 	],

@@ -3,12 +3,16 @@
         <!-- 页面标题 -->
         <view class="header" :style="{ paddingTop: statusBarHeight + 'px' }">
             <view class="header-content">
-                <text class="title">我的订单</text>
-                <button class="print-btn" @click="toggleBluetooth">
-                    <uni-icons :type="isConnected ? 'bluetooth-filled' : 'bluetooth'" size="24"
-                        :color="isConnected ? '#fff' : '#fff'" />
-                    <text>{{ isConnected ? deviceName : '连接打印机' }}</text>
-                </button>
+                <text class="title">订单</text>
+                <view style="display: flex;align-items: center;justify-content: center;">
+                    <button style="color: #fff; font-size: 20rpx;width: 200rpx; background: rgba(255, 255, 255, 0.15);"
+                        open-type="openSetting" bindopensetting="callback">蓝牙权限管理</button>
+                    <button class="print-btn" @click="searchBle">
+                        <uni-icons :type="isConnected ? 'checkbox-filled' : 'link'" size="24"
+                            :color="isConnected ? '#ff5500' : '#fff'" />
+                        <text>{{ isConnected ? deviceName : '连接打印机' }}</text>
+                    </button>
+                </view>
             </view>
         </view>
 
@@ -60,9 +64,9 @@
                             <button class="btn secondary" v-if="order.status === 'pending'"
                                 @click.stop="cancelOrder(order.id)">取消订单</button>
                             <button class="btn primary" v-if="order.status === 'delivered'"
-                                @click.stop="completeOrder(order.id)">确认收货</button>
-                            <button class="btn tertiary" v-if="order.status === 'completed'"
-                                @click.stop="reviewOrder(order.id)">写评价</button>
+                                @click.stop="completeOrder(order.id)">确认到货</button>
+                            <!-- <button class="btn tertiary" v-if="order.status === 'completed'"
+                                @click.stop="reviewOrder(order.id)">写评价</button> -->
                             <button class="btn print" v-if="isConnected" @click.stop="printOrder(order)">打印小票</button>
                         </view>
                     </view>
@@ -88,13 +92,12 @@
                     <uni-icons type="close" size="24" color="#999" @click="closeDeviceList" />
                 </view>
                 <scroll-view class="device-scroll" scroll-y>
-                    <view class="device-item" v-for="(device, index) in bluetoothDevices" :key="index"
-                        @click="connectDevice(device)">
+                    <view class="device-item" v-for="(device, index) in devices" :key="index" @click="onConn(device)">
                         <uni-icons type="bluetooth" size="24" color="#1296db" />
                         <text class="device-name">{{ device.name }}</text>
                         <text class="device-id">{{ device.deviceId }}</text>
                     </view>
-                    <view v-if="bluetoothDevices.length === 0" class="no-device">
+                    <view v-if="devices.length === 0" class="no-device">
                         <text>未发现可用设备</text>
                     </view>
                 </scroll-view>
@@ -104,18 +107,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { onPullDownRefresh } from '@dcloudio/uni-app'
 
 const statusBarHeight = ref(0)
 const tabs = ref(['全部', '待付款', '待发货', '待收货', '待评价', '退款/售后'])
 const currentTab = ref(0)
 const orders = ref([])
-// 蓝牙相关状态
-const isConnected = ref(false)
-const deviceName = ref('')
-const bluetoothDevices = ref([])
-const bluetoothAdapter = ref(null)
+
 const page = ref(1)
 const pageSize = ref(10)
 const hasMore = ref(true)
@@ -131,7 +130,6 @@ const scrollLeft = ref(0)
 
 onMounted(async () => {
     statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
-    await checkBluetooth()
     loadOrders()
 })
 
@@ -163,183 +161,6 @@ const formatTime = (dateString) => {
     // 其他日期显示完整日期
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
-// 蓝牙功能实现
-const checkBluetooth = async () => {
-    try {
-        // 使用同步方式获取系统信息
-        const res = uni.getSystemInfoSync();
-        if (!res.bluetoothEnabled) {
-            throw new Error('蓝牙未开启');
-        }
-
-        if (res.platform === 'android') {
-            // 尝试获取蓝牙权限
-            await uni.authorize({
-                scope: 'scope.bluetooth'
-            });
-        }
-
-        // 初始化蓝牙适配器
-        await uni.openBluetoothAdapter();
-
-        // 监听蓝牙状态变化
-        uni.onBluetoothAdapterStateChange((res) => {
-            if (!res.available) {
-                isConnected.value = false;
-                deviceName.value = '';
-                uni.showToast({
-                    title: '蓝牙已断开',
-                    icon: 'none'
-                });
-            }
-        });
-
-    } catch (err) {
-        console.error('蓝牙初始化失败', err);
-        uni.showModal({
-            title: '蓝牙初始化失败',
-            content: err.message || '请检查蓝牙是否开启并授予相关权限',
-            showCancel: false
-        });
-    }
-}
-const toggleBluetooth = async () => {
-    if (isConnected.value) {
-        await disconnectDevice()
-    } else {
-        await searchDevices()
-    }
-}
-
-const searchDevices = async () => {
-    try {
-        uni.showLoading({ title: '搜索中...' });
-        bluetoothDevices.value = [];
-
-        // 先停止之前的搜索
-        await uni.stopBluetoothDevicesDiscovery();
-
-        // 清理之前的监听器
-        uni.offBluetoothDeviceFound();
-
-        // 监听发现新设备
-        uni.onBluetoothDeviceFound((result) => {
-            const newDevices = result.devices.filter(device => {
-                // 过滤掉没有名称的设备和已存在的设备
-                return device.name &&
-                    !bluetoothDevices.value.some(d => d.deviceId === device.deviceId);
-            });
-
-            bluetoothDevices.value = [...bluetoothDevices.value, ...newDevices];
-        });
-
-        // 开始搜索设备
-        await uni.startBluetoothDevicesDiscovery({
-            allowDuplicatesKey: false,
-            interval: 0,
-            services: [] // 可以根据实际打印机的service UUID进行过滤
-        });
-
-        // 5秒后停止搜索
-        setTimeout(async () => {
-            await uni.stopBluetoothDevicesDiscovery();
-            uni.hideLoading();
-            if (bluetoothDevices.value.length > 0) {
-                $refs.devicePopup.open();
-            } else {
-                uni.showToast({
-                    title: '未找到打印设备',
-                    icon: 'none'
-                });
-            }
-        }, 5000);
-
-    } catch (err) {
-        uni.hideLoading();
-        uni.showToast({
-            title: '搜索设备失败: ' + (err.message || '未知错误'),
-            icon: 'none'
-        });
-    }
-}
-
-const connectDevice = async (device) => {
-    try {
-        uni.showLoading({ title: '连接中...' });
-
-        // 先断开现有连接
-        if (isConnected.value) {
-            await disconnectDevice();
-        }
-
-        // 创建连接
-        await uni.createBLEConnection({
-            deviceId: device.deviceId,
-            timeout: 10000 // 设置超时时间
-        });
-
-        // 获取设备的服务
-        const servicesRes = await uni.getBLEDeviceServices({
-            deviceId: device.deviceId
-        });
-
-        // TODO: 根据实际打印机的服务UUID进行匹配和特征值获取
-        // 这里需要根据具体打印机型号来实现
-
-        isConnected.value = true;
-        deviceName.value = device.name;
-        $refs.devicePopup.close();
-        uni.showToast({ title: '连接成功' });
-
-    } catch (err) {
-        console.error('连接设备失败:', err);
-        uni.showToast({
-            title: '连接失败: ' + (err.message || '未知错误'),
-            icon: 'none'
-        });
-    } finally {
-        uni.hideLoading();
-    }
-}
-
-const disconnectDevice = async () => {
-    try {
-        await uni.closeBLEConnection()
-        isConnected.value = false
-        deviceName.value = ''
-        uni.showToast({ title: '已断开连接' })
-    } catch (err) {
-        uni.showToast({ title: '断开失败', icon: 'none' })
-    }
-}
-
-const printOrder = async (order) => {
-    // 构建打印数据（需要根据具体打印机协议实现）
-    const printData = `
-        [C]<b>${order.storeName}</b>
-        [L]------------------------
-        [C]订单号：${order.id}
-        [L]下单时间：${order.createTime}
-        [L]------------------------
-        [L]商品：${order.goodsName} x${order.goodsCount}
-        [R]合计：¥${order.amount.toFixed(2)}
-        [L]------------------------
-        [C]感谢您的惠顾！
-    `
-
-    try {
-        await uni.writeBLECharacteristicValue({
-            deviceId: deviceName.value,
-            serviceId: '0000FFE0-0000-1000-8000-00805F9B34FB',
-            characteristicId: '0000FFE1-0000-1000-8000-00805F9B34FB',
-            value: stringToArrayBuffer(printData)
-        })
-        uni.showToast({ title: '打印任务已发送' })
-    } catch (err) {
-        uni.showToast({ title: '打印失败', icon: 'none' })
-    }
-}
-
 
 
 // 生命周期
@@ -433,7 +254,7 @@ const refreshOrders = () => {
 
 const viewOrderDetail = (orderId) => {
     uni.navigateTo({
-        url: `/pages/order/detail?id=${orderId}`
+        url: `/pages/orderDetail/OrderDetailIndex?id=${orderId}`
     })
 }
 
@@ -485,6 +306,243 @@ onPullDownRefresh(() => {
     })
 })
 
+
+
+
+
+/* 
+ * @Author: 
+ * @Motto: 
+ * @Github:
+ * @Description: 蓝牙连接
+ * @FilePath:
+ */
+
+// 响应式数据
+const devices = ref([]);
+const connectDeviceId = ref('');
+// 蓝牙相关状态
+const isConnected = ref(false)
+const deviceName = ref('')
+// const bluetoothDevices = ref([])
+// const bluetoothAdapter = ref(null)
+// 生命周期钩子
+onUnmounted(() => {
+    if (connectDeviceId.value !== '') {
+        uni.closeBLEConnection({
+            deviceId: connectDeviceId.value,
+            success(res) {
+                connectDeviceId.value = '';
+            }
+        });
+    }
+});
+
+const searchBle = () => {
+    // 如果已经连接蓝牙，先询问是否断开链接
+    if (isConnected.value) {
+        uni.showModal({
+            title: '提示',
+            content: '是否断开当前蓝牙连接？',
+            success: (res) => {
+                if (res.confirm) {
+                    uni.closeBLEConnection({
+                        deviceId: connectDeviceId.value,
+                        success(res) {
+                            uni.showToast({ title: '蓝牙已断开' });
+                            // 重置蓝牙相关状态
+                            isConnected.value = false;
+                            deviceName.value = '';
+                            connectDeviceId.value = '';
+                            // 可根据需要重新开始搜索蓝牙设备
+                        },
+                        fail(err) {
+                            uni.showToast({ title: '断开失败', icon: 'none' });
+                        }
+                    });
+                }
+            }
+        });
+        return;
+    }
+
+    // 未连接蓝牙时，开启蓝牙搜索流程
+    // 停止之前的设备发现监听
+    uni.offBluetoothDeviceFound();
+
+    uni.openBluetoothAdapter({
+        success(res) {
+            console.log(res, "初始化蓝牙模块");
+            onDevice();
+            uni.getBluetoothAdapterState({
+                success: function (res) {
+                    if (res.available) {
+                        if (res.discovering) {
+                            stopFindBule();
+                        }
+                        uni.startBluetoothDevicesDiscovery({
+                            success(res) {
+                                console.log(res, '开始搜寻附近的蓝牙外围设备');
+                                // 搜索成功后打开蓝牙设备选择弹窗
+                                if (devicePopup.value && typeof devicePopup.value.open === 'function') {
+                                    devicePopup.value.open();
+                                } else {
+                                    console.warn('无法打开设备弹窗');
+                                }
+                            }
+                        });
+                    } else {
+                        console.log('本机蓝牙不可用');
+                    }
+                },
+            });
+        },
+        fail(err) {
+            console.log(err, '初始化蓝牙模块失败');
+        }
+    });
+};
+
+const onDevice = () => {
+    uni.onBluetoothDeviceFound((res) => {
+        const foundDevices = res.devices || [];
+        foundDevices.forEach(device => {
+            const name = device.name;
+            if (name && name !== "未知设备") {
+                // 避免重复添加相同设备
+                const existing = devices.value.find(d => d.deviceId === device.deviceId);
+                if (!existing) {
+                    devices.value.push({
+                        name: name,
+                        deviceId: device.deviceId,
+                        services: []
+                    });
+                }
+            }
+        });
+    });
+};
+
+const stopFindBule = () => {
+    uni.stopBluetoothDevicesDiscovery({
+        success(res) {
+            console.log(res, '停止搜寻附近的蓝牙外围设备');
+        }
+    });
+};
+
+const onConn = (item) => {
+    uni.showLoading();
+    const deviceId = item.deviceId;
+    uni.createBLEConnection({
+        deviceId: deviceId,
+        complete(res) {
+            uni.hideLoading();
+            if (res.errMsg === "createBLEConnection:ok") {
+                console.log("连接蓝牙-[" + item.name + "]--成功");
+                connectDeviceId.value = deviceId;
+                setTimeout(function () {
+                    uni.showLoading({
+                        title: "连接中",
+                    });
+                    getBLEServices(deviceId);
+                }, 2000);
+            } else {
+                console.log(res, 'createBLEConnection');
+            }
+            stopFindBule();
+        },
+    });
+};
+
+// 新增UUID存储变量
+const serviceUUID = ref('');
+const characteristicUUID = ref('');
+
+// 修改getBLEServices方法
+const getBLEServices = (_deviceId) => {
+    uni.getBLEDeviceServices({
+        deviceId: _deviceId,
+        success(res) {
+            for (const service of res.services) {
+                uni.getBLEDeviceCharacteristics({
+                    deviceId: _deviceId,
+                    serviceId: service.uuid,
+                    success(res) {
+                        for (const char of res.characteristics) {
+                            if (char.properties.write) {
+                                serviceUUID.value = service.uuid;
+                                characteristicUUID.value = char.uuid;
+                                updateDevices(_deviceId, service.uuid, char.uuid);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    });
+};
+
+// 修改printOrder方法
+const printOrder = async (order) => {
+    if (!connectDeviceId.value) {
+        uni.showToast({ title: '未连接打印机', icon: 'none' });
+        return;
+    }
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(`
+    \x1B\x40
+    \x1B\x61\x01
+    ${order.storeName}\n
+    订单号：${order.id}\n
+    \x1D\x56\x41\x00
+  `);
+
+    try {
+        await uni.writeBLECharacteristicValue({
+            deviceId: connectDeviceId.value,
+            serviceId: serviceUUID.value,
+            characteristicId: characteristicUUID.value,
+            value: data
+        });
+        uni.showToast({ title: '打印成功' });
+    } catch (e) {
+        uni.showToast({ title: '打印失败：' + e.message, icon: 'none' });
+    }
+};
+const updateDevices = (deviceId, serviceId, characteristicId) => {
+    for (let index in devices.value) {
+        if (devices.value[index].deviceId === deviceId) {
+            devices.value[index].services.push({
+                serviceId: serviceId,
+                characteristicId: characteristicId
+            });
+            deviceName.value = devices.value[index].name
+            break;
+        }
+    }
+    uni.showToast({
+        title: "连接成功",
+        icon: "none"
+    });
+    isConnected.value = true
+
+    console.log(JSON.stringify(devices.value), '成功1');
+};
+
+
+// 添加对设备弹窗的引用
+const devicePopup = ref(null)
+
+// 定义关闭设备弹窗的方法
+const closeDeviceList = () => {
+    if (devicePopup.value && typeof devicePopup.value.close === 'function') {
+        devicePopup.value.close()
+    } else {
+        console.warn('devicePopup 无法关闭')
+    }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -500,15 +558,17 @@ $secondary-color: #FFA99F;
 .header {
     position: sticky;
     background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
-    padding: 20rpx 30rpx;
+    padding: 20rpx 0;
+    z-index: 2;
+    top: 0rpx;
     box-shadow: 0 4rpx 12rpx rgba(255, 107, 107, 0.2);
 
     .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         height: 100rpx;
-
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
 
         .title {
             color: #fff;
@@ -520,7 +580,8 @@ $secondary-color: #FFA99F;
         .print-btn {
             background: rgba(255, 255, 255, 0.15);
             border-radius: 40rpx;
-            padding: 12rpx 30rpx;
+            height: 60rpx;
+            // padding: 12rpx 30rpx;
             display: flex;
             align-items: center;
             font-size: 26rpx;
@@ -546,7 +607,7 @@ $secondary-color: #FFA99F;
     box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
     width: 100%;
     position: sticky;
-    top: 0;
+    // top: 200rpx;
     z-index: 1;
 
     .tabs {
@@ -818,5 +879,90 @@ $secondary-color: #FFA99F;
     padding: 30rpx 0;
     color: #999;
     font-size: 26rpx;
+}
+
+// 弹窗层
+.device-list {
+    background: #fff;
+    border-radius: 40rpx 40rpx 0 0;
+    padding: 40rpx 30rpx;
+    max-height: 70vh;
+    box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.08);
+
+    .popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 30rpx;
+        border-bottom: 1rpx solid #f5f5f5;
+        margin-bottom: 20rpx;
+
+        .title {
+            font-size: 34rpx;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .uni-icons {
+            padding: 16rpx;
+            border-radius: 50%;
+            transition: all 0.2s;
+
+            &:active {
+                background: #f5f5f5;
+            }
+        }
+    }
+
+    .device-scroll {
+        max-height: 60vh;
+        padding: 0 10rpx;
+
+        .device-item {
+            display: flex;
+            align-items: center;
+            padding: 28rpx 24rpx;
+            background: #fafafa;
+            border-radius: 16rpx;
+            margin-bottom: 20rpx;
+            transition: all 0.2s;
+
+            &:active {
+                background: #f1f1f1;
+                transform: scale(0.98);
+            }
+
+            .uni-icons {
+                margin-right: 20rpx;
+                flex-shrink: 0;
+            }
+
+            .device-name {
+                font-size: 30rpx;
+                color: #333;
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .device-id {
+                font-size: 24rpx;
+                color: #999;
+                margin-left: 20rpx;
+                flex-shrink: 0;
+                max-width: 240rpx;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        .no-device {
+            text-align: center;
+            padding: 60rpx 0;
+            color: #999;
+            font-size: 28rpx;
+        }
+    }
 }
 </style>

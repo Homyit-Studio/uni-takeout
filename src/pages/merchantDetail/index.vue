@@ -1,17 +1,39 @@
 <template>
   <view class="page">
     <!-- 顶部导航栏 -->
-    <view class="nav_bar" :style="{ paddingTop: statusBarHeight + 'px', 'backgroundColor': backgroundColor }">
+    <view class="nav_bar" :style="{
+      paddingTop: statusBarHeight + 'px',
+      'backgroundColor': backgroundColor
+    }">
       <!-- <view class="state_height"></view> -->
       <view class="nav_bar_inner">
         <view class=" nav-icon" @click="onBack()">
-          <uni-icons :type="backIcon" :color="backIconColor" size="30"></uni-icons>
+          <uni-icons :type="backIcon" color="#000" size="30"></uni-icons>
         </view>
       </view>
     </view>
     <!-- 顶部区域背景 -->
-    <view class="top_area area_height" data-type="1">
+    <view class="top_area area_height" :style="{ paddingTop: statusBarHeight + 44 + 'px' }" data-type="1">
+      <view class="shop-header">
+        <!-- 店铺头像 -->
+        <image class="shop-avatar" :src="shopInfo.avatar" mode="aspectFill" />
 
+        <view class="shop-details">
+          <!-- 店铺名称 -->
+          <text class="shop-name">{{ shopInfo.name }}</text>
+
+          <!-- 店铺状态 -->
+          <view class="status-tag" :class="shopInfo.status === 'open' ? 'open' : 'closed'">
+            {{ shopInfo.statusText }}
+          </view>
+
+          <!-- 发货方式 -->
+          <view class="delivery-info">
+            <uni-icons type="location" size="24" color="#FF5500" />
+            <text class="delivery-text">{{ shopInfo.deliveryInfo }}</text>
+          </view>
+        </view>
+      </view>
     </view>
     <!-- tab切换 -->
     <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 40 + 'px' }">
@@ -25,44 +47,66 @@
     </view>
 
     <template v-if="tabIndex == 0">
-      <!-- 广告位置 -->
       <view class="advert_area area_height" data-type="1">
-        <view class="img_box">
-          <image class="store-image" style="width: 100%;" mode="scaleToFill"
-            src="https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg">
-          </image>
+        <view class="group-entry">
+          <view class="entry-header">
+            <text class="title">🔥 火热拼团中</text>
+            <text class="subtitle">三人成团立享7折</text>
+          </view>
+          <image class="group-banner" mode="aspectFill"
+            src="https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg" />
+          <view class="action-box">
+            <text class="action-text">点击进入拼团</text>
+            <uni-icons type="forward" size="16" color="#666" />
+          </view>
         </view>
       </view>
 
-      <!-- 菜品区域 -->
-      <view class="cate_content">
-        <scroll-view scroll-y="true" :scroll-top="leftScrollTop" class="left"
-          :style="{ 'height': scrollHeight + 'px', 'top': stickyTop + 32 + 'px' }">
-          <view class="">
-            <view class="menu_name" :id="'menu_name' + index" :class="{ 'menu_name_active': currentIndex == index }"
-              v-for="(item, index) in productList" @click="onChangeCate(item, index)" :key="index">
-              {{ item.name }}
+      <!-- 跟团人员滚动 -->
+      <view class="purchase-container">
+        <scroll-view scroll-x class="purchase-scroll" :scroll-left="scrollLeft" @touchstart.prevent @touchmove.prevent
+          @touchend.prevent>
+          <view class="scroll-content">
+            <view class="purchase-item" v-for="(item, index) in purchaseList" :key="index">
+              <image class="user-avatar" :src="item.avatar" mode="aspectFill" />
+              <text class="purchase-text">{{ item.name }}刚刚下单了{{ item.product }}</text>
+              <view class="badge">进行中</view>
             </view>
           </view>
         </scroll-view>
-        <view class="right">
-          <view class="item" v-for="(item, index) in productList" :key="index">
-            <view class="title sticky_title" :style="{ 'top': stickyTop + 32 + 'px' }">
-              {{ item.name }}
-            </view>
-            <view class="content">
-              <view class="product_item" v-for="(cell, cIndex) in item.list" :key="cIndex">
-                <image :src="cell.img" mode="aspectFill" class="product_img"></image>
-                <view class="product_info">
-                  <view class="name">{{ cell.name }}</view>
-                  <view class="price-action">
-                    <text class="price">￥{{ cell.price }}</text>
-                    <!-- 添加数量控制 -->
-                    <view class="action-buttons">
-                      <text class="btn minus" @click.stop="decreaseCount(cell)">-</text>
-                      <text class="count">{{ cell.count || 0 }}</text>
-                      <text class="btn plus" @click.stop="increaseCount(cell)">+</text>
-                    </view>
+      </view>
+      <view style="width: 100%;height: 60rpx;text-align: center;background-color: #fff;font-size: 30rpx; ">店家长售餐饮</view>
+    </template>
+
+
+    <!-- 菜品区域 -->
+    <view class="cate_content">
+      <scroll-view scroll-y="true" :scroll-top="leftScrollTop" class="left"
+        :style="{ 'height': scrollHeight + 'px', 'top': stickyTop + 40 + 'px' }">
+        <view class="">
+          <view class="menu_name" :id="'menu_name' + index" :class="{ 'menu_name_active': currentIndex == index }"
+            v-for="(item, index) in productList" @click="onChangeCate(item, index)" :key="index">
+            {{ item.name }}
+          </view>
+        </view>
+      </scroll-view>
+      <view class="right">
+        <view class="item" v-for="(item, index) in productList" :key="index">
+          <view class="title sticky_title" :style="{ 'top': stickyTop + 40 + 'px' }">
+            {{ item.name }}
+          </view>
+          <view class="content">
+            <view class="product_item" v-for="(cell, cIndex) in item.list" :key="cIndex">
+              <image :src="cell.img" mode="aspectFill" class="product_img"></image>
+              <view class="product_info">
+                <view class="name">{{ cell.name }}</view>
+                <view class="price-action">
+                  <text class="price">￥{{ cell.price }}</text>
+                  <!-- 添加数量控制 -->
+                  <view class="action-buttons">
+                    <text class="btn minus" @click.stop="decreaseCount(cell)">-</text>
+                    <text class="count">{{ cell.count || 0 }}</text>
+                    <text class="btn plus" @click.stop="increaseCount(cell)">+</text>
                   </view>
                 </view>
               </view>
@@ -70,25 +114,7 @@
           </view>
         </view>
       </view>
-    </template>
-
-    <!-- 评论 -->
-    <view class="purchase-scroll">
-      <view class="scroll-container">
-        <view class="purchase-item" v-for="(item, index) in purchaseList" :key="index">
-          <image class="user-avatar" :src="item.avatar" mode="aspectFill"></image>
-          <text class="purchase-text">{{ item.name }}刚刚下单了{{ item.product }}</text>
-        </view>
-      </view>
     </view>
-    <view class="" v-if="tabIndex == 1">
-
-    </view>
-    <!-- 商家信息 -->
-    <view class="" v-if="tabIndex == 2">
-
-    </view>
-
 
     <!-- 底部购物车 -->
     <view class="foot">
@@ -100,7 +126,7 @@
           </view>
           <view class="price-box">
             <text class="total-price">￥{{ totalPrice }}</text>
-            <text class="tip">另需配送费{{ deliveryFee }}元</text>
+            <text class="tip">配送费需{{ deliveryFee }}元</text>
           </view>
         </view>
         <view class="submit-btn" :class="{ disabled: totalPrice < minDeliveryPrice }" @click="onSubmit">
@@ -139,7 +165,7 @@
       </uni-popup>
 
       <!-- 规格选择弹窗 -->
-      <uni-popup ref="specPopup" type="bottom" background-color="#fff" :mask-click="true" :safe-area="true">
+      <!-- <uni-popup ref="specPopup" type="bottom" background-color="#fff" :mask-click="true" :safe-area="true">
         <view class="spec-popup">
           <view class="spec-header">
             <view class="product-info">
@@ -172,7 +198,7 @@
             <view class="confirm-btn" @click="confirmSpec">加入购物车</view>
           </view>
         </view>
-      </uni-popup>
+      </uni-popup> -->
     </view>
 </template>
 
@@ -185,7 +211,7 @@ const windowHeight = uni.getSystemInfoSync().windowHeight
 const scrollHeight = ref(uni.getSystemInfoSync().windowHeight)
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight)
 const backgroundColor = ref("rgba(255,255,255,0)")
-const backIconColor = ref("#fff")
+const backIconColor = ref("#000")
 const backIcon = ref("back") // 将 "arrow-left" 改为 "back"
 const allAreaHeight = ref(0)
 const topList = ref([])
@@ -196,6 +222,14 @@ const stickyTop = ref(0)
 const tabIndex = ref(0)
 const isClick = ref(false)
 
+
+const shopInfo = ref({
+  avatar: '/static/logo.png', // 店铺头像
+  name: '绿茶餐厅旗舰店', // 店铺名称
+  status: 'open', // 状态：open/ closed
+  statusText: '营业中', // 状态文案
+  deliveryInfo: '门店自提/同城配送' // 发货方式
+});
 // 其他响应式数据保持不变
 const productList = reactive([{
   name: "中餐",
@@ -471,13 +505,11 @@ const productList = reactive([{
   ],
 }])
 const list4 = reactive([{
-  name: '跟团'
-}, {
-  name: '跟团详情',
+  name: '跟团新讯'
 },
-  // {
-  //   name: '商家',
-  // }
+{
+  name: '店家长售餐饮',
+}
 ])
 // const lineBg = "data:image/png;base64,..."
 
@@ -497,7 +529,7 @@ const selectedSpecs = ref({})
 const specCount = ref(1)
 
 // 添加购买记录数据
-const purchaseList = reactive([
+const purchaseList = ref([
   {
     avatar: '/static/logo.png',
     name: '张先生',
@@ -548,6 +580,7 @@ onUnmounted(() => {
   if (scrollTimer) {
     clearInterval(scrollTimer)
   }
+
 })
 
 // 页面滚动事件处理
@@ -576,19 +609,28 @@ onPageScroll(({ scrollTop }) => {
 // 获取右边内容距离顶部的距离
 function getTop() {
   const query = uni.createSelectorQuery()
-  query.select('.menu_name').boundingClientRect()
-    .selectAll('.item').boundingClientRect()
-    .exec(data => {
-      if (data) {
-        rightItemHeight.value = data[0].height
-        data[1].map((item) => {
-          topList.value.push({
-            top: parseInt(item.top - stickyTop.value),
-            bottom: parseInt(item.bottom - stickyTop.value),
-          })
+  query.select('.menu_name').boundingClientRect()  // 查询单个元素
+  query.selectAll('.item').boundingClientRect()      // 查询多个元素
+  query.exec(res => {
+    // res[0] 为 .menu_name 元素的节点信息
+    if (res && res[0]) {
+      // 如果 height 不存在则设置为 0 或其他默认值
+      rightItemHeight.value = res[0].height || 0
+    } else {
+      console.log('未找到 .menu_name 元素或 height 属性不存在')
+    }
+    // res[1] 为 .item 元素集合的信息数组
+    if (res && res[1]) {
+      res[1].forEach(item => {
+        topList.value.push({
+          top: parseInt(item.top - stickyTop.value),
+          bottom: parseInt(item.bottom - stickyTop.value)
         })
-      }
-    })
+      })
+    } else {
+      console.error('未找到 .item 元素集合')
+    }
+  })
 }
 
 // 点击商品分类
@@ -625,23 +667,42 @@ function onChangeTab(data) {
   tabIndex.value = data.index
 }
 
+// 拼团滚动逻辑
+const scrollLeft = ref(0)
+let scrollInterval = null
+
+onMounted(() => {
+  startAutoScroll()
+})
+
+function startAutoScroll() {
+  scrollInterval = setInterval(() => {
+    scrollLeft.value += 2
+    if (scrollLeft.value >= purchaseList.value.length * 300) {
+      scrollLeft.value = 0
+    }
+  }, 50)
+}
+
+onUnmounted(() => {
+  clearInterval(scrollInterval)
+})
+
 // 增减商品数量
 function increaseCount(item) {
-  if (item.specs && item.specs.length > 0) {
-    // 禁用底层滚动
-    // document.body.style.overflow = 'hidden'
-    currentProduct.value = item
-    specCount.value = 1
-    selectedSpecs.value = {}
-    item.specs.forEach(group => {
-      selectedSpecs.value[group.name] = group.items[0].name
-    })
-    specPopup.value.open()
-  } else {
-    if (!item.count) item.count = 0
-    item.count++
-    updateCart()
-  }
+  // if (item.specs && item.specs.length > 0) {
+  //   currentProduct.value = item
+  //   specCount.value = 1
+  //   selectedSpecs.value = {}
+  //   item.specs.forEach(group => {
+  //     selectedSpecs.value[group.name] = group.items[0].name
+  //   })
+  //   specPopup.value.open()
+  // } else {
+  if (!item.count) item.count = 0
+  item.count++
+  updateCart()
+  // }
 }
 
 function decreaseCount(item) {
@@ -679,7 +740,7 @@ function onSubmit() {
   uni.setStorageSync('orderData', orderData)
 
   uni.navigateTo({
-    url: '/pages/go_shopping/index'
+    url: '/pages/GoShopping/index'
   })
 }
 
@@ -726,42 +787,6 @@ const cartList = computed(() => {
   return list
 })
 
-// 规格选择相关方法
-function selectSpec(groupName, itemName) {
-  selectedSpecs.value[groupName] = itemName
-}
-
-function closeSpecPopup() {
-  // 恢复底层滚动
-  // document.body.style.overflow = 'auto'
-  specPopup.value.close()
-}
-
-function confirmSpec() {
-  // 生成规格字符串
-  const specsStr = Object.values(selectedSpecs.value).join('/')
-
-  // 查找是否已存在相同规格的商品
-  const existItem = cartList.value.find(item =>
-    item.id === currentProduct.value.id &&
-    item.selectedSpecs === specsStr
-  )
-
-  if (existItem) {
-    existItem.count += specCount.value
-  } else {
-    // 添加新商品到购物车
-    const newItem = {
-      ...currentProduct.value,
-      count: specCount.value,
-      selectedSpecs: specsStr
-    }
-    currentProduct.value.count = specCount.value
-  }
-
-  updateCart()
-  closeSpecPopup()
-}
 
 // 生命周期
 onMounted(() => {
@@ -778,7 +803,8 @@ onMounted(() => {
             addHeight += data[i].height
           }
         }
-        scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
+        // scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
+        scrollHeight.value = addHeight * 20
       }
     }).exec()
 
@@ -797,13 +823,50 @@ onMounted(() => {
     backIcon.value = "back"  // 将 "arrow-left" 改为 "back"
   }
 })
+// 规格选择相关方法
+// function selectSpec(groupName, itemName) {
+//   selectedSpecs.value[groupName] = itemName
+// }
+
+// function closeSpecPopup() {
+//   // 恢复底层滚动
+//   // document.body.style.overflow = 'auto'
+//   specPopup.value.close()
+// }
+
+// function confirmSpec() {
+//   // 生成规格字符串
+//   const specsStr = Object.values(selectedSpecs.value).join('/')
+//   // 创建规格唯一标识
+//   const specKey = JSON.stringify(selectedSpecs.value)
+
+//   // 查找是否已存在相同规格的商品
+//   const existItem = cartList.value.find(item =>
+//     item.id === currentProduct.value.id &&
+//     item.specKey === specKey
+//   )
+
+//   if (existItem) {
+//     existItem.count += specCount.value
+//   } else {
+//     // 添加新商品到购物车
+//     const newItem = {
+//       ...currentProduct.value,
+//       count: specCount.value,
+//       selectedSpecs: specsStr,
+//       specKey: specKey,  // 添加唯一规格标识
+//       originalPrice: currentProduct.value.price,  // 保留原价
+//       // 如果有不同规格价格差异，可以在这里处理
+//     }
+//     cartList.value.push(newItem)
+//   }
+
+//   updateCart()
+//   closeSpecPopup()
+// }
+
 </script>
 
-<style>
-page {
-  height: auto;
-}
-</style>
 <style lang="scss" scoped>
 view {
   box-sizing: border-box;
@@ -814,6 +877,7 @@ view {
 }
 
 .page {
+  background-color: #fff;
   padding-bottom: calc(constant(safe-area-inset-bottom) + 100rpx);
   padding-bottom: calc(env(safe-area-inset-bottom) + 100rpx);
 }
@@ -824,7 +888,7 @@ view {
   left: 0;
   right: 0;
   z-index: 999;
-  background: rgba(0, 0, 0, 0);
+  // background: rgba(0, 0, 0, 0);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -838,24 +902,117 @@ view {
 }
 
 .top_area {
-  height: 380rpx;
+  height: 400rpx;
   background-color: #fff;
-  background-image: url('https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-}
-
-.advert_area {
-  height: 300rpx;
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  margin: 0 100rpx;
 
-  .img_box {
+
+  .shop-header {
+    display: flex;
+    align-items: center;
     width: 100%;
+  }
+
+  .shop-avatar {
+    width: 160rpx;
+    height: 160rpx;
+    border-radius: 16rpx;
+    margin-right: 30rpx;
+  }
+
+  .shop-details {
+    flex: 1;
+  }
+
+  .shop-name {
+    font-size: 36rpx;
+    font-weight: 600;
+    margin-bottom: 20rpx;
+    color: #333;
+  }
+
+  .status-tag {
+    display: inline-block;
+    padding: 8rpx 24rpx;
+    font-size: 24rpx;
+    border-radius: 40rpx;
+    margin-bottom: 16rpx;
+
+    &.open {
+      background: #d1ffd8;
+      color: #2ac06d;
+    }
+
+    &.closed {
+      background: #fff1f0;
+      color: #ff4d4f;
+    }
+  }
+
+  .delivery-info {
+    display: flex;
+    align-items: center;
+    font-size: 28rpx;
+    color: #666;
+  }
+
+  .delivery-text {
+    color: #FF5500;
+    background-color: #ff550060;
+    border-radius: 20rpx;
+    padding: 0 20rpx;
+    margin-left: 10rpx;
+  }
+}
+
+.group-entry {
+  margin: 20rpx;
+  background: #fff9e6;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(255, 153, 0, 0.1);
+
+  .entry-header {
+    padding: 24rpx;
+    background: linear-gradient(90deg, #fff1da, #ffe8c4);
+
+    .title {
+      font-size: 32rpx;
+      color: #ff5500;
+      font-weight: bold;
+      margin-right: 20rpx;
+    }
+
+    .subtitle {
+      font-size: 26rpx;
+      color: #ff9900;
+    }
+  }
+
+  .group-banner {
+    width: 100%;
+    height: 240rpx;
+    display: block;
+  }
+
+  .action-box {
+    padding: 20rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff3d9;
+
+    .action-text {
+      font-size: 26rpx;
+      color: #666;
+      margin-right: 10rpx;
+    }
   }
 }
 
@@ -904,7 +1061,7 @@ view {
 
 .cate_content {
   /* 	position: sticky;
-		top: 100rpx; */
+        top: 100rpx; */
   display: flex;
   flex-direction: row;
 
@@ -917,7 +1074,7 @@ view {
 
     .menu_name {
       /* 	position: sticky;
-				top: 0; */
+                top: 0; */
       height: 100rpx;
       line-height: 100rpx;
       text-align: center;
@@ -1333,35 +1490,54 @@ view {
   z-index: 1001 !important;
 }
 
-.purchase-scroll {
-  height: auto;
-  background: rgba(255, 255, 255, 0.9);
-  margin: 20rpx;
-  border-radius: 30rpx;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
 
-  .scroll-container {
-    transition: transform 0.1s linear;
+/* 参团人员滚动样式 */
+.purchase-container {
+  margin: 20rpx;
+  background: #fff9e6;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.purchase-scroll {
+  width: 100%;
+  height: 100rpx;
+  white-space: nowrap;
+
+  .scroll-content {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 20rpx;
   }
 
   .purchase-item {
-    height: 60rpx;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    padding: 0 20rpx;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50rpx;
+    padding: 12rpx 24rpx;
+    margin-right: 20rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 
     .user-avatar {
-      width: 40rpx;
-      height: 40rpx;
+      width: 60rpx;
+      height: 60rpx;
       border-radius: 50%;
-      margin-right: 10rpx;
+      margin-right: 16rpx;
     }
 
     .purchase-text {
-      font-size: 24rpx;
+      font-size: 26rpx;
       color: #666;
+      margin-right: 16rpx;
+    }
+
+    .badge {
+      background: #ff5500;
+      color: white;
+      font-size: 20rpx;
+      padding: 4rpx 12rpx;
+      border-radius: 20rpx;
     }
   }
 }
