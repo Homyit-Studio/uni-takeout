@@ -7,7 +7,7 @@
         </view>
 
         <!-- 订单类型选项卡 -->
-        <scroll-view class="tabs" :style="{ top: statusBarHeight + 44 + 'px' }" scroll-x :scroll-with-animation="true">
+        <scroll-view class="tabs" :style="{ top: statusBarHeight + 36 + 'px' }" scroll-x :scroll-with-animation="true">
             <view class="tab-container">
                 <view class="tab-item" v-for="(tab, index) in tabs" :key="index"
                     :class="{ active: currentTab === index }" @click="switchTab(index)">
@@ -175,7 +175,7 @@ const refreshOrders = () => {
 
 const viewOrderDetail = (orderId) => {
     uni.navigateTo({
-        url: `/pages/order/detail?id=${orderId}`
+        url: `/pages/orderDetail/OrderDetailIndex?id=${orderId}`
     })
 }
 

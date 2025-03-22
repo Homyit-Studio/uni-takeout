@@ -51,15 +51,15 @@
         <!-- 快捷操作 -->
         <view class="quick-actions">
             <view class="action-item" @click="handleStockCheck">
-                <uni-icons type="smallcircle" size="28" color="#FF719A" />
+                <uni-icons type="smallcircle" size="28" color="#5D6DB2" />
                 <text>库存盘点</text>
             </view>
             <view class="action-item" @click="handleSalesReport">
-                <uni-icons type="compose" size="28" color="#FF719A" />
+                <uni-icons type="compose" size="28" color="#5D6DB2" />
                 <text>销售报表</text>
             </view>
             <view class="action-item" @click="handleShopSetting">
-                <uni-icons type="gear-filled" size="28" color="#FF719A" />
+                <uni-icons type="gear-filled" size="28" color="#5D6DB2" />
                 <text>店铺设置</text>
             </view>
         </view>
@@ -90,16 +90,16 @@ const handleTouchEnd = (e) => {
 }
 
 const goToProductManage = () => {
-    uni.navigateTo({ url: '/pages/merchant/product-manage/index' })
+    uni.navigateTo({ url: '/pages/productManage/ProductManageIndex' })
 }
 
 const goToOrderManage = () => {
-    uni.navigateTo({ url: '/pages/merchant/order-manage/index' })
+    uni.switchTab({ url: '/pages/order/order' })
 }
 </script>
 
 <style scoped lang="scss">
-$primary-gradient: linear-gradient(135deg, #FFA99F 0%, #FF719A 100%);
+$primary-gradient: linear-gradient(135deg, #7F95D1 0%, #5D6DB2 100%);
 $secondary-gradient: linear-gradient(135deg, #7F95D1 0%, #5D6DB2 100%);
 
 .merchant-container {
@@ -183,7 +183,7 @@ $secondary-gradient: linear-gradient(135deg, #7F95D1 0%, #5D6DB2 100%);
         .stat-value {
             font-size: 40rpx;
             font-weight: 600;
-            color: #FF719A;
+            color: #5D6DB2;
             display: block;
             line-height: 1.2;
         }

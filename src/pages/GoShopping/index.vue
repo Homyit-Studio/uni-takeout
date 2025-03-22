@@ -1,5 +1,15 @@
 <template>
   <view class="container">
+    <!-- 配送方式选择 -->
+    <view class="delivery-type">
+      <view class="type-item" :class="{ active: deliveryType === 1 }" @click="deliveryType = 1">
+        外卖配送
+      </view>
+      <view class="type-item" :class="{ active: deliveryType === 2 }" @click="deliveryType = 2">
+        到店自取
+      </view>
+    </view>
+
     <!-- 收货地址 -->
     <view class="address-section" @click="goToAddress">
       <view v-if="address" class="address-info">
@@ -13,6 +23,16 @@
         请选择收货地址
       </view>
       <uni-icons type="right" size="20"></uni-icons>
+    </view>
+
+    <!-- 自提信息（仅自取时显示） -->
+    <view class="pickup-info" v-if="deliveryType === 2">
+      <view class="title">自提点信息</view>
+      <view class="content">
+        <text>店铺地址：{{ storeAddress }}</text>
+        <text>营业时间：{{ businessHours }}</text>
+        <text>联系电话：{{ storePhone }}</text>
+      </view>
     </view>
 
     <!-- 商品列表 -->
@@ -35,12 +55,17 @@
       <text>￥{{ orderData.deliveryFee }}</text>
     </view>
 
-    <!-- 底部结算栏 -->
+    <!-- 修改后的底部结算栏 -->
     <view class="footer">
       <view class="total">
-        合计：<text class="price">￥{{ orderData.totalPrice + orderData.deliveryFee }}</text>
+        合计：<text class="price">￥{{
+          orderData.totalPrice +
+          (deliveryType === 1 ? orderData.deliveryFee : 0)
+        }}</text>
       </view>
-      <view class="submit-btn" @click="onSubmitOrder">确认支付</view>
+      <view class="submit-btn" @click="onSubmitOrder">
+        {{ deliveryType === 1 ? '确认支付' : '立即下单' }}
+      </view>
     </view>
   </view>
 </template>
@@ -53,6 +78,15 @@ const orderData = ref({
   cartList: [],
   totalPrice: 0,
   deliveryFee: 0
+})
+
+// 新增配送类型（1: 外卖 2: 自取）
+const deliveryType = ref(1)
+// 新增店铺信息
+const storeInfo = ref({
+  storeAddress: '北京市朝阳区某某街道123号',
+  businessHours: '08:00-22:00',
+  storePhone: '138-1234-5678'
 })
 
 onMounted(() => {
@@ -75,17 +109,22 @@ function goToAddress() {
     url: '/pages/address/index'
   })
 }
-
-// 提交订单
+// 修改后的提交订单逻辑
 function onSubmitOrder() {
-  if (!address.value) {
-    uni.showToast({
-      title: '请选择收货地址',
-      icon: 'none'
-    })
+  if (deliveryType.value === 1 && !address.value) {
+    uni.showToast({ title: '请选择收货地址', icon: 'none' })
     return
   }
 
+  // 构造订单数据时加入配送类型
+  const orderParams = {
+    ...orderData.value,
+    deliveryType: deliveryType.value,
+    address: deliveryType.value === 1 ? address.value : null,
+    storeInfo: deliveryType.value === 2 ? storeInfo.value : null
+  }
+
+  // 后续支付逻辑...
   // 调用支付接口
   uni.showLoading({
     title: '支付中...'
@@ -243,4 +282,50 @@ function onSubmitOrder() {
     font-size: 28rpx;
   }
 }
-</style>
+
+.delivery-type {
+  display: flex;
+  background: #fff;
+  padding: 20rpx 0;
+  margin-bottom: 20rpx;
+
+  .type-item {
+    flex: 1;
+    text-align: center;
+    padding: 20rpx;
+    margin: 0 20rpx;
+    border-radius: 8rpx;
+    border: 1rpx solid #eee;
+    transition: all 0.3s;
+
+    &.active {
+      border-color: #e93323;
+      color: #e93323;
+      background: #ffeceb;
+    }
+  }
+}
+
+.pickup-info {
+  background: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+
+  .title {
+    font-weight: bold;
+    margin-bottom: 20rpx;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    color: #666;
+
+    text {
+      margin-bottom: 10rpx;
+      font-size: 28rpx;
+    }
+  }
+}
+
+// 其他原有样式保持不变</style>

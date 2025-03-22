@@ -8,7 +8,18 @@ onLaunch(() => {
 
 onShow(() => {
   console.log('App Show')
-  // 第一处：切换角色后重新加载页面
+  /**
+   * 1. 获取用户角色
+   * 2. 根据角色加载页面
+   * 3. 如果用户角色发生变化，重新加载页面
+   */
+  uni.login({
+    provider: 'weixin', //使用微信登录
+    success: (res) => {
+      console.log(loginRes.authResult);
+    }
+  })
+
   const data = uni.getStorageSync("userRole")
   if (data === 'admin') {
     // uni.showTabBar()
