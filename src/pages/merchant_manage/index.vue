@@ -27,6 +27,10 @@
                 <uni-icons type="list" size="30" color="#4caf50"></uni-icons>
                 <text class="nav-text">营收细则</text>
             </view>
+            <view class="nav-item" @click="navigateTo('launchLuckying')">
+                <uni-icons type="gift-filled" size="30" color="#4caf50"></uni-icons>
+                <text class="nav-text">进行抽奖</text>
+            </view>
         </view>
 
         <!-- 营业时间展示 -->
@@ -265,6 +269,9 @@ export default {
                     break;
                 case'revenueDetails':
                     url = '/pages/revenue_details/index';
+                    break;
+                case'launchLuckying':
+                    url = '/pages/launch_lucky/index';
                     break;
             }
             uni.navigateTo({
