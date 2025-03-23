@@ -29,7 +29,7 @@
 
           <!-- 发货方式 -->
           <view class="delivery-info">
-            <uni-icons type="location" size="24" color="#FF5500" />
+            <uni-icons type="location" size="24" color="#fff" />
             <text class="delivery-text">{{ shopInfo.deliveryInfo }}</text>
           </view>
         </view>
@@ -75,7 +75,7 @@
           </view>
         </scroll-view>
       </view>
-      <view style="width: 100%;height: 60rpx;text-align: center;background-color: #fff;font-size: 30rpx; ">店家长售餐饮</view>
+      <view style="width: 100%;height: 60rpx;text-align: center;background-color: #fff;font-size: 40rpx; ">店家常售餐饮</view>
     </template>
 
 
@@ -508,7 +508,7 @@ const list4 = reactive([{
   name: '跟团新讯'
 },
 {
-  name: '店家长售餐饮',
+  name: '店家常售餐饮',
 }
 ])
 // const lineBg = "data:image/png;base64,..."
@@ -902,15 +902,16 @@ view {
 }
 
 .top_area {
+  width: 100%;
   height: 400rpx;
-  background-color: #fff;
+  background: linear-gradient(135deg, #FF5500 0%, #FAD0C4 100%);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 100rpx;
+  // margin: 0 100rpx;
 
 
   .shop-header {
@@ -934,7 +935,7 @@ view {
     font-size: 36rpx;
     font-weight: 600;
     margin-bottom: 20rpx;
-    color: #333;
+    color: #ffffff;
   }
 
   .status-tag {
@@ -963,8 +964,8 @@ view {
   }
 
   .delivery-text {
-    color: #FF5500;
-    background-color: #ff550060;
+    color: #ff5500;
+    background-color: #ffffff7c;
     border-radius: 20rpx;
     padding: 0 20rpx;
     margin-left: 10rpx;
@@ -972,7 +973,7 @@ view {
 }
 
 .group-entry {
-  margin: 20rpx;
+  margin: 20rpx 20rpx 0rpx 20rpx;
   background: #fff9e6;
   border-radius: 16rpx;
   overflow: hidden;
@@ -1002,11 +1003,11 @@ view {
   }
 
   .action-box {
-    padding: 20rpx;
+    padding: 0 20rpx 40rpx 20rpx;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #fff3d9;
+    // background: #fff3d9;
 
     .action-text {
       font-size: 26rpx;
@@ -1493,7 +1494,7 @@ view {
 
 /* 参团人员滚动样式 */
 .purchase-container {
-  margin: 20rpx;
+  margin: 0 20rpx 20rpx 20rpx;
   background: #fff9e6;
   border-radius: 16rpx;
   overflow: hidden;
@@ -1513,7 +1514,7 @@ view {
   .purchase-item {
     display: inline-flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.9);
+    // background: rgba(255, 255, 255, 0.9);
     border-radius: 50rpx;
     padding: 12rpx 24rpx;
     margin-right: 20rpx;

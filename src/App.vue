@@ -16,7 +16,7 @@ onShow(() => {
   uni.login({
     provider: 'weixin', //使用微信登录
     success: (res) => {
-      console.log(loginRes.authResult);
+      console.log(res);
     }
   })
 

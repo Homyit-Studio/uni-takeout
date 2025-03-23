@@ -6,7 +6,8 @@
                 <view class="nav-left">
                     <text class="app-name">校园购</text>
                     <view class="location-icon" @click="goToAddress">
-                        <uni-icons type="location-filled" size="18" color="#fff"></uni-icons>
+                        <uni-icons type="location-filled" style="margin-left: 10rpx;margin-right: -10rpx;" size="18"
+                            color="#fff"></uni-icons>
                         <text class="address-text">浙江大学紫金港校区niaa</text>
                         <uni-icons type="arrowdown" size="14" color="#fff"></uni-icons>
                     </view>
@@ -416,7 +417,7 @@ $secondary-color: #FFA99F;
 }
 
 .banner-swiper {
-    height: 240rpx;
+    height: 300rpx;
     margin: 30rpx;
     border-radius: 20rpx;
     overflow: hidden;

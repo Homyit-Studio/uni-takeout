@@ -143,7 +143,7 @@ const goToSystemSettings = () => {
 </script>
 
 <style scoped lang="scss">
-$primary-color: #2d4059;
+$primary-color: #fd8750;
 $secondary-color: #00c292;
 $warning-color: #ff5722;
 

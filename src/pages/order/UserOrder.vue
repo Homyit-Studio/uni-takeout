@@ -285,11 +285,12 @@ $border-color: #eee;
     box-sizing: border-box;
     display: flex;
     justify-content: center;
+    border-bottom: 0.0625rem solid #f0f0f0;
 
     .tab-container {
         display: flex;
         background: #fff;
-        border-radius: 16rpx;
+        // border-radius: 16rpx;
         box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
     }
 
