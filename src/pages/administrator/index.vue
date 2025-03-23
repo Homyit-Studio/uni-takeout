@@ -16,6 +16,18 @@
                 <uni-icons type="list" size="30" color="#007aff"></uni-icons>
                 <text class="nav-text">商户入驻审核</text>
             </view>
+            <view class="nav-item" @click="navigateTo('shopProductsManage')">
+                <uni-icons type="compose" size="30" color="#007aff"></uni-icons>
+                <text class="nav-text">商品管理</text>
+            </view>
+            <view class="nav-item" @click="navigateTo('shopLotteryManage')">
+                <uni-icons type="vip" size="30" color="#ff6347"></uni-icons>
+                <text class="nav-text">抽奖管理</text>
+            </view>
+            <view class="nav-item" @click="navigateTo('shopRevenueManage')">
+                <uni-icons type="wallet-filled" size="30" color="#4caf50"></uni-icons>
+                <text class="nav-text">营收细则</text>
+            </view>
         </view>
 
         <!-- 功能描述 -->
@@ -24,7 +36,6 @@
         </view>
     </view>
 </template>
-
 
 <script>
 export default {
@@ -123,6 +134,15 @@ export default {
                 case'approvalList':
                     url = '/pages/approval_list/index';
                     break;
+                case'shopProductsManage':
+                    url = '/pages/shopProduncts_manage/index';
+                    break;
+                case'shopLotteryManage':
+                    url = '/pages/shopLottery_manage/index';
+                    break;
+                case'shopRevenueManage':
+                    url = '/pages/shopRevenue_manage/index';
+                    break;
             }
             uni.navigateTo({
                 url: url,
@@ -176,7 +196,8 @@ export default {
 
 .function-nav {
     display: flex;
-    justify-content: space-around;
+    flex-wrap: wrap; /* 允许换行 */
+    justify-content: flex-start; /* 左对齐 */
     margin-bottom: 20px;
     background-color: #fff;
     border-radius: 12px;
@@ -189,29 +210,14 @@ export default {
     flex-direction: column;
     align-items: center;
     cursor: pointer;
+    width: 33.33%; /* 每行显示三个 */
+    margin-bottom: 15px; /* 项之间的间距 */
 }
 
 .nav-text {
     font-size: 14px;
     color: #333;
     margin-top: 5px;
-}
-
-.business-hours {
-    background-color: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.section-title {
-    font-size: 16px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
 }
 
 .function-description {

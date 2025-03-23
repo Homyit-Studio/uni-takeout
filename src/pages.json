@@ -141,6 +141,24 @@
 			"style": {
 				"navigationBarTitleText": "拼团详情"
 			}
+		},
+		{
+			"path": "pages/shopProduncts_manage/index",
+			"style": {
+				"navigationBarTitleText": "商户商品管理"
+			}
+		},
+		{
+			"path": "pages/shopLottery_manage/index",
+			"style": {
+				"navigationBarTitleText": "商户抽奖管理"
+			}
+		},
+		{
+			"path": "pages/shopRevenue_manage/index",
+			"style": {
+				"navigationBarTitleText": "商户营收管理"
+			}
 		}
 	],
 	"globalStyle": {
