@@ -139,7 +139,8 @@
 		{
 			"path": "pages/productDetail/ProductDetailIndex",
 			"style": {
-				"navigationBarTitleText": "拼团详情"
+				"navigationBarTitleText": "拼团详情",
+				"navigationStyle": "custom"
 			}
 		},
 		{

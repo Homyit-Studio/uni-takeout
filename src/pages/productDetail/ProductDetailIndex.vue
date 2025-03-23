@@ -1,18 +1,26 @@
 <template>
   <view class="ProductDetailIndex">
-    <!-- 商品分类选项卡 -->
-    <view class="product-tabs">
-      <view v-for="(item, index) in products" :key="index" class="tab-item"
-        :class="{ active: currentProduct === index }" @click="switchProduct(index)">
-        {{ item.title }}
+    <view class="nav-bar" :class="{ scrolled: isScrolled }">
+      <view class="back-btn" @click="handleBack">
+        <uni-icons :type="backIcon" color="#000" size="24" />
       </view>
     </view>
-
-    <!-- 商品图片 -->
+    <!-- 商品分类选项卡 -->
+    <!-- 商品主图 -->
     <view class="product-image">
       <image :src="currentProductData.image" mode="scaleToFill" />
       <view class="countdown">剩余时间：{{ formatTime }}</view>
     </view>
+
+    <!-- 商品缩略图滚动 -->
+    <scroll-view class="thumbnail-scroll" scroll-x>
+      <view class="thumbnail-list">
+        <view v-for="(item, index) in products" :key="index" class="thumbnail-item"
+          :class="{ active: currentProduct === index }" @click="switchProduct(index)">
+          <image :src="item.image" mode="aspectFill" class="thumb-image" />
+        </view>
+      </view>
+    </scroll-view>
 
     <!-- 商品信息 -->
     <view class="product-info">
@@ -30,18 +38,14 @@
       </view>
     </view>
 
-    <!-- 滚动提示 -->
+    <!-- 修改后的滚动提示 -->
     <view class="scrolling-alert">
       <view class="scroll-container">
-        <view class="scroll-content" :style="{ animationDuration: scrollDuration }">
-          <view v-for="(message, index) in scrollingMessages" :key="index" class="scroll-item">
+        <transition-group name="fade-slide" tag="view" class="scroll-content">
+          <view v-for="(message, index) in visibleMessages" :key="message" class="scroll-item">
             {{ message }} 最近{{ recentJoinCount }}人正在拼团...
           </view>
-          <!-- 复制实现无缝滚动 -->
-          <view v-for="(message, index) in scrollingMessages" :key="index + 'copy'" class="scroll-item">
-            {{ message }} 最近{{ recentJoinCount }}人正在拼团...
-          </view>
-        </view>
+        </transition-group>
       </view>
     </view>
 
@@ -87,7 +91,7 @@ const products = ref([
     groupPrice: 108,
     groupSize: 3,
     remainingTime: 2700,
-    image: 'https://example.com/豪华套餐.jpg',
+    image: 'https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg',
     sales: 567
   },
   {
@@ -96,14 +100,91 @@ const products = ref([
     groupPrice: 19.9,
     groupSize: 10,
     remainingTime: 1800,
-    image: 'https://example.com/工作餐.jpg',
+    image: 'https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg',
+    sales: 2987
+  },
+  {
+    title: '超值3人套餐',
+    originalPrice: 98,
+    groupPrice: 68,
+    groupSize: 5,
+    remainingTime: 3600,
+    image: 'https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg',
+    sales: 1234
+  },
+  {
+    title: '豪华5人套餐',
+    originalPrice: 158,
+    groupPrice: 108,
+    groupSize: 3,
+    remainingTime: 2700,
+    image: 'https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg',
+    sales: 567
+  },
+  {
+    title: '超值工作餐',
+    originalPrice: 28,
+    groupPrice: 19.9,
+    groupSize: 10,
+    remainingTime: 1800,
+    image: 'https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg',
+    sales: 2987
+  }, {
+    title: '超值3人套餐',
+    originalPrice: 98,
+    groupPrice: 68,
+    groupSize: 5,
+    remainingTime: 3600,
+    image: 'https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg',
+    sales: 1234
+  },
+  {
+    title: '豪华5人套餐',
+    originalPrice: 158,
+    groupPrice: 108,
+    groupSize: 3,
+    remainingTime: 2700,
+    image: 'https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg',
+    sales: 567
+  },
+  {
+    title: '超值工作餐',
+    originalPrice: 28,
+    groupPrice: 19.9,
+    groupSize: 10,
+    remainingTime: 1800,
+    image: 'https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg',
     sales: 2987
   }
 ])
 
 const currentProduct = ref(0)
 const currentProductData = computed(() => products.value[currentProduct.value])
+// 新增滚动状态
+const isScrolled = ref(false)
+const backIcon = ref("back") // 将 "arrow-left" 改为 "back"
+onMounted(() => {
+  if (getCurrentPages().length == 1) {
+    backIcon.value = "home"
+  } else {
+    backIcon.value = "left"  // 将 "arrow-left" 改为 "back"
+  }
+})
+// 返回按钮点击
+const handleBack = () => {
+  if (getCurrentPages().length == 1) {
+    uni.switchTab({
+      url: "/pages/index/index"
+    })
+  } else {
+    uni.navigateBack()
+  }
+}
 
+// 监听页面滚动
+const onPageScroll = (e) => {
+  isScrolled.value = e.scrollTop > 50
+}
 // 切换商品
 function switchProduct(index) {
   currentProduct.value = index
@@ -149,7 +230,28 @@ const scrollingMessages = ref([
   '用户F 的拼团即将满员！'
 ])
 const currentMessageIndex = ref(0)
+// 修改后的数据逻辑
+const visibleMessages = ref([])
 
+// 消息切换方法
+const startMessageRotation = () => {
+  let currentIndex = 0
+
+  // 初始显示第一条
+  visibleMessages.value = [scrollingMessages.value[currentIndex]]
+
+  setInterval(() => {
+    currentIndex = (currentIndex + 1) % scrollingMessages.value.length
+
+    // 先添加新消息
+    visibleMessages.value = [scrollingMessages.value[currentIndex]]
+
+  }, 3000) // 3秒切换一次
+}
+
+onMounted(() => {
+  startMessageRotation()
+})
 
 // 进度条计算
 const progressPercentage = computed(() => {
@@ -158,7 +260,7 @@ const progressPercentage = computed(() => {
 
 // 剩余空位
 const remainingSlots = computed(() => {
-  return product.value.groupSize - joinedUsers.value.length
+  return products.value.groupSize - joinedUsers.value.length
 })
 
 // 滚动消息
@@ -192,6 +294,49 @@ onUnmounted(() => {
   background: #f8f8f8;
 }
 
+/* 新增顶部导航栏样式 */
+.nav-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* padding-top: env(safe-area-inset-top); */
+  /* 处理刘海屏 */
+  padding-left: 30rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+.nav-bar.scrolled {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.back-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff82;
+  transition: background 0.3s;
+}
+
+.back-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.icon-back {
+  font-size: 40rpx;
+  color: #333;
+}
+
+
 /* 商品图片区域 */
 .product-image {
   position: relative;
@@ -205,6 +350,47 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
 }
+
+/* 新增缩略图样式 */
+.thumbnail-scroll {
+  padding: 50rpx 0;
+  background: #fff;
+  box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.thumbnail-list {
+  white-space: nowrap;
+  padding: 0 20rpx;
+}
+
+.thumbnail-item {
+  display: inline-block;
+  width: 120rpx;
+  height: 120rpx;
+  margin-right: 20rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s;
+  border: 4rpx solid transparent;
+}
+
+.thumbnail-item.active {
+  border-color: #ff5500;
+  transform: scale(1.1);
+}
+
+.thumb-image {
+  width: 100%;
+  height: 100%;
+}
+
+/* 调整主图区域间距 */
+.product-image {
+  margin-bottom: 20rpx;
+}
+
+
 
 .countdown {
   position: absolute;
@@ -311,44 +497,55 @@ onUnmounted(() => {
   border-radius: 2rpx;
 }
 
-/* 优化后的滚动提示样式 */
+/* 修改后的动画样式 */
+.scroll-container {
+  height: 80rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.scroll-content {
+  position: relative;
+  height: 100%;
+}
+
+/* 入场动画 */
+.fade-slide-enter-active {
+  transition: all 0.5s ease;
+  position: absolute;
+  width: 100%;
+}
+
+.fade-slide-leave-active {
+  transition: all 0.5s ease;
+  position: absolute;
+  width: 100%;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 调整后的滚动提示样式 */
 .scrolling-alert {
   background: #fff8e6;
   margin: 30rpx;
   border-radius: 10rpx;
   height: 80rpx;
-  overflow: hidden;
   position: relative;
   padding-left: 80rpx;
-}
-
-.scrolling-alert::before {
-  content: "🚨";
-  position: absolute;
-  left: 20rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 40rpx;
-  z-index: 1;
-}
-
-.scroll-container {
-  height: 100%;
-  overflow: hidden;
-}
-
-.scroll-content {
-  animation: vertical-scroll 20s linear infinite;
-}
-
-@keyframes vertical-scroll {
-  0% {
-    transform: translateY(0);
-  }
-
-  100% {
-    transform: translateY(-50%);
-  }
 }
 
 .scroll-item {
