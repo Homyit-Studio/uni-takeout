@@ -128,7 +128,7 @@ const orderStatusText = ref({
 const scrollLeft = ref(0)
 
 onMounted(async () => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     loadOrders()
 })
 
@@ -164,7 +164,7 @@ const formatTime = (dateString) => {
 
 // 生命周期
 onMounted(() => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     console.log(statusBarHeight.value)
     loadOrders()
 })

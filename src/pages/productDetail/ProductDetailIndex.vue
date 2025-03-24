@@ -1,6 +1,6 @@
 <template>
   <view class="ProductDetailIndex">
-    <view class="nav-bar" :class="{ scrolled: isScrolled }">
+    <view class="nav-bar" :style="{ top: statusBarHeight + 'px' }" :class="{ scrolled: isScrolled }">
       <view class="back-btn" @click="handleBack">
         <uni-icons :type="backIcon" color="#000" size="24" />
       </view>
@@ -163,13 +163,17 @@ const currentProductData = computed(() => products.value[currentProduct.value])
 // 新增滚动状态
 const isScrolled = ref(false)
 const backIcon = ref("back") // 将 "arrow-left" 改为 "back"
+const statusBarHeight = ref(0)
 onMounted(() => {
+  statusBarHeight.value = uni.getWindowInfo().statusBarHeight
   if (getCurrentPages().length == 1) {
     backIcon.value = "home"
   } else {
     backIcon.value = "left"  // 将 "arrow-left" 改为 "back"
   }
 })
+
+
 // 返回按钮点击
 const handleBack = () => {
   if (getCurrentPages().length == 1) {
@@ -179,11 +183,6 @@ const handleBack = () => {
   } else {
     uni.navigateBack()
   }
-}
-
-// 监听页面滚动
-const onPageScroll = (e) => {
-  isScrolled.value = e.scrollTop > 50
 }
 // 切换商品
 function switchProduct(index) {
@@ -253,34 +252,14 @@ onMounted(() => {
   startMessageRotation()
 })
 
-// 进度条计算
-const progressPercentage = computed(() => {
-  return (joinedUsers.value.length / product.value.groupSize) * 100 + '%'
-})
-
-// 剩余空位
 const remainingSlots = computed(() => {
-  return products.value.groupSize - joinedUsers.value.length
+  return Math.max(currentProductData.value.groupSize - joinedUsers.value.length, 0)
 })
 
-// 滚动消息
-const scrollDuration = computed(() => {
-  return scrollingMessages.value.length * 3 + 's' // 每条显示3秒
+const progressPercentage = computed(() => {
+  return (joinedUsers.value.length / currentProductData.value.groupSize * 100).toFixed(2) + '%'
 })
 
-onMounted(() => {
-  // 倒计时定时器
-  timer = setInterval(() => {
-    if (remainingTime.value > 0) {
-      remainingTime.value--
-    }
-  }, 1000)
-
-  // 滚动消息切换
-  setInterval(() => {
-    currentMessageIndex.value = (currentMessageIndex.value + 1) % scrollingMessages.value.length
-  }, 3000)
-})
 onMounted(startCountdown)
 onUnmounted(() => {
   clearInterval(timer)

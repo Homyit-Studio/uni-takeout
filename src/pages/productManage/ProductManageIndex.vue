@@ -250,9 +250,9 @@ const editCategory = (category) => {
 
 
 // 响应式数据
-const windowHeight = uni.getSystemInfoSync().windowHeight
-const scrollHeight = ref(uni.getSystemInfoSync().windowHeight)
-const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight)
+const windowHeight = uni.getWindowInfo().windowHeight
+const scrollHeight = ref(uni.getWindowInfo().windowHeight)
+const statusBarHeight = ref(uni.getWindowInfo().statusBarHeight)
 const backgroundColor = ref("rgba(255,255,255,0)")
 const backIconColor = ref("#000")
 const backIcon = ref("back") // 将 "arrow-left" 改为 "back"

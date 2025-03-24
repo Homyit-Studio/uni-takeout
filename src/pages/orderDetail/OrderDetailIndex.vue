@@ -99,7 +99,7 @@
 import { ref, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 
-const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight)
+const statusBarHeight = ref(uni.getWindowInfo().statusBarHeight)
 
 // 模拟订单数据
 const orderData = reactive({

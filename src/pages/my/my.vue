@@ -42,12 +42,12 @@
 
 
             <view class="func-grid">
-                <view class="func-item" @click="goToPage('/pages/group/order')">
+                <!-- <view class="func-item" @click="goToPage('/pages/group/order')">
                     <view class="icon-box group">
                         <uni-icons type="flag-filled" size="32" color="#fff"></uni-icons>
                     </view>
                     <text>我的拼团</text>
-                </view>
+                </view> -->
                 <view class="func-item" @click="goToTabbarPage('/pages/order/order')">
                     <view class="icon-box order">
                         <uni-icons type="cart-filled" size="32" color="#fff"></uni-icons>
@@ -101,7 +101,7 @@
         </view>
 
         <!-- 限时抢购 -->
-        <view class="flash-sale" v-if="userRole !== 'admin'">
+        <!-- <view class="flash-sale" v-if="userRole !== 'admin'">
             <view class="section-header">
                 <text class="title">限时抢购</text>
                 <view class="countdown">
@@ -128,7 +128,7 @@
                     </view>
                 </view>
             </scroll-view>
-        </view>
+        </view> -->
     </view>
 </template>
 <script setup>
@@ -183,7 +183,7 @@ const merchantEntrySub = computed(() => {
 
 // 生命周期
 onMounted(() => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     getUserInfo() // 移除 loadUserInfo 调用，只使用 getUserInfo
     loadHotStores()
 })

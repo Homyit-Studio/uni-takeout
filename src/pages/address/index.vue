@@ -95,6 +95,15 @@ const currentAddress = ref({
     detail: '',
 });
 
+// 计算属性获取当前选中的省
+const currentProvince = computed(() => pickerState.value.provinces[pickerState.value.pickerValue[0]] || {});
+
+// 计算属性获取当前选中的市
+const currentCity = computed(() => {
+    const province = currentProvince.value;
+    return province.city?.[pickerState.value.pickerValue[1]] || {};
+});
+
 
 // 在加载数据后确保第一个是默认地址
 onLoad(() => {
@@ -108,14 +117,6 @@ onLoad(() => {
     }
 });
 
-// 计算属性获取当前选中的省
-const currentProvince = computed(() => pickerState.value.provinces[pickerState.value.pickerValue[0]] || {});
-
-// 计算属性获取当前选中的市
-const currentCity = computed(() => {
-    const province = currentProvince.value;
-    return province.city?.[pickerState.value.pickerValue[1]] || {};
-});
 
 // 初始化省市区选择器数据
 const initPicker = () => {
@@ -317,7 +318,7 @@ const deleteAddress = (index) => {
     padding: 15px;
     margin-bottom: 15px;
     // border-radius: 8px;
-    border-bottom: 1px #747474 solid;
+    border-bottom: 1px #999 solid;
     // box-shadow: 0 0px 8px rgba(0, 0, 0, 0.5);
 
     .default-indicator {
@@ -357,6 +358,7 @@ const deleteAddress = (index) => {
 }
 
 .name {
+    color: #333;
     font-size: 16px;
     font-weight: bold;
     margin-right: 10px;
