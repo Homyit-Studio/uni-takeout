@@ -21,7 +21,7 @@ uni.addInterceptor('request', httpInterceptor)
 uni.addInterceptor('uploadFile', httpInterceptor)
 
 // 请求函数
-export const http = (options) => {
+export const request = (options) => {
     // 1. 返回 Promise 对象
     return new Promise((resolve, reject) => {
         uni.request({
