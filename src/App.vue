@@ -3,7 +3,12 @@ import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 
 onLaunch(() => {
   console.log('App Launch')
-
+  uni.login({
+    provider: 'weixin', //使用微信登录
+    success: (res) => {
+      console.log(res);
+    }
+  })
 })
 
 onShow(() => {
@@ -13,12 +18,6 @@ onShow(() => {
    * 2. 根据角色加载页面
    * 3. 如果用户角色发生变化，重新加载页面
    */
-  uni.login({
-    provider: 'weixin', //使用微信登录
-    success: (res) => {
-      console.log(res);
-    }
-  })
 
   const data = uni.getStorageSync("userRole")
   if (data === 'admin') {

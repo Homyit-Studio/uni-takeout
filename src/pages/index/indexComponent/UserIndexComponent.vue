@@ -597,7 +597,7 @@ $secondary-color: #FFA99F;
             z-index: 1;
         }
 
-        text {
+        .text {
             position: relative;
             color: #000000;
             font-family: '宋体';

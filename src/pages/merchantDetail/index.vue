@@ -32,7 +32,7 @@
             {{ shopInfo.statusText }}
           </view>
           <view class="delivery-info">
-            <uni-icons type="location" size="24" color="#666" />
+            <uni-icons type="location" size="24" color="#ff5500" />
             <text class="delivery-text">{{ shopInfo.deliveryInfo }}</text>
           </view>
         </view>
@@ -78,7 +78,9 @@
           </view>
         </scroll-view>
       </view>
-      <view style="width: 100%;height: 60rpx;text-align: center;background-color: #fff;font-size: 40rpx; ">店家常售餐饮</view>
+      <view
+        style="width: 100%;height: 80rpx;text-align: center;background-color: #fff;font-size: 40rpx;color: #ff5500; ">
+        常售餐饮</view>
     </template>
 
 
@@ -369,8 +371,42 @@ const scrollTop = ref(0)
 
 // 自动滚动
 let scrollTimer = null
+
 onMounted(() => {
   startScroll()
+  startAutoScroll()
+  nextTick(() => {
+    const query = uni.createSelectorQuery()
+    query.selectAll('.area_height').boundingClientRect(data => {
+      if (data) {
+        allAreaHeight.value = 0
+        let addHeight = 0
+        for (var i = 0; i < data.length; i++) {
+          if (data[i].dataset.type == '1') {
+            allAreaHeight.value += data[i].height
+          } else {
+            addHeight += data[i].height
+          }
+        }
+        scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
+        // scrollHeight.value = addHeight * 20
+      }
+    }).exec()
+
+    query.select('.tabs').boundingClientRect(data => {
+      if (data) {
+        stickyTop.value = statusBarHeight.value + data.height
+      }
+    }).exec()
+
+    getTop()
+  })
+
+  if (getCurrentPages().length == 1) {
+    backIcon.value = "home"
+  } else {
+    backIcon.value = "back"  // 将 "arrow-left" 改为 "back"
+  }
 })
 
 function startScroll() {
@@ -478,9 +514,6 @@ function onChangeTab(data) {
 const scrollLeft = ref(0)
 let scrollInterval = null
 
-onMounted(() => {
-  startAutoScroll()
-})
 
 function startAutoScroll() {
   scrollInterval = setInterval(() => {
@@ -582,43 +615,6 @@ const cartList = computed(() => {
     })
   })
   return list
-})
-
-
-// 生命周期
-onMounted(() => {
-  nextTick(() => {
-    const query = uni.createSelectorQuery()
-    query.selectAll('.area_height').boundingClientRect(data => {
-      if (data) {
-        allAreaHeight.value = 0
-        let addHeight = 0
-        for (var i = 0; i < data.length; i++) {
-          if (data[i].dataset.type == '1') {
-            allAreaHeight.value += data[i].height
-          } else {
-            addHeight += data[i].height
-          }
-        }
-        scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
-        // scrollHeight.value = addHeight * 20
-      }
-    }).exec()
-
-    query.select('.tabs').boundingClientRect(data => {
-      if (data) {
-        stickyTop.value = statusBarHeight.value + data.height
-      }
-    }).exec()
-
-    getTop()
-  })
-
-  if (getCurrentPages().length == 1) {
-    backIcon.value = "home"
-  } else {
-    backIcon.value = "back"  // 将 "arrow-left" 改为 "back"
-  }
 })
 </script>
 
@@ -1274,7 +1270,6 @@ view {
   white-space: nowrap;
 
   .scroll-content {
-    display: inline-flex;
     align-items: center;
     padding: 0 20rpx;
   }
