@@ -261,7 +261,6 @@ onMounted(() => {
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     loadHotStores()
     // 获取搜索栏的初始位置
-    const query = uni.createSelectorQuery()
     query.select('.search-bar-anchor').boundingClientRect(rect => {
         if (rect) {
             searchBarTop.value = rect.top

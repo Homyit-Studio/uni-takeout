@@ -13,23 +13,26 @@
       </view>
     </view>
     <!-- 顶部区域背景 -->
-    <view class="top_area area_height" :style="{ paddingTop: statusBarHeight + 44 + 'px' }" data-type="1">
-      <view class="shop-header">
-        <!-- 店铺头像 -->
+    <view class="top_area area_height" :style="{
+      paddingTop: statusBarHeight + 44 + 'px',
+      'background-image': `url(${shopInfo.avatar})`,
+      'background-size': 'cover',
+      'background-position': 'center',
+      'background-blend-mode': 'multiply'
+    }" data-type="1">
+      <view class="shop-header" style="backdrop-filter: blur(20px); 
+               background: rgba(255,255,255,0.5); 
+               padding: 40rpx;">
+        <!-- 店铺信息 -->
         <image class="shop-avatar" :src="shopInfo.avatar" mode="aspectFill" />
 
         <view class="shop-details">
-          <!-- 店铺名称 -->
           <text class="shop-name">{{ shopInfo.name }}</text>
-
-          <!-- 店铺状态 -->
           <view class="status-tag" :class="shopInfo.status === 'open' ? 'open' : 'closed'">
             {{ shopInfo.statusText }}
           </view>
-
-          <!-- 发货方式 -->
           <view class="delivery-info">
-            <uni-icons type="location" size="24" color="#fff" />
+            <uni-icons type="location" size="24" color="#666" />
             <text class="delivery-text">{{ shopInfo.deliveryInfo }}</text>
           </view>
         </view>
@@ -656,7 +659,10 @@ view {
 .top_area {
   width: 100%;
   height: 400rpx;
-  background: linear-gradient(135deg, #FF5500 0%, #FAD0C4 100%);
+  background-color: #f0f0f0;
+  /* 备用颜色防止图片加载失败 */
+  transition: background 0.3s ease;
+  /* 平滑过渡 */
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -665,11 +671,18 @@ view {
   justify-content: center;
   // margin: 0 100rpx;
 
+  .status-tag {
+    margin: 10rpx 0;
+  }
 
   .shop-header {
+    border-radius: 20rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     width: 100%;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
   }
 
   .shop-avatar {
@@ -713,6 +726,7 @@ view {
     align-items: center;
     font-size: 28rpx;
     color: #666;
+    margin-top: 10rpx;
   }
 
   .delivery-text {
