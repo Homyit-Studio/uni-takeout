@@ -42,7 +42,7 @@
 
 
             <view class="func-grid">
-                <!-- <view class="func-item" @click="goToPage('/pages/group/order')">
+                <!-- <view class="func-item" @click="goToPage('/pages/')">
                     <view class="icon-box group">
                         <uni-icons type="flag-filled" size="32" color="#fff"></uni-icons>
                     </view>
@@ -65,6 +65,12 @@
                         <uni-icons type="location-filled" size="32" color="#fff"></uni-icons>
                     </view>
                     <text>收货地址</text>
+                </view>
+                <view class="func-item" @click="goToPage('/pages/myApprovalList/index')">
+                    <view class="icon-box approval">
+                        <uni-icons type="notification-filled" size="32" color="#fff"></uni-icons>
+                    </view>
+                    <text>入驻审核</text>
                 </view>
             </view>
         </view>
@@ -565,6 +571,10 @@ $secondary-color: #FFA99F;
 
                 &.address {
                     background: #4CAF50;
+                }
+
+                &.approval {
+                    background: #FF5500;
                 }
             }
 

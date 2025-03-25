@@ -1,12 +1,19 @@
 <script setup>
-import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
+import { onLoad, onLaunch, onShow, onHide } from '@dcloudio/uni-app'
+import WebSocket from '@/utils/websocket.js'
+import { request } from './utils/request'
+
+onLoad(() => {
+  console.log('App Load')
+
+})
 
 onLaunch(() => {
   console.log('App Launch')
   uni.login({
     provider: 'weixin', //使用微信登录
     success: (res) => {
-      console.log(res);
+      request
     }
   })
 })
@@ -19,6 +26,41 @@ onShow(() => {
    * 3. 如果用户角色发生变化，重新加载页面
    */
 
+  // 调用示例
+
+  const ws = new WebSocket({
+    heartMsg: 'ping', // 心跳消息
+    onOpen: () => {
+      console.log('连接成功')
+    },
+    onMessage: (data) => {
+      console.log('收到消息:', data)
+      // 处理业务消息...
+    },
+    onClose: () => {
+      console.log('连接关闭')
+    },
+    onError: (err) => {
+      console.error('连接错误:', err)
+    }
+  })
+
+  // 发送消息
+  ws.send('Hello Server')
+  // 设置tabBar
+  tabBarSet()
+})
+onHide(() => {
+  console.log('App Hide')
+})
+
+
+const login = () => {
+
+}
+
+// 设置tabBar
+function tabBarSet() {
   const data = uni.getStorageSync("userRole")
   if (data === 'admin') {
     // uni.showTabBar()
@@ -65,10 +107,7 @@ onShow(() => {
       // visible: false
     })
   }
-})
-onHide(() => {
-  console.log('App Hide')
-})
+}
 
 </script>
 

@@ -1,34 +1,11 @@
 // utils/websocket.js
-// 调用示例
-// import WebSocket from '@/utils/websocket.js'
-
-// const ws = new WebSocket({
-//   url: 'wss://your-websocket-url',
-//   heartMsg: 'ping', // 心跳消息
-//   onOpen: () => {
-//     console.log('连接成功')
-//   },
-//   onMessage: (data) => {
-//     console.log('收到消息:', data)
-//     // 处理业务消息...
-//   },
-//   onClose: () => {
-//     console.log('连接关闭')
-//   },
-//   onError: (err) => {
-//     console.error('连接错误:', err)
-//   }
-// })
-
-// // 发送消息
-// ws.send('Hello Server')
 
 // // 手动关闭连接
 // // ws.close()
 export default class WebSocket {
     constructor(options = {}) {
         const defaultOptions = {
-            url: '',
+            url: `ws://1.15.115.21:8089//ws/${sid}`,
             heartInterval: 30000, // 心跳间隔
             reconnInterval: 5000, // 重连间隔
             maxReconnAttempts: 5, // 最大重连次数
