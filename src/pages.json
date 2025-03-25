@@ -159,6 +159,12 @@
 			"style": {
 				"navigationBarTitleText": "商户营收管理"
 			}
+		},
+		{
+			"path": "pages/editPersonalInfo/index",
+			"style": {
+				"navigationBarTitleText": "修改个人信息"
+			}
 		}
 	],
 	"globalStyle": {
