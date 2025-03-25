@@ -166,6 +166,18 @@
 			"style": {
 				"navigationBarTitleText": "修改个人信息"
 			}
+		},
+		{
+			"path": "pages/banner_manage/index",
+			"style": {
+				"navigationBarTitleText": "管理首页轮播图"
+			}
+		},
+		{
+			"path": "pages/myApprovalList/index",
+			"style": {
+				"navigationBarTitleText": "我的入驻审核"
+			}
 		}
 	],
 	"globalStyle": {

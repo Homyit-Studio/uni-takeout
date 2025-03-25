@@ -11,6 +11,10 @@
                 <image :src="merchantInfo.shopAvatar" class="shop-avatar"></image>
             </view>
             <view class="info-item">
+                <text class="label">店铺地址</text>
+                <text class="value">{{ merchantInfo.shopAddress }}</text>
+            </view>
+            <view class="info-item">
                 <text class="label">店铺简介</text>
                 <text class="value">{{ merchantInfo.shopDescription }}</text>
             </view>
@@ -51,6 +55,7 @@ export default {
             merchantInfo: {
                 shopName: '拼小圈',
                 shopAvatar: '/static/merchant_pic.jpg',
+                shopAddress: '北京市朝阳区某街道某号', // 添加店铺地址
                 shopDescription: '一家专注于本地生活服务的店铺',
                 businessLicense: '/static/logo.png',
                 otherNotes: '希望尽快审核通过',
