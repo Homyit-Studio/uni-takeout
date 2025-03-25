@@ -31,6 +31,10 @@
                 <uni-icons type="gift-filled" size="30" color="#4caf50"></uni-icons>
                 <text class="nav-text">进行抽奖</text>
             </view>
+            <view class="nav-item" @click="navigateTo('personalInfo')">
+                <uni-icons type="gift" size="30" color="#1cbf10"></uni-icons>
+                <text class="nav-text">个人信息修改</text>
+            </view>
         </view>
 
         <!-- 营业时间展示 -->
@@ -273,6 +277,9 @@ export default {
                 case'launchLuckying':
                     url = '/pages/launch_lucky/index';
                     break;
+                case'personalInfo':
+                    url = '/pages/editPersonalInfo/index';
+                    break;
             }
             uni.navigateTo({
                 url: url,
@@ -338,26 +345,31 @@ export default {
 }
 
 .function-nav {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-    background-color: #fff;
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  width: 33.33%; 
+  padding: 10px 0;
+  box-sizing: border-box; 
 }
 
 .nav-text {
-    font-size: 14px;
-    color: #333;
-    margin-top: 5px;
+  font-size: 14px;
+  color: #333;
+  margin-top: 5px;
+  text-align: center; 
 }
 
 .business-hours {

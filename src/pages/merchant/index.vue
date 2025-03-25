@@ -15,6 +15,15 @@
             </view>
         </view>
 
+        <!-- 店铺地址上传 -->
+         <view class="input-item">
+            <view class="label"><span class="required">*</span>店铺地址</view>
+            <view class="address-input-container">
+                <input v-model="shopAddress" placeholder="请输入店铺地址" />
+                <button class="map-select-btn" @click="chooseLocation">地图选择</button>
+            </view>
+        </view>
+
         <!-- 店铺简介输入 -->
         <view class="input-item">
             <view class="label"><span class="required">*</span>店铺简介</view>
@@ -28,19 +37,6 @@
                 <image v-if="businessLicense" :src="businessLicense" mode="aspectFill"></image>
                 <view v-else class="upload-placeholder" @click="chooseLicense">点击上传</view>
             </view>
-        </view>
-
-        <!-- 是否有食品安全许可证 -->
-        <view class="input-item">
-            <view class="label"><span class="required">*</span>是否有食品安全许可证</view>
-            <radio-group :ref="hasFoodSafetyLicense" class="radio-group">
-                <label class="radio-item">
-                    <radio value="有" class="radio-input" />有
-                </label>
-                <label class="radio-item">
-                    <radio value="无" class="radio-input" />无
-                </label>
-            </radio-group>
         </view>
 
         <!-- 其他问题和备注 -->
@@ -62,8 +58,8 @@ export default {
             shopAvatar: '',
             shopDescription: '',
             businessLicense: '',
-            hasFoodSafetyLicense: '',
-            otherNotes: ''
+            otherNotes: '',
+            shopAddress: ''
         };
     },
     methods: {
@@ -76,6 +72,21 @@ export default {
                 },
                 fail: (err) => {
                     console.error('选择头像失败:', err);
+                }
+            });
+        },
+         // 地图选择地址
+        chooseLocation() {
+            uni.chooseLocation({
+                success: (res) => {
+                    this.shopAddress = res.address || res.name; // 使用地图返回的地址
+                },
+                fail: (err) => {
+                    console.error('选择地址失败:', err);
+                    uni.showToast({
+                        title: '请手动输入地址',
+                        icon: 'none'
+                    });
                 }
             });
         },
@@ -93,7 +104,7 @@ export default {
         },
         // 提交表单
         submitForm() {
-            if (!this.shopName || !this.shopAvatar || !this.shopDescription || !this.businessLicense || !this.hasFoodSafetyLicense) {
+            if (!this.shopName || !this.shopAvatar || !this.shopDescription || !this.businessLicense || !this.shopAddress) {
                 uni.showToast({
                     title: '请完善所有必填信息',
                     icon: 'none'
@@ -106,7 +117,7 @@ export default {
                 shopAvatar: this.shopAvatar,
                 shopDescription: this.shopDescription,
                 businessLicense: this.businessLicense,
-                hasFoodSafetyLicense: this.hasFoodSafetyLicense,
+                shopAddress: this.shopAddress,
                 otherNotes: this.otherNotes
             });
             uni.showToast({
@@ -181,26 +192,26 @@ image {
     height: 100%;
     border-radius: 8px;
 }
-
-.radio-group {
+.address-input-container {
     display: flex;
     align-items: center;
-    gap: 20px;
-    /* 调整两个选项之间的间距 */
+    gap: 10px;
 }
 
-.radio-item {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    font-size: 14px;
+.address-input-container input {
+    flex: 1;
 }
 
-.radio-input {
-    margin-right: 8px;
-    /* 调整 radio 按钮和文字之间的间距 */
+.map-select-btn {
+    background-color: #f0f0f0;
+    color: #333;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    border: none;
+    outline: none;
 }
-
 .submit-btn {
     background-color: #ff9a9e;
     color: #fff;

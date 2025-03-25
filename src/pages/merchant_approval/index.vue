@@ -19,10 +19,6 @@
                 <image :src="merchantInfo.businessLicense" class="license-image"></image>
             </view>
             <view class="info-item">
-                <text class="label">食品安全许可证</text>
-                <text class="value">{{ merchantInfo.hasFoodSafetyLicense }}</text>
-            </view>
-            <view class="info-item">
                 <text class="label">备注</text>
                 <text class="value">{{ merchantInfo.otherNotes || '无' }}</text>
             </view>
@@ -57,7 +53,6 @@ export default {
                 shopAvatar: '/static/merchant_pic.jpg',
                 shopDescription: '一家专注于本地生活服务的店铺',
                 businessLicense: '/static/logo.png',
-                hasFoodSafetyLicense: '有',
                 otherNotes: '希望尽快审核通过',
             },
             auditStatus: 'pending', // 审核状态：pending（待审核）、approved（通过）、rejected（拒绝）

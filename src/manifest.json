@@ -54,6 +54,14 @@
         "setting": {
             "urlCheck": false
         },
+        "requiredPrivateInfos": [
+            "chooseLocation"
+        ],
+        "permission": {
+            "scope.userLocation": {
+                "desc": "你的位置信息将用于选择地址"
+            }
+        },
         // "permission": {
         //     "scope.userFuzzyLocation": {
         //         "desc": "位置信息效果展示"
