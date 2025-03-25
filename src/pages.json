@@ -139,7 +139,8 @@
 		{
 			"path": "pages/productDetail/ProductDetailIndex",
 			"style": {
-				"navigationBarTitleText": "拼团详情"
+				"navigationBarTitleText": "拼团详情",
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -174,7 +175,7 @@
 	},
 	"tabBar": {
 		"color": "#2c2c2c",
-		"selectedColor": "#FFA99F",
+		"selectedColor": "#fd8750",
 		"backgroundColor": "#ffffff",
 		"borderStyle": "black",
 		"list": [

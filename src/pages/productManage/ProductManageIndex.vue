@@ -51,13 +51,14 @@
       <view class="cate_content">
         <!-- 分类导航 -->
         <scroll-view scroll-y class="left" :style="{ 'height': scrollHeight + 'px', 'top': stickyTop + 40 + 'px' }">
-          <view v-for="(item, index) in productList" :key="index" class="swipe-item">
-            <uni-swipe-action :options="swipeOptions" @click="handleSwipeClick(item, index)">
-              <view class="menu_name" :class="{ 'menu_name_active': currentIndex == index }">
-                {{ item.name }}
-              </view>
-            </uni-swipe-action>
+
+          <view v-for="(item, index) in productList" :key="index" class="swipe-item"
+            @click="showActionMenu(item, index)">
+            <view class="menu_name" :class="{ 'menu_name_active': currentIndex == index }">
+              {{ item.name }}
+            </view>
           </view>
+
           <view class="add-category" @click="showAddCategoryDialog">
             <view class="add-box">
               <uni-icons type="plusempty" size="24" color="#ccc" />
@@ -121,29 +122,21 @@
         </view>
       </view>
     </template>
+
+    <!-- 添加操作菜单 -->
+    <uni-popup ref="actionMenu" type="bottom">
+      <view class="action-menu">
+        <view class="menu-item edit" @click="handleMenuAction('edit')">修改分类</view>
+        <view class="menu-item delete" @click="handleMenuAction('delete')">删除分类</view>
+        <view class="menu-item cancel" @click="$refs.actionMenu.close()">取消</view>
+      </view>
+    </uni-popup>
   </view>
 </template>
 
 <script setup>
 import { ref, reactive, nextTick, onMounted, computed, onUnmounted } from 'vue'
 import { onPageScroll } from '@dcloudio/uni-app' // 添加这行
-
-// 增删改查
-// 滑动操作配置
-const swipeOptions = reactive([
-  {
-    text: '修改',
-    style: {
-      backgroundColor: '#007aff'
-    }
-  },
-  {
-    text: '删除',
-    style: {
-      backgroundColor: '#dd524d'
-    }
-  }
-])
 
 // 商品操作
 const deleteProduct = (category, product) => {
@@ -162,15 +155,6 @@ const editProduct = (category, product) => {
   uni.navigateTo({
     url: '/pages/edit-product?category=' + JSON.stringify(category) + '&product=' + JSON.stringify(product)
   })
-}
-
-// 分类操作
-const handleSwipeClick = (item, index, option) => {
-  if (option.index === 0) {
-    editCategory(item)
-  } else {
-    deleteCategory(index)
-  }
 }
 
 const deleteCategory = (index) => {
@@ -221,15 +205,54 @@ const showAddGroupDialog = () => {
 }
 
 
+const actionMenu = ref(null)
+const selectedCategory = ref(null)
+const selectedIndex = ref(-1)
+
+// 显示操作菜单
+const showActionMenu = (item, index) => {
+  selectedCategory.value = item
+  selectedIndex.value = index
+  actionMenu.value.open()
+}
+
+// 处理菜单操作
+const handleMenuAction = (type) => {
+  actionMenu.value.close()
+  if (!selectedCategory.value) return
+
+  switch (type) {
+    case 'edit':
+      editCategory(selectedCategory.value)
+      break
+    case 'delete':
+      deleteCategory(selectedIndex.value)
+      break
+  }
+}
+
+// 修改后的分类操作
+const editCategory = (category) => {
+  uni.showModal({
+    title: '修改分类',
+    content: '请输入新名称',
+    editable: true,
+    success: (res) => {
+      if (res.confirm && res.content) {
+        category.name = res.content
+      }
+    }
+  })
+}
 
 
 
 
 
 // 响应式数据
-const windowHeight = uni.getSystemInfoSync().windowHeight
-const scrollHeight = ref(uni.getSystemInfoSync().windowHeight)
-const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight)
+const windowHeight = uni.getWindowInfo().windowHeight
+const scrollHeight = ref(uni.getWindowInfo().windowHeight)
+const statusBarHeight = ref(uni.getWindowInfo().statusBarHeight)
 const backgroundColor = ref("rgba(255,255,255,0)")
 const backIconColor = ref("#000")
 const backIcon = ref("back") // 将 "arrow-left" 改为 "back"
@@ -840,17 +863,70 @@ onMounted(() => {
   }
 }
 
-/* 滑动操作样式 */
-.swipe-item {
-  position: relative;
 
-  :deep(.uni-swipe) {
-    border-radius: 0;
-  }
+/* 添加操作菜单样式 */
+.action-menu {
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 30rpx 0;
 
-  :deep(.uni-swipe-action) {
+  .menu-item {
     height: 100rpx;
+    line-height: 100rpx;
+    text-align: center;
+    font-size: 32rpx;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 30rpx;
+      right: 30rpx;
+      bottom: 0;
+      height: 1px;
+      background: #eee;
+    }
+
+    &.edit {
+      color: #007aff;
+    }
+
+    &.delete {
+      color: #dd524d;
+    }
+
+    &.cancel {
+      color: #666;
+      margin-top: 20rpx;
+
+      &::after {
+        display: none;
+      }
+    }
   }
+}
+
+/* 调整分类项样式 */
+.swipe-item {
+  padding: 0 0rpx;
+
+  .menu_name {
+    height: 100rpx;
+    line-height: 100rpx;
+    transition: all 0.2s;
+
+    &:active {
+      background: #f5f5f5;
+    }
+  }
+}
+
+.menu_name {
+  width: 100%;
+  height: 100rpx;
+  line-height: 100rpx;
+  background: white;
+  transition: all 0.3s;
 }
 
 view {
@@ -1070,6 +1146,7 @@ view {
     .menu_name_active {
       background: #f5f5f5;
       color: #333;
+      border-left: 4rpx #ff5500 solid;
     }
   }
 

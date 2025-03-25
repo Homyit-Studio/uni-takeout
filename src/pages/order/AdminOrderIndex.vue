@@ -3,10 +3,9 @@
         <!-- 页面标题 -->
         <view class="header" :style="{ paddingTop: statusBarHeight + 'px' }">
             <view class="header-content">
-                <text class="title">订单</text>
+                <view class="title">订单管理</view>
                 <view style="display: flex;align-items: center;justify-content: center;">
-                    <button style="color: #fff; font-size: 20rpx;width: 200rpx; background: rgba(255, 255, 255, 0.15);"
-                        open-type="openSetting" bindopensetting="callback">蓝牙权限管理</button>
+
                     <button class="print-btn" @click="searchBle">
                         <uni-icons :type="isConnected ? 'checkbox-filled' : 'link'" size="24"
                             :color="isConnected ? '#ff5500' : '#fff'" />
@@ -17,7 +16,7 @@
         </view>
 
         <!-- 订单类型选项卡 -->
-        <view class="tabs-container">
+        <view class="tabs-container" :style="{ top: statusBarHeight + 50 + 'px' }">
             <scroll-view class="tabs" scroll-x :scroll-left="scrollLeft">
                 <view class="tab-item" v-for="(tab, index) in tabs" :key="index"
                     :class="{ active: currentTab === index }" @click="switchTab(index)">
@@ -129,7 +128,7 @@ const orderStatusText = ref({
 const scrollLeft = ref(0)
 
 onMounted(async () => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     loadOrders()
 })
 
@@ -165,7 +164,7 @@ const formatTime = (dateString) => {
 
 // 生命周期
 onMounted(() => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     console.log(statusBarHeight.value)
     loadOrders()
 })
@@ -547,7 +546,7 @@ const closeDeviceList = () => {
 
 <style lang="scss" scoped>
 $primary-color: #FF5500;
-$secondary-color: #FFA99F;
+$secondary-color: #eb7843;
 
 .container {
     background: #f8f9fb;
@@ -557,7 +556,7 @@ $secondary-color: #FFA99F;
 
 .header {
     position: sticky;
-    background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+    background: linear-gradient(135deg, #FF5500 0%, #FF8E53 100%);
     padding: 20rpx 0;
     z-index: 2;
     top: 0rpx;
@@ -566,14 +565,14 @@ $secondary-color: #FFA99F;
     .header-content {
         height: 100rpx;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
 
         .title {
             color: #fff;
             font-size: 40rpx;
             font-weight: 600;
+            margin-left: 30rpx;
             text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
         }
 

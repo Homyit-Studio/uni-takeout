@@ -95,7 +95,7 @@ const orderStatusText = ref({
 
 // 生命周期
 onMounted(() => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     console.log(statusBarHeight.value)
     loadOrders()
 })
@@ -285,11 +285,13 @@ $border-color: #eee;
     box-sizing: border-box;
     display: flex;
     justify-content: center;
+    border-bottom: 0.0625rem solid #ddd;
+    background: #fff;
 
     .tab-container {
         display: flex;
         background: #fff;
-        border-radius: 16rpx;
+        width: 100%;
         box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
     }
 

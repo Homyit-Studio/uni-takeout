@@ -51,16 +51,17 @@
         <!-- 快捷操作 -->
         <view class="quick-actions">
             <view class="action-item" @click="handleStockCheck">
-                <uni-icons type="smallcircle" size="28" color="#5D6DB2" />
-                <text>库存盘点</text>
+                <uni-icons type="smallcircle" size="28" color="#FF5500" />
+                <text class="text">库存盘点</text>
             </view>
             <view class="action-item" @click="handleSalesReport">
-                <uni-icons type="compose" size="28" color="#5D6DB2" />
-                <text>销售报表</text>
+                <uni-icons type="compose" size="28" color="#FF5500" />
+                <text class="text">销售报表</text>
             </view>
-            <view class="action-item" @click="handleShopSetting">
-                <uni-icons type="gear-filled" size="28" color="#5D6DB2" />
-                <text>店铺设置</text>
+            <view class="action-item">
+                <uni-icons type="gear-filled" size="28" color="#FF5500" />
+                <button open-type="openSetting" bindopensetting="callback"
+                    style=" display: flex;font-size: 26rpx;color: #666;text-wrap: nowrap;">蓝牙设置</button>
             </view>
         </view>
     </view>
@@ -70,16 +71,15 @@
 import { ref, onMounted } from 'vue'
 
 const statusBarHeight = ref(0)
-onMounted(() => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
-})
-
 const storeInfo = ref({
     avatar: '/static/logo.png',
     name: '星悦烘焙坊',
     status: '营业中'
 })
 
+onMounted(() => {
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
+})
 // 点击动画处理
 const handleTouchStart = (e) => {
     // e.currentTarget.style.transform = 'scale(0.98)'
@@ -99,8 +99,8 @@ const goToOrderManage = () => {
 </script>
 
 <style scoped lang="scss">
-$primary-gradient: linear-gradient(135deg, #7F95D1 0%, #5D6DB2 100%);
-$secondary-gradient: linear-gradient(135deg, #7F95D1 0%, #5D6DB2 100%);
+$primary-gradient: linear-gradient(135deg, #fd8750 0%, #eb7843 100%);
+$secondary-gradient: linear-gradient(135deg, #fd8750 0%, #eb7843 100%);
 
 .merchant-container {
     min-height: 100vh;
@@ -183,7 +183,7 @@ $secondary-gradient: linear-gradient(135deg, #7F95D1 0%, #5D6DB2 100%);
         .stat-value {
             font-size: 40rpx;
             font-weight: 600;
-            color: #5D6DB2;
+            color: #FF5500;
             display: block;
             line-height: 1.2;
         }
@@ -295,7 +295,7 @@ $secondary-gradient: linear-gradient(135deg, #7F95D1 0%, #5D6DB2 100%);
             background: darken(#f8f9fb, 2%);
         }
 
-        text {
+        .text {
             display: block;
             margin-top: 15rpx;
             font-size: 26rpx;

@@ -13,30 +13,33 @@
       </view>
     </view>
     <!-- 顶部区域背景 -->
-    <view class="top_area area_height" :style="{ paddingTop: statusBarHeight + 44 + 'px' }" data-type="1">
-      <view class="shop-header">
-        <!-- 店铺头像 -->
+    <view class="top_area area_height" :style="{
+      paddingTop: statusBarHeight + 44 + 'px',
+      'background-image': `url(${shopInfo.avatar})`,
+      'background-size': 'cover',
+      'background-position': 'center',
+      'background-blend-mode': 'multiply'
+    }" data-type="1">
+      <view class="shop-header" style="backdrop-filter: blur(20px); 
+               background: rgba(255,255,255,0.5); 
+               padding: 40rpx;">
+        <!-- 店铺信息 -->
         <image class="shop-avatar" :src="shopInfo.avatar" mode="aspectFill" />
 
         <view class="shop-details">
-          <!-- 店铺名称 -->
           <text class="shop-name">{{ shopInfo.name }}</text>
-
-          <!-- 店铺状态 -->
           <view class="status-tag" :class="shopInfo.status === 'open' ? 'open' : 'closed'">
             {{ shopInfo.statusText }}
           </view>
-
-          <!-- 发货方式 -->
           <view class="delivery-info">
-            <uni-icons type="location" size="24" color="#FF5500" />
+            <uni-icons type="location" size="24" color="#ff5500" />
             <text class="delivery-text">{{ shopInfo.deliveryInfo }}</text>
           </view>
         </view>
       </view>
     </view>
     <!-- tab切换 -->
-    <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 40 + 'px' }">
+    <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 38 + 'px' }">
       <!-- 替换u-tabs为自定义tab -->
       <view class="tab-list">
         <view v-for="(item, index) in list4" :key="index" class="tab-item" :class="{ active: tabIndex === index }"
@@ -75,7 +78,9 @@
           </view>
         </scroll-view>
       </view>
-      <view style="width: 100%;height: 60rpx;text-align: center;background-color: #fff;font-size: 30rpx; ">店家长售餐饮</view>
+      <view
+        style="width: 100%;height: 80rpx;text-align: center;background-color: #fff;font-size: 40rpx;color: #ff5500; ">
+        常售餐饮</view>
     </template>
 
 
@@ -92,7 +97,7 @@
       </scroll-view>
       <view class="right">
         <view class="item" v-for="(item, index) in productList" :key="index">
-          <view class="title sticky_title" :style="{ 'top': stickyTop + 40 + 'px' }">
+          <view class="title sticky_title" :style="{ 'top': stickyTop + 37 + 'px' }">
             {{ item.name }}
           </view>
           <view class="content">
@@ -121,7 +126,7 @@
       <view class="inner">
         <view class="cart-left" @click="onShowCart()">
           <view class="icon-box">
-            <uni-icons type="cart" color="#ff5500" size="32" />
+            <uni-icons type="cart" color="red" size="32" />
             <view class="badge" v-if="cartCount > 0">{{ cartCount }}</view>
           </view>
           <view class="price-box">
@@ -207,9 +212,9 @@ import { ref, reactive, nextTick, onMounted, computed, onUnmounted } from 'vue'
 import { onPageScroll } from '@dcloudio/uni-app' // 添加这行
 
 // 响应式数据
-const windowHeight = uni.getSystemInfoSync().windowHeight
-const scrollHeight = ref(uni.getSystemInfoSync().windowHeight)
-const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight)
+const windowHeight = uni.getWindowInfo().windowHeight
+const scrollHeight = ref(uni.getWindowInfo().windowHeight)
+const statusBarHeight = ref(uni.getWindowInfo().statusBarHeight)
 const backgroundColor = ref("rgba(255,255,255,0)")
 const backIconColor = ref("#000")
 const backIcon = ref("back") // 将 "arrow-left" 改为 "back"
@@ -239,23 +244,6 @@ const productList = reactive([{
     name: "七味盐黄金豆腐",
     img: "https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg",
     price: 188,
-    specs: [
-      {
-        name: '口味',
-        items: [
-          { name: '微辣' },
-          { name: '中辣' },
-          { name: '特辣' }
-        ]
-      },
-      {
-        name: '规格',
-        items: [
-          { name: '小份' },
-          { name: '大份' }
-        ]
-      }
-    ]
   },
   {
     name: "龙井凤尾虾仁",
@@ -333,187 +321,14 @@ const productList = reactive([{
   }
   ],
 },
-{
-  name: "西餐",
-  id: "2",
-  icon: "",
-  list: [{
-    name: "绿茶烤鸡",
-    img: "https://qcloud.dpfile.com/pc/qnYmJT9l5QbBNCNfezzLojGCAHfoE6xmprOQlvoyvpiwK8Lj0colHBWeX6r06i-Y5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 36,
-  },
-  {
-    name: "石锅鸡汤",
-    img: "https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶葱香",
-    img: "https://qcloud.dpfile.com/pc/8To1nn0bLS0Z8UXhWs7d_6_4hgdHYJDB9PY0bTHn51l0M4tvZgWeKDKSXjsROSf95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 48,
-  },
-  {
-    name: "面包诱惑",
-    img: "https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 32,
-
-  },
-  {
-    name: "石锅鸡汤",
-    img: "https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶葱香",
-    img: "https://qcloud.dpfile.com/pc/8To1nn0bLS0Z8UXhWs7d_6_4hgdHYJDB9PY0bTHn51l0M4tvZgWeKDKSXjsROSf95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 48,
-  },
-  {
-    name: "面包诱惑",
-    img: "https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 32,
-
-  }
-  ],
-},
-{
-  name: "中餐",
-  id: "1",
-  icon: "",
-  list: [{
-    name: "七味盐黄金豆腐",
-    img: "https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 188,
-  },
-  {
-    name: "龙井凤尾虾仁",
-    img: "https://qcloud.dpfile.com/pc/oUbzBcAwYHbcXkxpAKlEs-C8fJQSNvsbJU8yORW5Ev8LwkSAC8kXSFYMi29l17Qs5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶饼",
-    img: "https://qcloud.dpfile.com/pc/BDNSIx7XBHIm2AZ-68Yq8CsI0vGyA_Bjnzl6bPXAAqciRqcwCz8FTdU3fU3gYaOR5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 18,
-  }
-  ],
-},
-{
-  name: "西餐",
-  id: "2",
-  icon: "",
-  list: [{
-    name: "绿茶烤鸡",
-    img: "https://qcloud.dpfile.com/pc/qnYmJT9l5QbBNCNfezzLojGCAHfoE6xmprOQlvoyvpiwK8Lj0colHBWeX6r06i-Y5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 36,
-  },
-  {
-    name: "石锅鸡汤",
-    img: "https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶葱香",
-    img: "https://qcloud.dpfile.com/pc/8To1nn0bLS0Z8UXhWs7d_6_4hgdHYJDB9PY0bTHn51l0M4tvZgWeKDKSXjsROSf95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 48,
-  },
-  {
-    name: "面包诱惑",
-    img: "https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 32,
-
-  },
-  {
-    name: "石锅鸡汤",
-    img: "https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶葱香",
-    img: "https://qcloud.dpfile.com/pc/8To1nn0bLS0Z8UXhWs7d_6_4hgdHYJDB9PY0bTHn51l0M4tvZgWeKDKSXjsROSf95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 48,
-  },
-  {
-    name: "面包诱惑",
-    img: "https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 32,
-
-  }
-  ],
-},
-{
-  name: "中餐",
-  id: "1",
-  icon: "",
-  list: [{
-    name: "七味盐黄金豆腐",
-    img: "https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 188,
-  },
-  {
-    name: "龙井凤尾虾仁",
-    img: "https://qcloud.dpfile.com/pc/oUbzBcAwYHbcXkxpAKlEs-C8fJQSNvsbJU8yORW5Ev8LwkSAC8kXSFYMi29l17Qs5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶饼",
-    img: "https://qcloud.dpfile.com/pc/BDNSIx7XBHIm2AZ-68Yq8CsI0vGyA_Bjnzl6bPXAAqciRqcwCz8FTdU3fU3gYaOR5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 18,
-  }
-  ],
-},
-{
-  name: "西餐",
-  id: "2",
-  icon: "",
-  list: [{
-    name: "绿茶烤鸡",
-    img: "https://qcloud.dpfile.com/pc/qnYmJT9l5QbBNCNfezzLojGCAHfoE6xmprOQlvoyvpiwK8Lj0colHBWeX6r06i-Y5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 36,
-  },
-  {
-    name: "石锅鸡汤",
-    img: "https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶葱香",
-    img: "https://qcloud.dpfile.com/pc/8To1nn0bLS0Z8UXhWs7d_6_4hgdHYJDB9PY0bTHn51l0M4tvZgWeKDKSXjsROSf95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 48,
-  },
-  {
-    name: "面包诱惑",
-    img: "https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 32,
-
-  },
-  {
-    name: "石锅鸡汤",
-    img: "https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶葱香",
-    img: "https://qcloud.dpfile.com/pc/8To1nn0bLS0Z8UXhWs7d_6_4hgdHYJDB9PY0bTHn51l0M4tvZgWeKDKSXjsROSf95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 48,
-  },
-  {
-    name: "面包诱惑",
-    img: "https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 32,
-
-  }
-  ],
-}])
+])
 const list4 = reactive([{
   name: '跟团新讯'
 },
 {
-  name: '店家长售餐饮',
+  name: '常售餐饮',
 }
 ])
-// const lineBg = "data:image/png;base64,..."
-
-// slide-popup ref
 const popup = ref(null)
 
 // 新增购物车相关数据
@@ -521,12 +336,6 @@ const cartCount = ref(0)
 const totalPrice = ref(0)
 const deliveryFee = ref(5)
 const minDeliveryPrice = ref(20)
-
-// 规格选择相关
-const specPopup = ref(null)
-const currentProduct = ref({})
-const selectedSpecs = ref({})
-const specCount = ref(1)
 
 // 添加购买记录数据
 const purchaseList = ref([
@@ -562,8 +371,42 @@ const scrollTop = ref(0)
 
 // 自动滚动
 let scrollTimer = null
+
 onMounted(() => {
   startScroll()
+  startAutoScroll()
+  nextTick(() => {
+    const query = uni.createSelectorQuery()
+    query.selectAll('.area_height').boundingClientRect(data => {
+      if (data) {
+        allAreaHeight.value = 0
+        let addHeight = 0
+        for (var i = 0; i < data.length; i++) {
+          if (data[i].dataset.type == '1') {
+            allAreaHeight.value += data[i].height
+          } else {
+            addHeight += data[i].height
+          }
+        }
+        scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
+        // scrollHeight.value = addHeight * 20
+      }
+    }).exec()
+
+    query.select('.tabs').boundingClientRect(data => {
+      if (data) {
+        stickyTop.value = statusBarHeight.value + data.height
+      }
+    }).exec()
+
+    getTop()
+  })
+
+  if (getCurrentPages().length == 1) {
+    backIcon.value = "home"
+  } else {
+    backIcon.value = "back"  // 将 "arrow-left" 改为 "back"
+  }
 })
 
 function startScroll() {
@@ -671,9 +514,6 @@ function onChangeTab(data) {
 const scrollLeft = ref(0)
 let scrollInterval = null
 
-onMounted(() => {
-  startAutoScroll()
-})
 
 function startAutoScroll() {
   scrollInterval = setInterval(() => {
@@ -690,15 +530,6 @@ onUnmounted(() => {
 
 // 增减商品数量
 function increaseCount(item) {
-  // if (item.specs && item.specs.length > 0) {
-  //   currentProduct.value = item
-  //   specCount.value = 1
-  //   selectedSpecs.value = {}
-  //   item.specs.forEach(group => {
-  //     selectedSpecs.value[group.name] = group.items[0].name
-  //   })
-  //   specPopup.value.open()
-  // } else {
   if (!item.count) item.count = 0
   item.count++
   updateCart()
@@ -730,7 +561,6 @@ function updateCart() {
 // 提交订单
 function onSubmit() {
   if (totalPrice.value < minDeliveryPrice.value) return
-
   // 保存购物车数据到本地
   const orderData = {
     cartList: cartList.value,
@@ -786,85 +616,6 @@ const cartList = computed(() => {
   })
   return list
 })
-
-
-// 生命周期
-onMounted(() => {
-  nextTick(() => {
-    const query = uni.createSelectorQuery()
-    query.selectAll('.area_height').boundingClientRect(data => {
-      if (data) {
-        allAreaHeight.value = 0
-        let addHeight = 0
-        for (var i = 0; i < data.length; i++) {
-          if (data[i].dataset.type == '1') {
-            allAreaHeight.value += data[i].height
-          } else {
-            addHeight += data[i].height
-          }
-        }
-        // scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
-        scrollHeight.value = addHeight * 20
-      }
-    }).exec()
-
-    query.select('.tabs').boundingClientRect(data => {
-      if (data) {
-        stickyTop.value = statusBarHeight.value + data.height
-      }
-    }).exec()
-
-    getTop()
-  })
-
-  if (getCurrentPages().length == 1) {
-    backIcon.value = "home"
-  } else {
-    backIcon.value = "back"  // 将 "arrow-left" 改为 "back"
-  }
-})
-// 规格选择相关方法
-// function selectSpec(groupName, itemName) {
-//   selectedSpecs.value[groupName] = itemName
-// }
-
-// function closeSpecPopup() {
-//   // 恢复底层滚动
-//   // document.body.style.overflow = 'auto'
-//   specPopup.value.close()
-// }
-
-// function confirmSpec() {
-//   // 生成规格字符串
-//   const specsStr = Object.values(selectedSpecs.value).join('/')
-//   // 创建规格唯一标识
-//   const specKey = JSON.stringify(selectedSpecs.value)
-
-//   // 查找是否已存在相同规格的商品
-//   const existItem = cartList.value.find(item =>
-//     item.id === currentProduct.value.id &&
-//     item.specKey === specKey
-//   )
-
-//   if (existItem) {
-//     existItem.count += specCount.value
-//   } else {
-//     // 添加新商品到购物车
-//     const newItem = {
-//       ...currentProduct.value,
-//       count: specCount.value,
-//       selectedSpecs: specsStr,
-//       specKey: specKey,  // 添加唯一规格标识
-//       originalPrice: currentProduct.value.price,  // 保留原价
-//       // 如果有不同规格价格差异，可以在这里处理
-//     }
-//     cartList.value.push(newItem)
-//   }
-
-//   updateCart()
-//   closeSpecPopup()
-// }
-
 </script>
 
 <style lang="scss" scoped>
@@ -902,21 +653,32 @@ view {
 }
 
 .top_area {
+  width: 100%;
   height: 400rpx;
-  background-color: #fff;
+  background-color: #f0f0f0;
+  /* 备用颜色防止图片加载失败 */
+  transition: background 0.3s ease;
+  /* 平滑过渡 */
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 100rpx;
+  // margin: 0 100rpx;
 
+  .status-tag {
+    margin: 10rpx 0;
+  }
 
   .shop-header {
+    border-radius: 20rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     width: 100%;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
   }
 
   .shop-avatar {
@@ -934,7 +696,7 @@ view {
     font-size: 36rpx;
     font-weight: 600;
     margin-bottom: 20rpx;
-    color: #333;
+    color: #ffffff;
   }
 
   .status-tag {
@@ -960,11 +722,12 @@ view {
     align-items: center;
     font-size: 28rpx;
     color: #666;
+    margin-top: 10rpx;
   }
 
   .delivery-text {
-    color: #FF5500;
-    background-color: #ff550060;
+    color: #ff5500;
+    background-color: #ffffff7c;
     border-radius: 20rpx;
     padding: 0 20rpx;
     margin-left: 10rpx;
@@ -972,7 +735,7 @@ view {
 }
 
 .group-entry {
-  margin: 20rpx;
+  margin: 20rpx 20rpx 0rpx 20rpx;
   background: #fff9e6;
   border-radius: 16rpx;
   overflow: hidden;
@@ -1002,11 +765,11 @@ view {
   }
 
   .action-box {
-    padding: 20rpx;
+    padding: 0 20rpx 40rpx 20rpx;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #fff3d9;
+    // background: #fff3d9;
 
     .action-text {
       font-size: 26rpx;
@@ -1021,7 +784,8 @@ view {
   top: 0;
   height: 100rpx;
   background: #fff;
-  box-shadow: 0 3px 10px -4px rgba(0, 0, 0, 0.2);
+  border-bottom: 0.0685rem solid #ddd;
+  // box-shadow: 0 3px 10px -4px rgba(0, 0, 0, 0.2);
   z-index: 999;
 }
 
@@ -1050,7 +814,7 @@ view {
         transform: translateX(-50%);
         width: 40rpx;
         height: 4rpx;
-        background: #e93323;
+        background: #ff5500;
         border-radius: 2rpx;
       }
     }
@@ -1085,6 +849,7 @@ view {
     .menu_name_active {
       background: #f5f5f5;
       color: #333;
+      border-left: 4px solid #ff5500;
     }
   }
 
@@ -1179,7 +944,7 @@ view {
         min-width: 32rpx;
         height: 32rpx;
         border-radius: 16rpx;
-        background: #e93323;
+        background: #ff5500;
         color: #fff;
         font-size: 20rpx;
         display: flex;
@@ -1207,7 +972,7 @@ view {
   .submit-btn {
     width: 200rpx;
     height: 72rpx;
-    background: #e93323;
+    background: #ff5500;
     color: #fff;
     border-radius: 36rpx;
     display: flex;
@@ -1274,7 +1039,7 @@ view {
         align-items: center;
 
         .price {
-          color: #e93323;
+          color: #ff5500;
           font-size: 32rpx;
           font-weight: bold;
         }
@@ -1327,7 +1092,7 @@ view {
       align-items: center;
 
       .price {
-        color: #e93323;
+        color: #ff5500;
         font-size: 32rpx;
         font-weight: bold;
       }
@@ -1355,7 +1120,7 @@ view {
     }
 
     &.plus {
-      background: #e93323;
+      background: #ff5500;
       color: #fff;
     }
   }
@@ -1402,7 +1167,7 @@ view {
         }
 
         .price {
-          color: #e93323;
+          color: #ff5500;
           font-size: 32rpx;
           margin-top: 10rpx;
         }
@@ -1442,7 +1207,7 @@ view {
           font-size: 26rpx;
 
           &.active {
-            background: #e93323;
+            background: #ff5500;
             color: #fff;
           }
         }
@@ -1466,7 +1231,7 @@ view {
     .confirm-btn {
       width: 200rpx;
       height: 72rpx;
-      background: #e93323;
+      background: #ff5500;
       color: #fff;
       border-radius: 36rpx;
       display: flex;
@@ -1493,7 +1258,7 @@ view {
 
 /* 参团人员滚动样式 */
 .purchase-container {
-  margin: 20rpx;
+  margin: 0 20rpx 20rpx 20rpx;
   background: #fff9e6;
   border-radius: 16rpx;
   overflow: hidden;
@@ -1505,7 +1270,6 @@ view {
   white-space: nowrap;
 
   .scroll-content {
-    display: inline-flex;
     align-items: center;
     padding: 0 20rpx;
   }
@@ -1513,7 +1277,7 @@ view {
   .purchase-item {
     display: inline-flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.9);
+    // background: rgba(255, 255, 255, 0.9);
     border-radius: 50rpx;
     padding: 12rpx 24rpx;
     margin-right: 20rpx;

@@ -48,7 +48,7 @@
 
                 <view class="card notice-card">
                     <view class="card-header">
-                        <uni-icons type="sound" size="24" color="#fff" />
+                        <uni-icons class="icon" type="info-filled" size="24" color="#fff" />
                         <text>系统通知</text>
                     </view>
                     <view class="notice-list">
@@ -114,7 +114,7 @@ import { onMounted, ref } from 'vue'
 
 const statusBarHeight = ref(0)
 onMounted(() => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
 })
 
 const handleTouchStart = (e) => {
@@ -143,7 +143,7 @@ const goToSystemSettings = () => {
 </script>
 
 <style scoped lang="scss">
-$primary-color: #2d4059;
+$primary-color: #fd8750;
 $secondary-color: #00c292;
 $warning-color: #ff5722;
 
@@ -247,7 +247,7 @@ $warning-color: #ff5722;
             margin-bottom: 30rpx;
             font-size: 28rpx;
 
-            uni-icons {
+            .icon {
                 margin-right: 15rpx;
             }
         }

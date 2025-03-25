@@ -6,8 +6,9 @@
                 <view class="nav-left">
                     <text class="app-name">校园购</text>
                     <view class="location-icon" @click="goToAddress">
-                        <uni-icons type="location-filled" size="18" color="#fff"></uni-icons>
-                        <text class="address-text">浙江大学紫金港校区niaa</text>
+                        <uni-icons type="location-filled" style="margin-left: 10rpx;margin-right: -10rpx;" size="18"
+                            color="#fff"></uni-icons>
+                        <text class="address-text">{{ defaultAddress || "未知地址，请添加" }}</text>
                         <uni-icons type="arrowdown" size="14" color="#fff"></uni-icons>
                     </view>
                 </view>
@@ -23,6 +24,8 @@
             </view>
         </view>
 
+
+
         <!-- 轮播图 -->
         <swiper class="banner-swiper" :autoplay="true" :circular="true" indicator-active-color="#FF719A">
             <swiper-item v-for="(item, index) in bannerList" :key="index">
@@ -30,8 +33,39 @@
             </swiper-item>
         </swiper>
 
-        <!-- 选择取餐方式 -->
+        <view class="scrolling-alert">
+            <view class="scroll-container">
+                <transition-group name="fade-slide" tag="view" class="scroll-content">
+                    <view v-for="(message, index) in visibleMessages" :key="message" class="scroll-item">
+                        {{ message }} 最近{{ recentJoinCount }}人正在拼团...
+                    </view>
+                </transition-group>
+            </view>
+        </view>
+
+
+        <!-- <view class="launch-container">
+            <view class="launch-wrapper">
+                <view class="launch-item" @click="goToLaunchLucky">
+                    <image src="/static/lucky-draw.png" mode="aspectFill" class="launch-image"></image>
+                    <text class="launch-text">幸运抽奖</text>
+                </view>
+            </view>
+        </view> -->
+
+        <!-- 选择取餐方式待定 -->
         <view class="choice-container">
+            <!-- <view class="choice-wrapper">
+                <view class="choice-item delivery" @click="handleDeliverySelect('delivery')"
+                    :style="{ backgroundImage: 'url(/static/delivery-bg.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat' }">
+                    <text>支持配送</text>
+                </view>
+
+                <view class="choice-item pickup" @click="handleDeliverySelect('pickup')"
+                    :style="{ backgroundImage: 'url(/static/pickup-bg.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat' }">
+                    <text>到店自提</text>
+                </view>
+            </view> -->
         </view>
 
         <!-- 标签栏 -->
@@ -88,13 +122,13 @@
                                 <text class="store-name">{{ store.name }}</text>
                                 <view class="rating">
                                     <uni-icons type="star-filled" size="16" color="#FFB400"></uni-icons>
-                                    <text>4.8</text>
+                                    <text class="text">4.8</text>
                                 </view>
                             </view>
                             <text class="store-desc">{{ store.description }}</text>
                             <view class="promotion-tag">
-                                <text>满30减5</text>
-                                <text>新用户立减8元</text>
+                                <text class="text">满30减5</text>
+                                <text class="text">新用户立减8元</text>
                             </view>
                             <view class="hot-product">
                                 <text class="product-name">{{ store.hotProduct.name }}</text>
@@ -116,7 +150,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { onPageScroll, onReachBottom } from '@dcloudio/uni-app'
+import { onPageScroll, onReachBottom, onShow } from '@dcloudio/uni-app'
 
 // 轮播图数据
 const bannerList = ref([
@@ -137,57 +171,30 @@ const navBarHeight = ref(40)
 const currentTab = ref(0)
 const tabsOffsetTop = ref(0)
 
-// 计算标签栏样式
-const tabsStyle = computed(() => ({
-    top: `${statusBarHeight.value + navBarHeight.value}px`
-}))
+const defaultAddress = ref(null)
 
-// 计算内容区域样式
-// const contentStyle = computed(() => ({
-//   paddingTop: isTabsFixed.value ? '88rpx' : '0'
-// }))
-
-// 切换标签
-const switchTab = (index) => {
-    currentTab.value = index
-}
-
-onMounted(() => {
-    // 获取状态栏高度
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
-
-    // 获取nav-bar高度
-    const query = uni.createSelectorQuery()
-    query.select('.nav-bar').boundingClientRect(rect => {
-        if (rect) {
-            navBarHeight.value = rect.height
-        }
-    }).exec()
-
-    // 获取标签栏位置
-    query.select('.tabs').boundingClientRect(rect => {
-        if (rect) {
-            tabsOffsetTop.value = rect.top
-        }
-    }).exec()
-})
-
+const recentJoinCount = ref(12) // 最近参与人数
+const scrollingMessages = ref([
+    '用户D 刚刚参团成功！',
+    '用户E 发起了一个新拼团！',
+    '用户F 的拼团即将满员！'
+])
+// 修改后的数据逻辑
+const visibleMessages = ref([])
 
 // 响应式状态
 const hotStores = ref([])
 const page = ref(1)
 const pageSize = ref(10)
 const hasMore = ref(true)
-const isRefreshing = ref(false)
-
 
 // 添加搜索栏位置相关的响应式状态
 const searchBarTop = ref(0)
 
 // 离导航栏的高度
-const navContentHeight = 80; // 单位rpx
-const navContentHeightPx = ref(uni.upx2px(navContentHeight));
-const totalNavHeight = computed(() => statusBarHeight.value + navContentHeightPx.value);
+// const navContentHeight = 80; // 单位rpx
+// const navContentHeightPx = ref(uni.upx2px(navContentHeight));
+// const totalNavHeight = computed(() => statusBarHeight.value + navContentHeightPx.value);
 
 // 添加热门商品数据
 const hotProducts = ref([
@@ -217,18 +224,91 @@ const hotProducts = ref([
     }
 ])
 
-// 生命周期
+// 计算标签栏样式
+const tabsStyle = computed(() => ({
+    top: `${statusBarHeight.value + navBarHeight.value}px`
+}))
+
 onMounted(() => {
-    statusBarHeight.value = uni.getSystemInfoSync().statusBarHeight
+    startMessageRotation()
+    // 获取本地存储的地址列表
+    const savedAddresses = uni.getStorageSync('addresses') || []
+    if (savedAddresses.length > 0) {
+        // 查找默认地址
+        const defaultAddr = savedAddresses.find(addr => addr.isDefault) || savedAddresses[0]
+        // 拼接地址信息
+        defaultAddress.value = `${defaultAddr.province}${defaultAddr.city}${defaultAddr.area}${defaultAddr.detail}`
+    }
+
+    // 获取状态栏高度
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
+
+    // 获取nav-bar高度
+    const query = uni.createSelectorQuery()
+    query.select('.nav-bar').boundingClientRect(rect => {
+        if (rect) {
+            navBarHeight.value = rect.height
+        }
+    }).exec()
+
+    // 获取标签栏位置
+    query.select('.tabs').boundingClientRect(rect => {
+        if (rect) {
+            tabsOffsetTop.value = rect.top
+        }
+    }).exec()
+
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     loadHotStores()
     // 获取搜索栏的初始位置
-    const query = uni.createSelectorQuery()
     query.select('.search-bar-anchor').boundingClientRect(rect => {
         if (rect) {
             searchBarTop.value = rect.top
         }
     }).exec()
 })
+
+onShow(async () => {
+    // 获取本地存储的地址列表
+    const savedAddresses = uni.getStorageSync('addresses') || []
+    if (savedAddresses.length > 0) {
+        // 查找默认地址
+        const defaultAddr = savedAddresses.find(addr => addr.isDefault) || savedAddresses[0]
+        // 拼接地址信息
+        defaultAddress.value = `${defaultAddr.province}${defaultAddr.city}${defaultAddr.area}${defaultAddr.detail}`
+    }
+})
+
+// 使用onReachBottom替代scrolltolower
+onReachBottom(() => {
+    if (!hasMore.value) return
+    page.value++
+    loadHotStores()
+})
+
+const isNavSticky = ref(false)
+
+// 监听页面滚动
+onPageScroll(({ scrollTop }) => {
+    // 控制粘性效果，根据实际布局调整阈值
+    isNavSticky.value = scrollTop > 50
+})
+// 动态滚动
+const startMessageRotation = () => {
+    let currentIndex = 0
+    // 初始显示第一条
+    visibleMessages.value = [scrollingMessages.value[currentIndex]]
+    setInterval(() => {
+        currentIndex = (currentIndex + 1) % scrollingMessages.value.length
+        // 先添加新消息
+        visibleMessages.value = [scrollingMessages.value[currentIndex]]
+    }, 3000) // 3秒切换一次
+}
+
+// 切换标签
+const switchTab = (index) => {
+    currentTab.value = index
+}
 
 // 方法
 const loadHotStores = () => {
@@ -260,18 +340,6 @@ const loadHotStores = () => {
     })
 }
 
-const loadMoreHotStores = () => {
-    if (!hasMore.value) return
-    page.value++
-    loadHotStores()
-}
-
-const refreshHotStores = () => {
-    isRefreshing.value = true
-    page.value = 1
-    hasMore.value = true
-    loadHotStores()
-}
 // 跳转到地址页面
 const goToAddress = () => {
     uni.navigateTo({
@@ -284,7 +352,11 @@ const goToSearch = () => {
         url: '/pages/search/index'
     })
 }
-
+const goToLaunchLucky = () => {
+    uni.navigateTo({
+        url: '/pages/launch_lucky/index'
+    })
+}
 // 跳转到商家详情
 const goToStoreDetail = (storeId) => {
     uni.navigateTo({
@@ -300,21 +372,20 @@ const goToProduct = (productId) => {
     })
 }
 
+/*
+*自提与外卖选择暂未实现
+* @param {string} type - 选择类型，可以是'delivery'或'takeout'
+**/
 
-// 使用onReachBottom替代scrolltolower
-onReachBottom(() => {
-    if (!hasMore.value) return
-    page.value++
-    loadHotStores()
-})
-
-const isNavSticky = ref(false)
-
-// 监听页面滚动
-onPageScroll(({ scrollTop }) => {
-    // 控制粘性效果，根据实际布局调整阈值
-    isNavSticky.value = scrollTop > 50
-})
+const handleDeliverySelect = (type) => {
+    console.log('选择类型:', type)
+    // 这里可以添加跳转逻辑或状态变更逻辑
+    // if (type === 'delivery') {
+    //     uni.navigateTo()
+    // } else {
+    //     uni.navigateTo()
+    // }
+}
 
 
 //权限控制 
@@ -330,6 +401,7 @@ const getUserRole = async () => {
     // 这里添加获取用户角色的API调用
     return 'user' // 默认返回用户角色
 }
+
 </script>
 
 <style scoped lang="scss">
@@ -415,9 +487,71 @@ $secondary-color: #FFA99F;
     }
 }
 
-.banner-swiper {
-    height: 240rpx;
+/* 修改后的动画样式 */
+.scroll-container {
+    height: 80rpx;
+    overflow: hidden;
+    position: relative;
+}
+
+.scroll-content {
+    position: relative;
+    height: 100%;
+}
+
+/* 入场动画 */
+.fade-slide-enter-active {
+    transition: all 0.5s ease;
+    position: absolute;
+    width: 100%;
+}
+
+.fade-slide-leave-active {
+    transition: all 0.5s ease;
+    position: absolute;
+    width: 100%;
+}
+
+.fade-slide-enter-from {
+    opacity: 0;
+    transform: translateY(100%);
+}
+
+.fade-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-100%);
+}
+
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 调整后的滚动提示样式 */
+.scrolling-alert {
+    background: #fff8e6;
     margin: 30rpx;
+    border-radius: 10rpx;
+    height: 80rpx;
+    position: relative;
+    padding-left: 80rpx;
+}
+
+.scroll-item {
+    height: 80rpx;
+    line-height: 80rpx;
+    font-size: 26rpx;
+    color: #ff9900;
+    white-space: nowrap;
+    padding-right: 30rpx;
+}
+
+
+
+.banner-swiper {
+    height: 300rpx;
+    margin: 10rpx;
     border-radius: 20rpx;
     overflow: hidden;
 
@@ -427,15 +561,75 @@ $secondary-color: #FFA99F;
     }
 }
 
+/* 修改后的样式 */
+.choice-container {
+    // padding: 10rpx;
+    // margin: 10rpx 0;
+
+    .choice-wrapper {
+        height: 200rpx;
+        position: relative;
+        display: flex;
+        border-radius: 24rpx;
+        overflow: visible;
+        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+    }
+
+    .choice-item {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background: #fff;
+        background-size: cover;
+        background-position: center;
+        transition: all 0.3s;
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            // background: rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+
+        .text {
+            position: relative;
+            color: #000000;
+            font-family: '宋体';
+            font-size: 40rpx;
+            font-weight: 600;
+            text-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+
+        &.delivery {
+            clip-path: polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%);
+            border-radius: 24rpx 0 0 24rpx;
+            margin-right: -40rpx;
+        }
+
+        &.pickup {
+            clip-path: polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0 50%);
+            border-radius: 0 24rpx 24rpx 0;
+            margin-left: -40rpx;
+        }
+    }
+}
+
 .tabs-container {
     background: #fff;
     position: sticky;
     padding: 0 30rpx;
     z-index: 99;
+    border-bottom: 0.0625rem solid #ddd;
 
     .tabs {
         display: flex;
-        border-bottom: 2rpx solid #f0f0f0;
 
         .tab-item {
             flex: 1;
@@ -465,7 +659,7 @@ $secondary-color: #FFA99F;
 }
 
 .content {
-    padding: 30rpx;
+    padding: 20rpx;
 }
 
 /* 拼团列表样式 */
@@ -590,7 +784,7 @@ $secondary-color: #FFA99F;
                     color: #FFB400;
                     font-size: 26rpx;
 
-                    text {
+                    .text {
                         margin-left: 8rpx;
                     }
                 }
@@ -607,7 +801,7 @@ $secondary-color: #FFA99F;
                 gap: 15rpx;
                 margin-bottom: 20rpx;
 
-                text {
+                .text {
                     background: #FFF0F3;
                     color: $primary-color;
                     font-size: 22rpx;
