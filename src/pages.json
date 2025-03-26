@@ -178,6 +178,12 @@
 			"style": {
 				"navigationBarTitleText": "我的入驻审核"
 			}
+		},
+		{
+			"path": "pages/my_lists/index",
+			"style": {
+				"navigationBarTitleText": "我的商铺审核"
+			}
 		}
 	],
 	"globalStyle": {
