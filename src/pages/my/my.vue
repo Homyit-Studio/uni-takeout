@@ -138,8 +138,9 @@
     </view>
 </template>
 <script setup>
-import { onPullDownRefresh } from '@dcloudio/uni-app'
+import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import { ref, computed, onMounted } from 'vue'
+import { request } from '../../utils/request'
 
 // 用户角色状态
 const userRole = ref(uni.getStorageSync('userRole') || 'user')
@@ -190,10 +191,14 @@ const merchantEntrySub = computed(() => {
 // 生命周期
 onMounted(() => {
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
-    getUserInfo() // 移除 loadUserInfo 调用，只使用 getUserInfo
-    loadHotStores()
+    // loadHotStores()
+})
+onShow(() => {
+    // 获取用户信息
+    getUserInfo()
 })
 
+// 获取个人信息
 // 方法
 const showRoleSwitcher = () => {
     // 首先检查本地存储的角色权限
@@ -304,8 +309,16 @@ const mockFetchUserInfo = () => {
 const getUserInfo = async () => {
     try {
         // 模拟从接口获取用户信息
-        const res = await mockFetchUserInfo()
-        userInfo.value = res
+        const res = await request({
+            url: '/user/getUserInfo',
+            method: 'GET'
+        })
+        console.log(res.data)
+        userInfo.value = res.data
+        // 测试数据处
+        userInfo.value.isStore = true
+        userInfo.value.isAdmin = true
+
         // 设置用户角色（优先使用本地存储的角色）
         const storedRole = uni.getStorageSync('userRole')
         if (storedRole) {
@@ -339,7 +352,7 @@ const goToUserProfile = () => {
     uni.login
 
     uni.navigateTo({
-        url: '/pages/GetUserPhone/GetUserPhoneIndex'
+        url: '/pages/editPersonalInfo/index'
     })
 }
 
@@ -477,6 +490,10 @@ $secondary-color: #FFA99F;
                 color: #fff;
                 font-weight: 600;
                 margin-right: 20rpx;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                width: 150rpx;
             }
 
             .role-tag {

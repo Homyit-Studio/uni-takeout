@@ -46,7 +46,7 @@
                     </view>
                 </view>
 
-                <view class="card notice-card">
+                <!-- <view class="card notice-card">
                     <view class="card-header">
                         <uni-icons class="icon" type="info-filled" size="24" color="#fff" />
                         <text>系统通知</text>
@@ -55,7 +55,7 @@
                         <view class="notice-item">新版审核流程已上线</view>
                         <view class="notice-item">系统维护计划预告</view>
                     </view>
-                </view>
+                </view> -->
             </view>
 
             <!-- 功能导航 -->
@@ -68,8 +68,8 @@
                 </view>
 
                 <view class="function-grid">
-                    <view class="grid-item merchant-list" @click="goToMerchantList" @touchstart="handleTouchStart"
-                        @touchend="handleTouchEnd">
+                    <view class="grid-item merchant-list" @click="goToManage(`shopProduncts_manage/index`)"
+                        @touchstart="handleTouchStart" @touchend="handleTouchEnd">
                         <view class="icon-wrapper">
                             <uni-icons type="shop-filled" size="36" color="#fff" />
                         </view>
@@ -77,8 +77,8 @@
                         <text class="item-subtitle">管理所有入驻商家</text>
                     </view>
 
-                    <view class="grid-item merchant-audit" @click="goToMerchantAudit" @touchstart="handleTouchStart"
-                        @touchend="handleTouchEnd">
+                    <view class="grid-item merchant-audit" @click="goToManage(`approval_list/index`)"
+                        @touchstart="handleTouchStart" @touchend="handleTouchEnd">
                         <view class="icon-wrapper">
                             <uni-icons type="shop" size="36" color="#fff" />
                         </view>
@@ -87,21 +87,47 @@
                         <view class="badge">3</view>
                     </view>
 
-                    <view class="grid-item user-manage" @click="goToUserManage" @touchstart="handleTouchStart"
+                    <view class="grid-item user-manage" @click="goToManage(``)" @touchstart="handleTouchStart"
                         @touchend="handleTouchEnd">
                         <view class="icon-wrapper">
                             <uni-icons type="person-filled" size="36" color="#fff" />
                         </view>
                         <text class="item-title">用户管理</text>
-                        <text class="item-subtitle">管理平台用户</text>
+                        <text class="item-subtitle">暂无</text>
                     </view>
 
-                    <view class="grid-item system-settings" @click="goToSystemSettings" @touchstart="handleTouchStart"
-                        @touchend="handleTouchEnd">
+                    <view class="grid-item user-manage" @click="goToManage(`banner_manage/index`)"
+                        @touchstart="handleTouchStart" @touchend="handleTouchEnd">
                         <view class="icon-wrapper">
-                            <uni-icons type="settings-filled" size="36" color="#fff" />
+                            <uni-icons type="images" size="36" color="#fff" />
                         </view>
-                        <text class="item-title">系统设置</text>
+                        <text class="item-title">轮播图管理</text>
+                        <text class="item-subtitle">管理首页轮播图</text>
+                    </view>
+
+                    <view class="grid-item user-manage" @click="goToManage(`shopLottery_manage/index`)"
+                        @touchstart="handleTouchStart" @touchend="handleTouchEnd">
+                        <view class="icon-wrapper">
+                            <uni-icons type="vip" size="36" color="#fff" />
+                        </view>
+                        <text class="item-title">抽奖管理</text>
+                        <text class="item-subtitle">管理商家抽奖</text>
+                    </view>
+                    <view class="grid-item user-manage" @click="goToManage(`shopRevenue_manage/index`)"
+                        @touchstart="handleTouchStart" @touchend="handleTouchEnd">
+                        <view class="icon-wrapper">
+                            <uni-icons type="wallet-filled" size="36" color="#fff" />
+                        </view>
+                        <text class="item-title">营收细则</text>
+                        <text class="item-subtitle">查看营收细则</text>
+                    </view>
+
+                    <view class="grid-item system-settings" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
+                        <view class="icon-wrapper">
+                            <uni-icons type="gear-filled" size="36" color="#fff" />
+                        </view>
+                        <button open-type="openSetting" bindopensetting="callback"
+                            style="padding: 0;justify-content: center; display: flex;font-size: 28rpx;color: #FF5500;text-wrap: nowrap;">系统设置</button>
                         <text class="item-subtitle">配置系统参数</text>
                     </view>
                 </view>
@@ -125,20 +151,27 @@ const handleTouchEnd = (e) => {
     // e.currentTarget.style.transform = 'scale(1)'
 }
 
+
+const goToManage = (url) => {
+    uni.navigateTo({ url: `/pages/${url}` })
+}
 const goToMerchantList = () => {
-    uni.navigateTo({ url: '/pages/admin/merchant-list/index' })
+    uni.navigateTo({ url: '/pages/shopProduncts_manage/index' })
 }
 
 const goToMerchantAudit = () => {
-    uni.navigateTo({ url: '/pages/admin/merchant-audit/index' })
+    uni.navigateTo({ url: '/pages/approval_list/index' })
 }
 
+const goToBannerManage = () => {
+    uni.navigateTo({ url: '/pages/banner_manage/index' })
+}
 const goToUserManage = () => {
-    uni.navigateTo({ url: '/pages/admin/user-manage/index' })
+    uni.navigateTo({ url: '/pages/' })
 }
 
 const goToSystemSettings = () => {
-    uni.navigateTo({ url: '/pages/admin/system-settings/index' })
+    uni.navigateTo({ url: '/pages/' })
 }
 </script>
 
@@ -309,6 +342,9 @@ $warning-color: #ff5722;
         gap: 30rpx;
 
         .grid-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             background: #fff;
             border-radius: 24rpx;
             padding: 40rpx;

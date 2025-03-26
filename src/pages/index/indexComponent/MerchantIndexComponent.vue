@@ -50,18 +50,31 @@
 
         <!-- 快捷操作 -->
         <view class="quick-actions">
-            <view class="action-item" @click="handleStockCheck">
+            <!-- <view class="action-item" @click="handleStockCheck">
                 <uni-icons type="smallcircle" size="28" color="#FF5500" />
                 <text class="text">库存盘点</text>
-            </view>
+            </view> -->
+            <!-- <view class="action-item" @click="handleSalesReport">
+                <uni-icons type="compose" size="28" color="#FF5500" />
+                <text class="text">管理商品</text>
+            </view> -->
             <view class="action-item" @click="handleSalesReport">
                 <uni-icons type="compose" size="28" color="#FF5500" />
-                <text class="text">销售报表</text>
+                <text class="text">发布抽奖</text>
+            </view>
+            <view class="action-item" @click="handleSalesReport">
+                <uni-icons type="list" size="28" color="#FF5500" />
+                <text class="text">营收细则</text>
+            </view>
+
+            <view class="action-item" @click="handleSalesReport">
+                <uni-icons type="compose" size="28" color="#FF5500" />
+                <text class="text">个人信息修改</text>
             </view>
             <view class="action-item">
                 <uni-icons type="gear-filled" size="28" color="#FF5500" />
                 <button open-type="openSetting" bindopensetting="callback"
-                    style=" display: flex;font-size: 26rpx;color: #666;text-wrap: nowrap;">蓝牙设置</button>
+                    style="padding: 0;justify-content: center; display: flex;font-size: 28rpx;color: #666;text-wrap: nowrap;">系统设置</button>
             </view>
         </view>
     </view>
@@ -276,8 +289,8 @@ $secondary-gradient: linear-gradient(135deg, #fd8750 0%, #eb7843 100%);
 .quick-actions {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20rpx;
-    padding: 30rpx;
+    gap: 10rpx;
+    padding: 30rpx 10rpx;
     background: #fff;
     margin: 30rpx;
     border-radius: 24rpx;
