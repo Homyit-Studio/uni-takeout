@@ -1,6 +1,8 @@
 // 设置请求拦截器，使得自动拼接请求地址，传token等功能
 const baseURL = "https://homyit2023.online:9000"
 
+const token = uni.getStorageSync("token")
+
 // 添加拦截器
 // 先添加请求
 const httpInterceptor = {
@@ -13,6 +15,7 @@ const httpInterceptor = {
         options.timeout = 10000
         // 添加请求头标识
         options.header = {
+            "token": token,
             ...options.header
         }
     }

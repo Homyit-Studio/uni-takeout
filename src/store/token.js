@@ -1,0 +1,20 @@
+// 封装的 token 操作方法
+export const useTokenStore = () => {
+    const setToken = (token) => {
+        uni.setStorageSync('token_key', token);
+    };
+
+    const getToken = () => {
+        return uni.getStorageSync('token_key') || '';
+    };
+
+    const removeToken = () => {
+        uni.removeStorageSync('token_key');
+    };
+
+    return {
+        setToken,
+        getToken,
+        removeToken
+    };
+};

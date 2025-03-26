@@ -5,7 +5,8 @@
 export default class WebSocket {
     constructor(options = {}) {
         const defaultOptions = {
-            url: `ws://1.15.115.21:8089//ws/${sid}`,
+            url: 'ws://1.15.115.21:8089/ws/11929101',
+            // url: `ws://1.15.115.21:8089//ws/${sid}`,
             heartInterval: 30000, // 心跳间隔
             reconnInterval: 5000, // 重连间隔
             maxReconnAttempts: 5, // 最大重连次数

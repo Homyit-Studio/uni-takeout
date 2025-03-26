@@ -1,21 +1,14 @@
 <script setup>
-import { onLoad, onLaunch, onShow, onHide } from '@dcloudio/uni-app'
+import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import WebSocket from '@/utils/websocket.js'
 import { request } from './utils/request'
+import { useTokenStore } from './store/token'
 
-onLoad(() => {
-  console.log('App Load')
-
-})
+const useToken = useTokenStore()
 
 onLaunch(() => {
   console.log('App Launch')
-  uni.login({
-    provider: 'weixin', //使用微信登录
-    success: (res) => {
-      request
-    }
-  })
+  login()
 })
 
 onShow(() => {
@@ -25,9 +18,38 @@ onShow(() => {
    * 2. 根据角色加载页面
    * 3. 如果用户角色发生变化，重新加载页面
    */
+  // 设置tabBar
+  tabBarSet()
+})
+onHide(() => {
+  console.log('App Hide')
+})
 
-  // 调用示例
 
+const login = async () => {
+  uni.login({
+    provider: 'weixin', //使用微信登录
+    success: async (res) => {
+      try {
+        const data = await request(
+          {
+            method: 'POST',
+            url: '/user/wxlogin',
+            data: {
+              code: res.code
+            }
+          }
+        )
+        console.log(data)
+        useToken.setToken(data.data)
+      } catch (e) {
+        console.log("登录失败", e)
+      }
+    }
+  })
+}
+
+function getOrderInfo() {
   const ws = new WebSocket({
     heartMsg: 'ping', // 心跳消息
     onOpen: () => {
@@ -47,16 +69,6 @@ onShow(() => {
 
   // 发送消息
   ws.send('Hello Server')
-  // 设置tabBar
-  tabBarSet()
-})
-onHide(() => {
-  console.log('App Hide')
-})
-
-
-const login = () => {
-
 }
 
 // 设置tabBar
