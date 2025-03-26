@@ -16,6 +16,10 @@
                 <uni-icons type="list" size="30" color="#007aff"></uni-icons>
                 <text class="nav-text">商户入驻审核</text>
             </view>
+            <view class="nav-item" @click="navigateTo('bannerManage')">
+                <uni-icons type="images" size="30" color="#807aff"></uni-icons>
+                <text class="nav-text">管理首页轮播图</text>
+            </view>
             <view class="nav-item" @click="navigateTo('shopProductsManage')">
                 <uni-icons type="compose" size="30" color="#007aff"></uni-icons>
                 <text class="nav-text">商品管理</text>
@@ -142,6 +146,9 @@ export default {
                     break;
                 case'shopRevenueManage':
                     url = '/pages/shopRevenue_manage/index';
+                    break;
+                case'bannerManage':
+                    url = '/pages/banner_manage/index';
                     break;
             }
             uni.navigateTo({

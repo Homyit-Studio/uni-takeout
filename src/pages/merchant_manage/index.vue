@@ -19,10 +19,6 @@
                 <uni-icons type="compose" size="30" color="#007aff"></uni-icons>
                 <text class="nav-text">管理商品</text>
             </view>
-            <view class="nav-item" @click="navigateTo('bannerManage')">
-                <uni-icons type="images" size="30" color="#807aff"></uni-icons>
-                <text class="nav-text">管理首页轮播图</text>
-            </view>
             <view class="nav-item" @click="navigateTo('publishLottery')">
                 <uni-icons type="vip" size="30" color="#ff6347"></uni-icons>
                 <text class="nav-text">发布抽奖</text>
@@ -284,9 +280,7 @@ export default {
                 case'personalInfo':
                     url = '/pages/editPersonalInfo/index';
                     break;
-                case'bannerManage':
-                    url = '/pages/banner_manage/index';
-                    break;
+                
             }
             uni.navigateTo({
                 url: url,
