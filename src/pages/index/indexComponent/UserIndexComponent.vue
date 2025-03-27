@@ -1,14 +1,14 @@
 <template>
     <view class="container">
         <!-- 顶部导航栏 -->
-        <view class="nav-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
+        <!-- <view class="nav-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
             <view class="nav-content">
                 <view class="nav-left">
                     <text class="app-name">校园购</text>
                     <view class="location-icon" @click="goToAddress">
                         <uni-icons type="location-filled" style="margin-left: 10rpx;margin-right: -10rpx;" size="18"
                             color="#fff"></uni-icons>
-                        <text class="address-text">{{ defaultAddress || "未知地址，请添加" }}</text>
+                        <text class="address-text">{{ defaultAddress || "请添加地址 ^" }}</text>
                         <uni-icons type="arrowdown" size="14" color="#fff"></uni-icons>
                     </view>
                 </view>
@@ -19,14 +19,11 @@
                     </view>
                 </view>
                 <view class="nav-right">
-                    <!-- <uni-icons type="search" size="18" color="#999"></uni-icons> -->
+                   
                 </view>
             </view>
         </view>
 
-
-
-        <!-- 轮播图 -->
         <swiper class="banner-swiper" :autoplay="true" :circular="true" indicator-active-color="#FF719A">
             <swiper-item v-for="(item, index) in bannerList" :key="index">
                 <image :src="item.image" mode="aspectFill" class="banner-image" />
@@ -41,8 +38,62 @@
                     </view>
                 </transition-group>
             </view>
+        </view> -->
+
+        <!-- 第一导航栏（需要上滑隐藏的） -->
+        <view class="first-nav" :style="{ transform: `translateY(${navTranslateY}px)`, opacity: 1 - scrollProgress }">
+            <!-- 位置信息 -->
+            <view class="nav-left">
+                <view class="location-icon" @click="goToAddress">
+                    <uni-icons type="location-filled" style="margin-left: 10rpx;margin-right: -10rpx;" size="18"
+                        color="#fff"></uni-icons>
+                    <text class="address-text">{{ defaultAddress || "请添加地址 ^" }}</text>
+                    <uni-icons type="arrowdown" size="14" color="#fff"></uni-icons>
+                </view>
+                <text class="app-name">校园购</text>
+            </view>
+            <!-- 搜索框 -->
+            <view class="search-box">
+                <view class="search-input" @click="goToSearch">
+                    <uni-icons type="search" size="18" color="#999"></uni-icons>
+                    <text class="placeholder">搜索商家、美食</text>
+                </view>
+            </view>
+
+            <swiper class="banner-swiper" :autoplay="true" :circular="true" indicator-active-color="#FF719A">
+                <swiper-item v-for="(item, index) in bannerList" :key="index">
+                    <image :src="item.image" mode="aspectFill" class="banner-image" />
+                </swiper-item>
+            </swiper>
+
+            <view class="scrolling-alert">
+                <view class="scroll-container">
+                    <transition-group name="fade-slide" tag="view" class="scroll-content">
+                        <view v-for="(message, index) in visibleMessages" :key="message" class="scroll-item">
+                            {{ message }} 最近{{ recentJoinCount }}人正在拼团...
+                        </view>
+                    </transition-group>
+                </view>
+            </view>
+
         </view>
 
+        <!-- 第二导航栏（固定显示的） -->
+        <view class="fixed-nav" :style="{ opacity: scrollProgress, background: navBackground }">
+            <view class="nav-content">
+                <!-- 左侧位置信息 -->
+                <view class="nav-left">
+                    <uni-icons type="location-filled" size="18" color="#fff"></uni-icons>
+                    <text class="address-text">{{ defaultAddress || "请添加地址 ^" }}</text>
+                </view>
+
+                <!-- 中间标题 -->
+                <text class="nav-title">校园购</text>
+
+                <!-- 右侧占位 -->
+                <view class="nav-right"></view>
+            </view>
+        </view>
 
         <!-- <view class="launch-container">
             <view class="launch-wrapper">
@@ -171,6 +222,11 @@ const navBarHeight = ref(40)
 const currentTab = ref(0)
 const tabsOffsetTop = ref(0)
 
+// 新增滚动相关逻辑
+const scrollProgress = ref(0)
+const navTranslateY = ref(0)
+const navBackground = ref('rgba(255,85,0,0)')
+
 const defaultAddress = ref(null)
 
 const recentJoinCount = ref(12) // 最近参与人数
@@ -229,17 +285,15 @@ const tabsStyle = computed(() => ({
     top: `${statusBarHeight.value + navBarHeight.value}px`
 }))
 
+
+onPageScroll((e) => {
+    const progress = Math.min(e.scrollTop / 100, 1)
+    scrollProgress.value = progress
+    navTranslateY.value = -e.scrollTop * 0.8
+    navBackground.value = `rgba(255,85,0,${progress})`
+})
 onMounted(() => {
     startMessageRotation()
-    // 获取本地存储的地址列表
-    const savedAddresses = uni.getStorageSync('addresses') || []
-    if (savedAddresses.length > 0) {
-        // 查找默认地址
-        const defaultAddr = savedAddresses.find(addr => addr.isDefault) || savedAddresses[0]
-        // 拼接地址信息
-        defaultAddress.value = `${defaultAddr.province}${defaultAddr.city}${defaultAddr.area}${defaultAddr.detail}`
-    }
-
     // 获取状态栏高度
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
 
@@ -270,12 +324,13 @@ onMounted(() => {
 
 onShow(async () => {
     // 获取本地存储的地址列表
-    const savedAddresses = uni.getStorageSync('addresses') || []
-    if (savedAddresses.length > 0) {
+    const savedAddress = uni.getStorageSync('defaultAddress') || []
+    if (savedAddress) {
         // 查找默认地址
-        const defaultAddr = savedAddresses.find(addr => addr.isDefault) || savedAddresses[0]
+        // const defaultAddr = savedAddresses.find(addr => addr.isDefault) || savedAddresses[0]
         // 拼接地址信息
-        defaultAddress.value = `${defaultAddr.province}${defaultAddr.city}${defaultAddr.area}${defaultAddr.detail}`
+        // defaultAddress.value = `${defaultAddr.province}${defaultAddr.city}${defaultAddr.area}${defaultAddr.detail}`
+        defaultAddress.value = savedAddress.address
     }
 })
 
@@ -413,12 +468,46 @@ $secondary-color: #FFA99F;
     min-height: 100vh;
 }
 
-.nav-bar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-    // padding-bottom: 20rpx;
+.first-bar {
+    position: relative;
+    z-index: 90;
+    padding: 20rpx 30rpx 0;
+    background: linear-gradient(135deg, #FF5500 0%, #FFA99F 100%);
+    transition: all 0.2s ease;
+
+    .location-wrapper {
+        display: flex;
+        align-items: center;
+        padding: 20rpx 0;
+
+        .address-text {
+            color: #fff;
+            font-size: 26rpx;
+            margin-left: 10rpx;
+            max-width: 400rpx;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .search-box {
+        padding: 20rpx 0 40rpx;
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 40rpx;
+            height: 80rpx;
+            display: flex;
+            align-items: center;
+            padding: 0 30rpx;
+
+            .placeholder {
+                color: #666;
+                font-size: 28rpx;
+                margin-left: 15rpx;
+            }
+        }
+    }
 
     .nav-content {
         display: flex;
@@ -484,6 +573,52 @@ $secondary-color: #FFA99F;
         flex: 1;
         text-align: right;
         margin-left: -50rpx;
+    }
+}
+
+
+/* 第二导航栏样式 */
+.fixed-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+
+    .nav-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100rpx;
+        padding: 0 30rpx;
+
+        .nav-left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+
+            .address-text {
+                color: #fff;
+                font-size: 26rpx;
+                max-width: 200rpx;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        .nav-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 36rpx;
+            font-weight: bold;
+        }
+
+        .nav-right {
+            flex: 1;
+        }
     }
 }
 
