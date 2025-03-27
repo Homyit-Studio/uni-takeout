@@ -1,476 +1,499 @@
 <template>
     <view class="address-container">
         <!-- 地址列表 -->
-        <view class="address-card" v-for="(address, index) in addressList" :key="index">
-            <!-- 左侧圆点 -->
-            <view class="default-indicator" @click="setDefault(index)">
-                <uni-icons :type="address.isDefault ? 'checkbox-filled' : 'circle'" size="20"
-                    :color="address.isDefault ? '#ff5500' : '#ddd'"></uni-icons>
-            </view>
-
-            <!-- 地址信息 -->
-            <view class="address-info">
-                <text class="name">{{ address.name }}</text>
-                <text class="phone">{{ address.phone }}</text>
-                <view class="detail">
-                    {{ address.province }}{{ address.city }}{{ address.area }}
-                    {{ address.detail }}
+        <view class="address-list">
+            <view class="address-card" v-for="(address, index) in addressList" :key="index">
+                <!-- 左侧选择框 -->
+                <view class="radio-box" @click="setDefault(index)">
+                    <uni-icons :type="address.isDefault ? 'checkbox-filled' : 'circle'" size="20"
+                        :color="address.isDefault ? '#FF5500' : '#ccc'"></uni-icons>
                 </view>
-            </view>
 
-            <!-- 右侧操作按钮 -->
-            <view class="address-actions">
-                <view class="action-item" @click="openEditModal(index)">
-                    <text class="action-text" style="color: #8fc2eb;">修改</text>
-                </view>
-                <view class="action-item" @click="deleteAddress(index)">
-                    <text class="action-text" style="color: red;">删除</text>
-                </view>
-            </view>
-        </view>
-        <!-- 添加地址按钮 -->
-        <view class="add-address" @click="openAddModal">
-            <text class="add-text">+ 添加新地址</text>
-        </view>
-
-        <!-- 底部弹框 -->
-        <view class="modal" v-if="modalState.showModal">
-            <view class="modal-content">
-                <text class="modal-title">{{ modalState.isEditing ? '修改地址' : '添加地址' }}</text>
-                <input class="input" v-model="currentAddress.name" placeholder="姓名" />
-                <input class="input" v-model="currentAddress.phone" placeholder="电话" type="number" />
-                <picker mode="multiSelector" @change="onPickerChange" @columnchange="onColumnChange"
-                    :range="[pickerState.provinces.map(p => p.name), pickerState.cities, pickerState.areas]"
-                    :value="pickerState.pickerValue" class="picker-item">
-                    <view class="picker-trigger">
-                        当前选择：
-                        {{ pickerState.provinces[pickerState.pickerValue[0]] ?
-                            pickerState.provinces[pickerState.pickerValue[0]].name : '请选择省份' }}
-                        {{ pickerState.cities[pickerState.pickerValue[1]] ?
-                            pickerState.cities[pickerState.pickerValue[1]] : '请选择城市' }}
-                        {{ pickerState.areas[pickerState.pickerValue[2]] ? pickerState.areas[pickerState.pickerValue[2]]
-                            : '请选择区县' }}
+                <!-- 地址信息 -->
+                <view class="address-info">
+                    <view class="info-top">
+                        <text class="name">{{ address.name }}</text>
+                        <text class="phone">{{ address.phone }}</text>
                     </view>
-                </picker>
-                <input class="input" v-model="currentAddress.detail" placeholder="详细地址" />
-                <view class="modal-actions">
-                    <button class="modal-button" @click="closeModal">取消</button>
-                    <button class="modal-button confirm" @click="saveAddress">保存</button>
+                    <text class="address">{{ address.address }}</text>
+                </view>
+
+                <!-- 右侧操作按钮 -->
+                <view class="action-btns">
+                    <button class="edit-btn" @click="openEditModal(index)">
+                        <uni-icons type="compose" size="20" color="#666"></uni-icons>
+                    </button>
+                    <button class="delete-btn" @click="deleteAddress(index)">
+                        <uni-icons type="trash" size="20" color="#FF5500"></uni-icons>
+                    </button>
                 </view>
             </view>
         </view>
+
+        <!-- 添加地址按钮 -->
+        <view class="add-btn" @click="openAddModal">
+            <text>+ 添加新地址</text>
+        </view>
+
+        <!-- 弹框组件 -->
+        <uni-popup ref="popup" type="bottom" background-color="#fff">
+            <view class="popup-content">
+                <view class="popup-header">
+                    <text class="title">{{ isEditing ? '修改地址' : '添加地址' }}</text>
+                    <uni-icons type="closeempty" size="24" color="#999" @click="closeModal"></uni-icons>
+                </view>
+
+                <view class="form-item">
+                    <text class="label">收货人</text>
+                    <input class="input" v-model="currentAddress.name" placeholder="请输入收货人姓名" />
+                </view>
+
+                <view class="form-item">
+                    <text class="label">手机号</text>
+                    <input class="input" v-model="currentAddress.phone" type="number" placeholder="请输入手机号码" />
+                </view>
+
+                <view class="form-item">
+                    <text class="label">详细地址（精确到门牌号）</text>
+                    <view class="address-input-wrapper">
+                        <textarea class="address-input" v-model="currentAddress.address" placeholder="请输入详细地址"
+                            auto-height></textarea>
+                        <button class="map-select-btn" @click="chooseLocation">
+                            <uni-icons type="location-filled" size="20" color="#FF5500"></uni-icons>
+                        </button>
+                    </view>
+                </view>
+
+                <button class="save-btn" @click="saveAddress">保存地址</button>
+            </view>
+        </uni-popup>
     </view>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import provinceData from "@/common/provinceData.js";
-import { onLoad } from '@dcloudio/uni-app';
+import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { request } from '../../utils/request'
 
-// 地址列表
-const addressList = ref([]);
+// 地址列表数据
+const addressList = ref([])
 
-// 省市区选择器状态
-const pickerState = ref({
-    provinces: provinceData.data, // 省份数据
-    cities: [], // 市列表
-    areas: [], // 区列表
-    pickerValue: [0, 0, 0], // picker选中索引
-});
-
-// 模态框状态
-const modalState = ref({
-    showModal: false,
-    isEditing: false,
-    editIndex: -1,
-});
-
-// 当前编辑或新增的地址
+// 当前编辑的地址
 const currentAddress = ref({
     name: '',
     phone: '',
-    province: '',
-    city: '',
-    area: '',
-    detail: '',
-});
+    address: ''
+})
 
-// 计算属性获取当前选中的省
-const currentProvince = computed(() => pickerState.value.provinces[pickerState.value.pickerValue[0]] || {});
+// 弹框控制
+const popup = ref(null)
+const isEditing = ref(false)
+const editIndex = ref(-1)
 
-// 计算属性获取当前选中的市
-const currentCity = computed(() => {
-    const province = currentProvince.value;
-    return province.city?.[pickerState.value.pickerValue[1]] || {};
-});
+// 本地存储的默认地址ID
+// const defaultAddressId = ref(null)
 
+// 页面加载时获取地址列表
+onShow(() => {
+    getAddressList()
+})
 
-// 在加载数据后确保第一个是默认地址
-onLoad(() => {
-    const savedAddresses = uni.getStorageSync('addresses');
-    if (savedAddresses) {
-        // 如果加载的数据没有默认地址，设置第一个为默认
-        if (!savedAddresses.some(item => item.isDefault)) {
-            savedAddresses[0].isDefault = true;
+// 获取地址列表
+const getAddressList = async () => {
+    try {
+        // 从本地获取完整默认地址
+        const localDefaultAddress = uni.getStorageSync('defaultAddress') || null
+
+        const res = await request({
+            url: '/address/selectaddress',
+            method: 'GET'
+        })
+
+        // 处理地址数据
+        addressList.value = res.data.map(item => ({
+            ...item,
+            isDefault: localDefaultAddress
+                ? item.id === localDefaultAddress.id  // 使用ID比对更可靠
+                : false
+        }))
+
+        // 自动设置第一个为默认（当没有默认地址时）
+        if (addressList.value.length > 0 && !localDefaultAddress) {
+            addressList.value[0].isDefault = true
+            uni.setStorageSync('defaultAddress', addressList.value[0])
         }
-        addressList.value = savedAddresses;
+    } catch (error) {
+        console.error('获取地址列表失败:', error)
+        uni.showToast({
+            title: '获取地址失败',
+            icon: 'none'
+        })
     }
-});
+}
 
-
-// 初始化省市区选择器数据
-const initPicker = () => {
-    const firstProvince = pickerState.value.provinces[0];
-    pickerState.value.cities = firstProvince.city.map(c => c.name);
-    const firstCity = firstProvince.city[0];
-    pickerState.value.areas = firstCity.area;
-};
-
-initPicker();
-
-// 监听省变化
-watch(() => pickerState.value.pickerValue[0], (newVal) => {
-    const province = pickerState.value.provinces[newVal];
-    pickerState.value.cities = province.city.map(c => c.name);
-    pickerState.value.pickerValue[1] = 0;
-
-    const city = province.city[0];
-    pickerState.value.areas = city.area;
-    pickerState.value.pickerValue[2] = 0;
-});
-
-// 监听市变化
-watch(() => pickerState.value.pickerValue[1], (newVal) => {
-    const province = pickerState.value.provinces[pickerState.value.pickerValue[0]];
-    const city = province.city[newVal];
-    pickerState.value.areas = city.area;
-    pickerState.value.pickerValue[2] = 0;
-});
-
-// 省市区选择器列变化事件
-const onColumnChange = (e) => {
-    const column = e.detail.column;
-    const value = e.detail.value;
-    pickerState.value.pickerValue[column] = value;
-
-    if (column === 0) { // 省变化
-        const province = pickerState.value.provinces[value];
-        pickerState.value.cities = province.city.map(c => c.name);
-        pickerState.value.pickerValue[1] = 0;
-
-        const city = province.city[0];
-        pickerState.value.areas = city.area;
-        pickerState.value.pickerValue[2] = 0;
-    } else if (column === 1) { // 市变化
-        const province = pickerState.value.provinces[pickerState.value.pickerValue[0]];
-        const city = province.city[value];
-        pickerState.value.areas = city.area;
-        pickerState.value.pickerValue[2] = 0;
-    }
-};
-
-// 省市区选择器确认事件
-const onPickerChange = (e) => {
-    const [provinceIndex, cityIndex, areaIndex] = e.detail.value;
-    currentAddress.value.province = pickerState.value.provinces[provinceIndex].name;
-    currentAddress.value.city = pickerState.value.cities[cityIndex];
-    currentAddress.value.area = pickerState.value.areas[areaIndex];
-};
-
-// 打开新增地址模态框
+// 打开添加地址弹框
 const openAddModal = () => {
     currentAddress.value = {
         name: '',
         phone: '',
-        province: '',
-        city: '',
-        area: '',
-        detail: '',
-    };
-    modalState.value.isEditing = false;
-    modalState.value.showModal = true;
-};
+        address: ''
+    }
+    isEditing.value = false
+    popup.value.open()
+}
 
-// 打开编辑地址模态框
+// 打开编辑地址弹框
 const openEditModal = (index) => {
-    const address = addressList.value[index];
-    currentAddress.value = { ...address };
-    modalState.value.isEditing = true;
-    modalState.value.editIndex = index;
-    modalState.value.showModal = true;
+    currentAddress.value = { ...addressList.value[index] }
+    isEditing.value = true
+    editIndex.value = index
+    popup.value.open()
+}
 
-    // 查找对应的省市区索引
-    const provinceIndex = pickerState.value.provinces.findIndex(p => p.name === address.province);
-    if (provinceIndex === -1) return;
-    const cityIndex = pickerState.value.provinces[provinceIndex].city.findIndex(c => c.name === address.city);
-    if (cityIndex === -1) return;
-    const areaIndex = pickerState.value.provinces[provinceIndex].city[cityIndex].area.findIndex(a => a === address.area);
-    if (areaIndex === -1) return;
-
-    // 更新pickerValue及相关数据
-    pickerState.value.pickerValue = [provinceIndex, cityIndex, areaIndex];
-    pickerState.value.cities = pickerState.value.provinces[provinceIndex].city.map(c => c.name);
-    pickerState.value.areas = pickerState.value.provinces[provinceIndex].city[cityIndex].area;
-};
-
-// 关闭模态框
+// 关闭弹框
 const closeModal = () => {
-    modalState.value.showModal = false;
-};
+    popup.value.close()
+}
 
-// 修改后的设置默认方法
-const setDefault = (index) => {
-    // 获取当前点击的地址
-    const targetAddress = addressList.value[index];
+// 设置默认地址
+const setDefault = async (index) => {
+    const targetAddress = addressList.value[index]
+    if (targetAddress.isDefault) return
 
-    // 如果已经是默认则不做处理
-    if (targetAddress.isDefault) return;
-
-    // 更新所有地址的默认状态
+    // 更新所有地址状态
     addressList.value.forEach(item => {
-        item.isDefault = false;
-    });
+        item.isDefault = item.id === targetAddress.id
+    })
 
-    // 设置当前为默认
-    targetAddress.isDefault = true;
+    // 存储完整默认地址到本地
+    uni.setStorageSync('defaultAddress', targetAddress)
 
-    // 将默认地址移动到数组最前面
-    const newList = [
-        targetAddress,
-        ...addressList.value.filter((_, i) => i !== index)
-    ];
+    // 重新排序
+    addressList.value.sort((a, b) => b.isDefault - a.isDefault)
 
-    addressList.value = newList;
-
-    // 保存到本地存储
-    uni.setStorageSync('addresses', addressList.value);
-
-    // 显示提示信息
-    uni.showToast({ title: '设置默认地址成功', icon: 'success' });
-};
+    uni.showToast({ title: '设置默认成功', icon: 'success' })
+}
 
 // 保存地址
-const saveAddress = () => {
-    if (!/^1[3-9]\d{9}$/.test(currentAddress.value.phone)) {
-        uni.showToast({ title: '请输入有效手机号', icon: 'none' });
-        return;
-    }
+const saveAddress = async () => {
+    // 表单验证
     if (!currentAddress.value.name?.trim()) {
-        uni.showToast({ title: '请输入姓名', icon: 'none' });
-        return;
-    }
-    if (!currentAddress.value.province || !currentAddress.value.city || !currentAddress.value.area) {
-        uni.showToast({ title: '请选择省市区', icon: 'none' });
-        return;
-    }
-    if (modalState.value.isEditing) {
-        addressList.value[modalState.value.editIndex] = { ...currentAddress.value };
-        uni.showToast({ title: '修改地址成功', icon: 'success' });
-    } else {
-        addressList.value.push({ ...currentAddress.value });
-        uni.showToast({ title: '添加地址成功', icon: 'success' });
+        uni.showToast({
+            title: '请输入收货人姓名',
+            icon: 'none'
+        })
+        return
     }
 
-    // 保存到本地存储
-    uni.setStorageSync('addresses', addressList.value);
+    if (!/^1[3-9]\d{9}$/.test(currentAddress.value.phone)) {
+        uni.showToast({
+            title: '请输入正确的手机号码',
+            icon: 'none'
+        })
+        return
+    }
 
-    // 重置表单
-    currentAddress.value = {
-        name: '',
-        phone: '',
-        province: '',
-        city: '',
-        area: '',
-        detail: '',
-    };
-    modalState.value.showModal = false;
-};
+    if (!currentAddress.value.address?.trim()) {
+        uni.showToast({
+            title: '请选择或输入详细地址',
+            icon: 'none'
+        })
+        return
+    }
+
+    try {
+        if (isEditing.value) {
+            // 更新地址
+            await request({
+                url: '/address/updateaddress',
+                method: 'POST',
+                data: {
+                    id: addressList.value[editIndex.value].id,
+                    ...currentAddress.value
+                }
+            })
+
+            // 更新本地数据
+            addressList.value[editIndex.value] = {
+                ...addressList.value[editIndex.value],
+                ...currentAddress.value
+            }
+
+            // 在修改地址成功后添加以下代码：
+            if (addressList.value[editIndex.value].isDefault) {
+                // 如果修改的是默认地址，更新本地存储
+                uni.setStorageSync('defaultAddress', addressList.value[editIndex.value])
+            }
+
+            uni.showToast({
+                title: '修改地址成功',
+                icon: 'success'
+            })
+        } else {
+            // 新增地址
+            const res = await request({
+                url: '/address/addaddress',
+                method: 'POST',
+                data: currentAddress.value
+            })
+
+            // 添加到地址列表
+            const newAddress = {
+                id: res.data.id,
+                ...currentAddress.value,
+                isDefault: addressList.value.length === 0 // 如果是第一个地址则设为默认
+            }
+
+            addressList.value.unshift(newAddress)
+
+            // 如果是第一个地址，设置为默认
+            if (newAddress.isDefault) {
+                uni.setStorageSync('defaultAddress', newAddress)
+            }
+
+            uni.showToast({
+                title: '添加地址成功',
+                icon: 'success'
+            })
+        }
+
+        // 关闭弹框
+        closeModal()
+    } catch (error) {
+        console.error('保存地址失败:', error)
+        uni.showToast({
+            title: '保存地址失败',
+            icon: 'none'
+        })
+    }
+}
 
 // 删除地址
-const deleteAddress = (index) => {
-    uni.showModal({
-        title: '提示',
-        content: '确定删除该地址吗？',
-        success: (res) => {
-            if (res.confirm) {
-                addressList.value.splice(index, 1);
-                uni.showToast({ title: '删除地址成功', icon: 'success' });
+const deleteAddress = async (index) => {
+    try {
+        const address = addressList.value[index]
 
-                // 保存到本地存储
-                uni.setStorageSync('addresses', addressList.value);
+        const res = await uni.showModal({
+            title: '提示',
+            content: '确定要删除该地址吗？',
+            confirmColor: '#FF5500'
+        })
+
+        if (!res.confirm) return
+
+        // 调用API删除地址
+        await request({
+            url: '/address/deleteaddress',
+            method: 'POST',
+            data: {
+                id: address.id
             }
-        },
-    });
-};
+        })
+
+        // 在删除地址时：
+        if (address.isDefault) {
+            uni.removeStorageSync('defaultAddress')
+            // 设置新的默认地址
+            if (addressList.value.length > 0) {
+                addressList.value[0].isDefault = true
+                uni.setStorageSync('defaultAddress', addressList.value[0])
+            }
+        }
+        // 从列表中移除
+        addressList.value.splice(index, 1)
+
+        uni.showToast({
+            title: '删除地址成功',
+            icon: 'success'
+        })
+    } catch (error) {
+        console.error('删除地址失败:', error)
+        uni.showToast({
+            title: '删除地址失败',
+            icon: 'none'
+        })
+    }
+}
+
+// 选择地图位置
+const chooseLocation = async () => {
+    try {
+        const res = await uni.chooseLocation({})
+
+        if (res) {
+            currentAddress.value.address = res.address || res.name
+            uni.showToast({
+                title: '地址选择成功',
+                icon: 'success'
+            })
+        }
+    } catch (error) {
+        console.error('选择地址失败:', error)
+        uni.showToast({
+            title: '请手动输入地址',
+            icon: 'none'
+        })
+    }
+}
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .address-container {
-    padding: 20px;
-    padding-bottom: 80px;
-    /* 为底部按钮留出空间 */
+    padding: 20rpx;
+    min-height: 100vh;
+    background-color: #f7f7f7;
+    padding-bottom: 120rpx;
+}
+
+.address-list {
+    margin-bottom: 20rpx;
 }
 
 .address-card {
-    // background-color: #fff; // 统一白色背景
     display: flex;
     align-items: center;
-    padding: 15px;
-    margin-bottom: 15px;
-    // border-radius: 8px;
-    border-bottom: 1px #999 solid;
-    // box-shadow: 0 0px 8px rgba(0, 0, 0, 0.5);
+    padding: 30rpx;
+    margin-bottom: 20rpx;
+    border-bottom: 5rpx #ddd solid;
 
-    .default-indicator {
-        margin-right: 12px;
-
-        .radio-dot {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 1px solid #ddd;
-
-            &.active {
-                border-color: #ff5500;
-                background: #ff5500 url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTkgM2wtMTAgsTEwLTRMLE0uNDEgMS40MUw5IDE2LjM0bDEyLjQxLTEyLjQxTDE5IDN6Ii8+PC9zdmc+') center/10px no-repeat;
-            }
-        }
+    .radio-box {
+        margin-right: 20rpx;
     }
 
     .address-info {
         flex: 1;
-        margin-right: 15px;
+        margin-right: 20rpx;
+
+        .info-top {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10rpx;
+
+            .name {
+                font-size: 32rpx;
+                font-weight: bold;
+                color: #333;
+                margin-right: 20rpx;
+            }
+
+            .phone {
+                font-size: 28rpx;
+                color: #666;
+            }
+        }
+
+        .address {
+            font-size: 28rpx;
+            color: #666;
+            line-height: 1.5;
+        }
     }
 
-    .address-actions {
+    .action-btns {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 20rpx;
 
-        .action-item {
-            margin-left: 0;
+        button {
+            padding: 0;
+            margin: 0;
+            background: none;
+            line-height: 1;
+
+            &::after {
+                border: none;
+            }
         }
     }
 }
 
-.address-info {
-    margin-bottom: 10px;
-}
-
-.name {
-    color: #333;
-    font-size: 16px;
-    font-weight: bold;
-    margin-right: 10px;
-}
-
-.phone {
-    font-size: 14px;
-    color: #666;
-}
-
-.detail {
-    font-size: 14px;
-    color: #333;
-    margin-top: 5px;
-    display: block;
-}
-
-.address-actions {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.action-item {
-    margin-left: 15px;
-}
-
-.action-text {
-    font-size: 14px;
-    color: #666;
-    cursor: pointer;
-}
-
-.action-text.active {
-    color: #ff5500d2;
-    font-weight: bold;
-}
-
-.add-address {
+.add-btn {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    background-color: #ff5500cb;
-    color: #fff;
+    bottom: 40rpx;
+    left: 30rpx;
+    right: 30rpx;
+    height: 80rpx;
+    line-height: 80rpx;
     text-align: center;
-    padding: 15px;
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.add-text {
-    font-size: 16px;
-    font-weight: bold;
-}
-
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    z-index: 999;
-}
-
-.modal-content {
-    background-color: #fff;
-    width: 100%;
-    padding: 20px;
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-}
-
-.modal-title {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 15px;
-    display: block;
-}
-
-.input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    font-size: 14px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: space-between;
-}
-
-.modal-button {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background-color: #ddd;
-    color: #333;
-    font-size: 14px;
-    cursor: pointer;
-    margin: 0 5px;
-}
-
-.modal-button.confirm {
     background-color: #FF5500;
     color: #fff;
+    font-size: 32rpx;
+    border-radius: 40rpx;
+    box-shadow: 0 4rpx 12rpx rgba(255, 85, 0, 0.3);
+}
+
+.popup-content {
+    padding: 40rpx;
+
+    .popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40rpx;
+
+        .title {
+            font-size: 36rpx;
+            font-weight: bold;
+            color: #333;
+        }
+    }
+
+    .form-item {
+        margin-bottom: 30rpx;
+
+        .label {
+            display: block;
+            font-size: 28rpx;
+            color: #666;
+            margin-bottom: 10rpx;
+        }
+
+        .input {
+            height: 80rpx;
+            line-height: 80rpx;
+            padding: 0 20rpx;
+            background-color: #f7f7f7;
+            border-radius: 8rpx;
+            font-size: 28rpx;
+        }
+
+        .address-input-wrapper {
+            position: relative;
+
+            .address-input {
+                width: 100%;
+                min-height: 150rpx;
+                padding: 10rpx;
+                background-color: #f7f7f7;
+                border-radius: 8rpx;
+                font-size: 28rpx;
+                line-height: 1.5;
+            }
+
+            .map-select-btn {
+                position: absolute;
+                right: 10rpx;
+                bottom: 10rpx;
+                padding: 0;
+                margin: 0;
+                background: none;
+                z-index: 2;
+
+                &::after {
+                    border: none;
+                }
+            }
+        }
+    }
+
+    .save-btn {
+        margin-top: 40rpx;
+        height: 80rpx;
+        line-height: 80rpx;
+        background-color: #FF5500;
+        color: #fff;
+        font-size: 32rpx;
+        border-radius: 40rpx;
+    }
 }
 </style>
