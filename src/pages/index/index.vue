@@ -6,7 +6,7 @@
     <AdminIndex />
   </view>
   <view v-else>
-    <UserIndex />
+    <UserIndex :scroll-top="scrollTop" />
   </view>
 </template>
 
@@ -15,10 +15,14 @@ import { ref } from 'vue'
 import UserIndex from './indexComponent/UserIndexComponent.vue'
 import MerchantIndex from './indexComponent/MerchantIndexComponent.vue'
 import AdminIndex from './indexComponent/AdminIndexComponent.vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onPageScroll } from '@dcloudio/uni-app'
 
-//权限控制 
-const userRole = ref('user') // 默认用户角色
+const userRole = ref('user')
+const scrollTop = ref(0)
+
+onPageScroll((e) => {
+  scrollTop.value = e.scrollTop
+})
 
 
 onShow(async () => {

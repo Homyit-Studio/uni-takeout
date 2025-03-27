@@ -1,56 +1,27 @@
 <template>
     <view class="container">
-        <!-- 顶部导航栏 -->
-        <!-- <view class="nav-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
+
+        <!-- 第一导航栏（需要上滑隐藏的） -->
+        <view class="first-nav" :style="{
+            transform: `translateY(${-scrollY * 0.5}px) scale(${1 - scrollProgress})`,
+            opacity: 1 - scrollProgress,
+            paddingTop: statusBarHeight + 'px'
+        }">
+            <!-- 位置信息 -->
             <view class="nav-content">
                 <view class="nav-left">
-                    <text class="app-name">校园购</text>
                     <view class="location-icon" @click="goToAddress">
                         <uni-icons type="location-filled" style="margin-left: 10rpx;margin-right: -10rpx;" size="18"
                             color="#fff"></uni-icons>
-                        <text class="address-text">{{ defaultAddress || "请添加地址 ^" }}</text>
+                        <text class="address-text">{{ defaultAddress || "请添加地址 >" }}</text>
                         <uni-icons type="arrowdown" size="14" color="#fff"></uni-icons>
                     </view>
-                </view>
-                <view class="search-wrapper" @click="goToSearch">
-                    <view class="search-input">
-                        <uni-icons type="search" size="18" color="#999"></uni-icons>
-                        <text class="placeholder">搜索商家、美食</text>
-                    </view>
+                    <view class="app-name">校园购</view>
+
                 </view>
                 <view class="nav-right">
-                   
+
                 </view>
-            </view>
-        </view>
-
-        <swiper class="banner-swiper" :autoplay="true" :circular="true" indicator-active-color="#FF719A">
-            <swiper-item v-for="(item, index) in bannerList" :key="index">
-                <image :src="item.image" mode="aspectFill" class="banner-image" />
-            </swiper-item>
-        </swiper>
-
-        <view class="scrolling-alert">
-            <view class="scroll-container">
-                <transition-group name="fade-slide" tag="view" class="scroll-content">
-                    <view v-for="(message, index) in visibleMessages" :key="message" class="scroll-item">
-                        {{ message }} 最近{{ recentJoinCount }}人正在拼团...
-                    </view>
-                </transition-group>
-            </view>
-        </view> -->
-
-        <!-- 第一导航栏（需要上滑隐藏的） -->
-        <view class="first-nav" :style="{ transform: `translateY(${navTranslateY}px)`, opacity: 1 - scrollProgress }">
-            <!-- 位置信息 -->
-            <view class="nav-left">
-                <view class="location-icon" @click="goToAddress">
-                    <uni-icons type="location-filled" style="margin-left: 10rpx;margin-right: -10rpx;" size="18"
-                        color="#fff"></uni-icons>
-                    <text class="address-text">{{ defaultAddress || "请添加地址 ^" }}</text>
-                    <uni-icons type="arrowdown" size="14" color="#fff"></uni-icons>
-                </view>
-                <text class="app-name">校园购</text>
             </view>
             <!-- 搜索框 -->
             <view class="search-box">
@@ -79,19 +50,29 @@
         </view>
 
         <!-- 第二导航栏（固定显示的） -->
-        <view class="fixed-nav" :style="{ opacity: scrollProgress, background: navBackground }">
+        <view class="fixed-nav" v-show="scrollProgress > 0" :style="{
+            opacity: scrollProgress,
+            paddingTop: statusBarHeight + 'px'
+        }">
             <view class="nav-content">
-                <!-- 左侧位置信息 -->
                 <view class="nav-left">
-                    <uni-icons type="location-filled" size="18" color="#fff"></uni-icons>
-                    <text class="address-text">{{ defaultAddress || "请添加地址 ^" }}</text>
+                    <text class="app-name">校园购</text>
+                    <view class="location-icon" @click="goToAddress">
+                        <uni-icons type="location-filled" style="margin-left: 10rpx;margin-right: -10rpx;" size="18"
+                            color="#fff"></uni-icons>
+                        <text class="address-text">{{ defaultAddress || "请添加地址 >" }}</text>
+                        <uni-icons type="arrowdown" size="14" color="#fff"></uni-icons>
+                    </view>
                 </view>
+                <view class="search-wrapper" @click="goToSearch">
+                    <view class="search-input">
+                        <uni-icons type="search" size="18" color="#999"></uni-icons>
+                        <text class="placeholder">搜索商家、美食</text>
+                    </view>
+                </view>
+                <view class="nav-right">
 
-                <!-- 中间标题 -->
-                <text class="nav-title">校园购</text>
-
-                <!-- 右侧占位 -->
-                <view class="nav-right"></view>
+                </view>
             </view>
         </view>
 
@@ -200,8 +181,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { onPageScroll, onReachBottom, onShow } from '@dcloudio/uni-app'
+/*
+* 重要：使用 defineProps() 定义 props
+*/
+const props = defineProps({
+    scrollTop: {
+        type: Number,
+        default: 0
+    }
+})
+
 
 // 轮播图数据
 const bannerList = ref([
@@ -218,14 +209,14 @@ const tabs = [
 ]
 
 const statusBarHeight = ref(0)
+const statusfirstPaddingTop = ref(0)
 const navBarHeight = ref(40)
 const currentTab = ref(0)
 const tabsOffsetTop = ref(0)
 
-// 新增滚动相关逻辑
+// 新增滚动控制逻辑
+const scrollY = ref(0)
 const scrollProgress = ref(0)
-const navTranslateY = ref(0)
-const navBackground = ref('rgba(255,85,0,0)')
 
 const defaultAddress = ref(null)
 
@@ -286,20 +277,27 @@ const tabsStyle = computed(() => ({
 }))
 
 
+watch(() => props.scrollTop, (newVal) => {
+    const progress = Math.min(newVal / 100, 1)
+    scrollProgress.value = progress
+})
+
 onPageScroll((e) => {
+    scrollY.value = e.scrollTop
+    // 计算滚动进度（0-1之间）
+    const maxScroll = 200 // 控制滚动效果的最大滚动距离
+    scrollProgress.value = Math.min(e.scrollTop / maxScroll, 1)
     const progress = Math.min(e.scrollTop / 100, 1)
     scrollProgress.value = progress
-    navTranslateY.value = -e.scrollTop * 0.8
-    navBackground.value = `rgba(255,85,0,${progress})`
 })
 onMounted(() => {
     startMessageRotation()
     // 获取状态栏高度
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
-
+    statusfirstPaddingTop.value = uni.getWindowInfo().statusBarHeight
     // 获取nav-bar高度
     const query = uni.createSelectorQuery()
-    query.select('.nav-bar').boundingClientRect(rect => {
+    query.select('.fixed-nav').boundingClientRect(rect => {
         if (rect) {
             navBarHeight.value = rect.height
         }
@@ -468,27 +466,105 @@ $secondary-color: #FFA99F;
     min-height: 100vh;
 }
 
-.first-bar {
+.first-nav {
     position: relative;
     z-index: 90;
-    padding: 20rpx 30rpx 0;
-    background: linear-gradient(135deg, #FF5500 0%, #FFA99F 100%);
-    transition: all 0.2s ease;
+    padding: 10rpx 10rpx;
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    transform-origin: top center;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-    .location-wrapper {
+
+    .nav-content {
         display: flex;
         align-items: center;
-        padding: 20rpx 0;
+        // padding: 0 30rpx;
 
-        .address-text {
-            color: #fff;
-            font-size: 26rpx;
-            margin-left: 10rpx;
-            max-width: 400rpx;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .nav-left {
+            flex: 2;
+            height: 80rpx; // 明确容器高度
+            display: flex;
+            align-items: center; // 垂直居中
+            position: relative; // 建立定位上下文
+
+            .app-name {
+                flex: 1;
+                color: #fff;
+                font-size: 40rpx;
+                font-weight: 700;
+                width: 300rpx;
+                // margin-left: 40rpx;
+                margin-bottom: 20rpx;
+                // margin-left: 50rpx;
+            }
+
+            .location-icon {
+                flex: 1;
+                display: flex;
+                align-items: flex-end;
+                padding: 10rpx 0;
+
+                .address-text {
+                    color: #fff;
+                    font-size: 30rpx;
+                    font-weight: 500;
+                    margin: 0 10rpx;
+                    width: 260rpx;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+            }
+        }
+
+        .nav-right {
+            flex: 1;
+        }
+
+    }
+
+
+
+
+    .search-box {
+        transition: all 0.3s;
+        transform-origin: top center;
+        box-sizing: border-box;
+        margin: 0 40rpx;
+
+        .search-input {
+            background: #fff;
+            border-radius: 40rpx;
+            transition: all 0.3s;
+            // 初始状态
+            // width: 600rpx;
+            height: 50rpx;
+            display: flex;
+            align-items: center;
+            padding: 0 50rpx;
+
+            .placeholder {
+                color: #666;
+                font-size: 28rpx;
+                margin-left: 15rpx;
+            }
         }
     }
+}
+
+
+/* 第二导航栏样式 */
+.fixed-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    transform: translateY(0);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    // padding-bottom: 20rpx;
 
     .search-box {
         padding: 20rpx 0 40rpx;
@@ -573,52 +649,6 @@ $secondary-color: #FFA99F;
         flex: 1;
         text-align: right;
         margin-left: -50rpx;
-    }
-}
-
-
-/* 第二导航栏样式 */
-.fixed-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    backdrop-filter: blur(10px);
-
-    .nav-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 100rpx;
-        padding: 0 30rpx;
-
-        .nav-left {
-            flex: 1;
-            display: flex;
-            align-items: center;
-
-            .address-text {
-                color: #fff;
-                font-size: 26rpx;
-                max-width: 200rpx;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-        }
-
-        .nav-title {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            font-size: 36rpx;
-            font-weight: bold;
-        }
-
-        .nav-right {
-            flex: 1;
-        }
     }
 }
 
@@ -759,6 +789,9 @@ $secondary-color: #FFA99F;
 .tabs-container {
     background: #fff;
     position: sticky;
+    margin-top: -20rpx;
+    border-top-left-radius: 20rpx;
+    border-top-right-radius: 20rpx;
     padding: 0 30rpx;
     z-index: 99;
     border-bottom: 0.0625rem solid #ddd;
