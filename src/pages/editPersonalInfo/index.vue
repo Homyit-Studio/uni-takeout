@@ -18,13 +18,6 @@
         <input class="input" v-model="userInfo.nickname" placeholder="请输入昵称" />
         <uni-icons type="compose" size="18" color="#999"></uni-icons>
       </view>
-      
-      <!-- 其他信息展示 -->
-      <view class="info-item" @click="showToast('手机号暂不可修改')">
-        <text class="label">手机号</text>
-        <text class="value">{{ userInfo.phone }}</text>
-        <uni-icons type="forward" size="18" color="#999"></uni-icons>
-      </view>
     </view>
     
     <!-- 保存按钮 -->
@@ -35,92 +28,162 @@
 </template>
 
 <script>
+import { request } from '@/utils/request'
+
 export default {
   data() {
     return {
       userInfo: {
-        avatar: '/static/merchant_pic.jpg', // 默认头像
-        nickname: '用户昵称',
-        phone: '138****1234' // 模拟手机号
-      }
+        avatar: '',
+        nickname: '',
+        id: null
+      },
+      isLoading: false,
+      originalInfo: {} // 用于保存原始数据，比较是否有修改
     }
   },
   methods: {
+    // 获取用户信息
+    async getUserInfo() {
+      try {
+        this.isLoading = true
+        uni.showLoading({ title: '加载中...' })
+        
+        const response = await request({
+          method: 'GET',
+          url: '/user/getUserInfo'
+        })
+        
+        if (response?.code === 200 && response.data) {
+          this.userInfo = {
+            avatar: response.data.avatar || '/static/default-avatar.png',
+            nickname: response.data.nickname || '未设置昵称',
+            id: response.data.id
+          }
+          // 保存原始数据用于比较
+          this.originalInfo = JSON.parse(JSON.stringify(this.userInfo))
+        } else {
+          throw new Error(response?.message || '获取用户信息失败')
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+        uni.showToast({
+          title: error.message || '获取信息失败',
+          icon: 'none'
+        })
+      } finally {
+        this.isLoading = false
+        uni.hideLoading()
+      }
+    },
+    
     // 修改头像
     changeAvatar() {
+      if (this.isLoading) return;
       uni.chooseImage({
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
         success: (res) => {
-          // 这里可以添加图片压缩逻辑
-          this.userInfo.avatar = res.tempFilePaths[0]
-          
-          // 模拟上传到服务器
-          this.uploadAvatar(res.tempFilePaths[0])
+          this.userInfo.avatar = res.tempFilePaths[0];
+        },
+        fail: (err) => {
+          console.error('选择图片失败:', err);
+          uni.showToast({
+            title: '选择图片失败',
+            icon: 'none'
+          });
         }
-      })
-    },
-    
-    // 模拟头像上传
-    uploadAvatar(filePath) {
-      // 这里应该是实际的上传接口
-      console.log('上传头像到服务器:', filePath)
-      // 模拟上传延迟
-      uni.showLoading({
-        title: '上传中...'
-      })
-      setTimeout(() => {
-        uni.hideLoading()
-        uni.showToast({
-          title: '头像上传成功',
-          icon: 'success'
-        })
-      }, 1500)
+      });
     },
     
     // 保存个人信息
-    saveProfile() {
+    async saveProfile() {
+      if (this.isLoading) return;
+      // 验证昵称
       if (!this.userInfo.nickname.trim()) {
         uni.showToast({
-          title: '昵称不能为空',
-          icon: 'none'
-        })
-        return
+            title: '昵称不能为空',
+            icon: 'none'
+        });
+        return;
       }
-      
-      // 这里应该是实际的保存接口
-      console.log('保存用户信息:', this.userInfo)
-      uni.showLoading({
-        title: '保存中...'
-      })
-      
-      // 模拟API请求
-      setTimeout(() => {
-        uni.hideLoading()
+      // 检查是否有修改
+      if (JSON.stringify(this.userInfo) === JSON.stringify(this.originalInfo)) {
         uni.showToast({
-          title: '保存成功',
-          icon: 'success'
-        })
-        
-        // 这里可以添加保存成功后的逻辑
-        // 例如更新全局用户信息
-        uni.$emit('userInfoUpdated', this.userInfo)
-      }, 1000)
+            title: '未修改任何信息',
+            icon: 'none'
+        });
+        return;
+      }
+      try {
+        this.isLoading = true;
+        uni.showLoading({ title: '保存中...' });
+        const userDTO = {
+            nickname: this.userInfo.nickname,
+            id: this.userInfo.id
+        };
+        let formData = {
+            userDTO: JSON.stringify(userDTO)
+        };
+        if (this.userInfo.avatar) {
+            // 如果头像为网络图片路径，直接添加到formData
+            if (this.userInfo.avatar.startsWith('http')) {
+                formData.file = this.userInfo.avatar;
+            } else {
+                // 将本地头像转换为base64格式
+                const base64Data = await new Promise((resolve, reject) => {
+                    uni.getFileSystemManager().readFile({
+                        filePath: this.userInfo.avatar,
+                        encoding: 'base64',
+                        success: (res) => resolve(res.data),
+                        fail: (err) => reject(err)
+                    });
+                });
+                formData.file = base64Data;
+            }
+        } else {
+            formData.file = '';
+        }
+        const response = await request({
+            method: 'POST',
+            url: '/user/updateInfo',
+            data: formData,
+            header: {
+                'Content-Type': 'application/json'
+            }
+        });
+        this.handleSaveResponse(response);
+      } catch (error) {
+        console.error('保存失败:', error);
+        uni.showToast({
+            title: error.message || '保存失败',
+            icon: 'none'
+        });
+      } finally {
+        this.isLoading = false;
+        uni.hideLoading();
+      }
     },
-    
-    // 提示信息
-    showToast(msg) {
-      uni.showToast({
-        title: msg,
-        icon: 'none'
-      })
+    // 处理保存响应
+    handleSaveResponse(response) {
+      if (response?.code === 200) {
+        uni.showToast({
+            title: '保存成功',
+            icon:'success'
+        });
+        // 更新原始数据
+        this.originalInfo = JSON.parse(JSON.stringify(this.userInfo));
+        // 通知其他组件用户信息已更新
+        uni.$emit('userInfoUpdated', this.userInfo);
+      } else {
+        throw new Error(response?.message || '保存失败');
+      }
     }
   },
   
   onLoad() {
-    // 这里可以添加从服务器获取用户信息的逻辑
-    // this.getUserInfo()
+    this.getUserInfo()
   }
 }
 </script>
@@ -174,19 +237,6 @@ export default {
   height: 100%;
 }
 
-.avatar-edit {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 50rpx;
-  height: 50rpx;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .info-item {
   display: flex;
   align-items: center;
@@ -205,13 +255,6 @@ export default {
 }
 
 .input {
-  flex: 1;
-  font-size: 30rpx;
-  color: #333;
-  padding-right: 20rpx;
-}
-
-.value {
   flex: 1;
   font-size: 30rpx;
   color: #333;
