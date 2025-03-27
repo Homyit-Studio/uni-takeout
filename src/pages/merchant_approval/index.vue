@@ -174,15 +174,17 @@ export default {
         // 提交审核结果
         async submitAuditResult(status, comment = '') {
             try {
-              this.isLoading = true;
+                this.isLoading = true;
+                // 确保 merchantId 是整数
+                const id = Number.isInteger(this.merchantId) ? this.merchantId : parseInt(this.merchantId);
+                // 构建 URL 参数
+                const queryParams = `id=${id}&applicationStatus=${encodeURIComponent(status)}&auditComment=${encodeURIComponent(comment)}`;
+                // 拼接完整的请求 URL
+                const url = `/admin/auditapplication?${queryParams}`;
+
                 const response = await request({
                     method: 'POST',
-                    url: '/admin/auditapplication',
-                    data: {
-                        id: Number.isInteger(this.merchantId) ? this.merchantId : parseInt(this.merchantId),
-                        applicationStatus: status,
-                        auditComment: comment
-                    }
+                    url: url
                 });
                 
                 if (response) {
