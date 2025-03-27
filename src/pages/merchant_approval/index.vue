@@ -8,7 +8,7 @@
             </view>
             <view class="info-item">
                 <text class="label">店铺头像</text>
-                <image :src="merchantInfo.shopAvatar" class="shop-avatar"></image>
+                <image :src="merchantInfo.shopPhoto || '/static/default-avatar.png'" class="shop-avatar"></image>
             </view>
             <view class="info-item">
                 <text class="label">店铺地址</text>
@@ -16,119 +16,195 @@
             </view>
             <view class="info-item">
                 <text class="label">店铺简介</text>
-                <text class="value">{{ merchantInfo.shopDescription }}</text>
+                <text class="value">{{ merchantInfo.shopIntroduction || '无' }}</text>
             </view>
             <view class="info-item">
                 <text class="label">营业执照</text>
-                <image :src="merchantInfo.businessLicense" class="license-image"></image>
+                <image :src="merchantInfo.businessLicenseImage || '/static/default-license.png'" class="license-image"></image>
             </view>
             <view class="info-item">
-                <text class="label">备注</text>
-                <text class="value">{{ merchantInfo.otherNotes || '无' }}</text>
+                <text class="label">联系电话</text>
+                <text class="value">{{ merchantInfo.shopPhone }}</text>
             </view>
         </view>
 
         <!-- 审核状态 -->
         <view class="audit-status">
             <text class="status-label">审核状态：</text>
-            <text :class="['status', auditStatusClass]">{{ auditStatusText }}</text>
+            <text :class="['status', getStatusClass(merchantInfo.applicationStatus)]">
+                {{ merchantInfo.applicationStatus || '未知状态' }}
+            </text>
         </view>
 
         <!-- 审核操作 -->
-        <view class="audit-actions">
-            <button class="action-btn approve" @click="handleApprove">通过</button>
-            <button class="action-btn reject" @click="handleReject">拒绝</button>
+        <view v-if="merchantInfo.applicationStatus === '待审核'" class="audit-actions">
+            <button class="action-btn approve" @click="showApproveDialog">通过</button>
+            <button class="action-btn reject" @click="showRejectDialog">拒绝</button>
         </view>
 
-        <!-- 备注输入 -->
-        <view class="remark-input">
-            <textarea v-model="remark" placeholder="请输入审核备注（可选）" class="remark-textarea"></textarea>
-        </view>
+        <!-- 审核对话框 -->
+        <uni-popup ref="approveDialog" type="dialog">
+            <uni-popup-dialog 
+                mode="input" 
+                title="通过审核" 
+                placeholder="请输入审核意见（可选）"
+                @confirm="confirmApprove"
+            ></uni-popup-dialog>
+        </uni-popup>
+
+        <uni-popup ref="rejectDialog" type="dialog">
+            <uni-popup-dialog 
+                mode="input" 
+                title="拒绝审核" 
+                placeholder="请输入拒绝原因（建议填写）"
+                @confirm="confirmReject"
+            ></uni-popup-dialog>
+        </uni-popup>
     </view>
 </template>
 
 <script>
+import { request } from '@/utils/request'
+
 export default {
     data() {
         return {
-            // 商户提交的信息
-            merchantInfo: {
-                shopName: '拼小圈',
-                shopAvatar: '/static/merchant_pic.jpg',
-                shopAddress: '北京市朝阳区某街道某号', // 添加店铺地址
-                shopDescription: '一家专注于本地生活服务的店铺',
-                businessLicense: '/static/logo.png',
-                otherNotes: '希望尽快审核通过',
-            },
-            auditStatus: 'pending', // 审核状态：pending（待审核）、approved（通过）、rejected（拒绝）
-            remark: '', // 审核备注
+            merchantId: null,
+            merchantInfo: {},
+            isLoading: false
         };
     },
-    computed: {
-        // 审核状态文本
-        auditStatusText() {
-            switch (this.auditStatus) {
-                case 'pending':
-                    return '待审核';
-                case 'approved':
-                    return '已通过';
-                case 'rejected':
-                    return '已拒绝';
-                default:
-                    return '未知状态';
-            }
-        },
-        // 审核状态样式
-        auditStatusClass() {
-            switch (this.auditStatus) {
-                case 'pending':
-                    return 'pending';
-                case 'approved':
-                    return 'approved';
-                case 'rejected':
-                    return 'rejected';
-                default:
-                    return '';
-            }
-        },
+    onLoad(options) {
+        this.merchantId = parseInt(options.id); 
+        this.fetchMerchantInfo();
     },
     methods: {
-        // 处理通过操作
-        handleApprove() {
+        // 获取商户信息
+        async fetchMerchantInfo() {
+            try {
+                this.isLoading = true;
+                const response = await request({
+                    method: 'GET',
+                    url: '/admin/getapplications',
+                });
+                
+                if (response && response.data) {
+                    const merchant = response.data.find(item => item.id == this.merchantId);
+                    if (merchant) {
+                        this.merchantInfo = merchant;
+                    } else {
+                        uni.showToast({
+                            title: '未找到商户信息',
+                            icon: 'none'
+                        });
+                        setTimeout(() => {
+                            uni.navigateBack();
+                        }, 1500);
+                    }
+                }
+            } catch (error) {
+                console.error('获取商户信息失败:', error);
+                uni.showToast({
+                    title: '获取商户信息失败',
+                    icon: 'none'
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        
+        // 获取状态对应的CSS类名
+        getStatusClass(status) {
+            switch (status) {
+                case '待审核': return 'pending';
+                case '审核通过': return 'approved';
+                case '审核不通过': return 'rejected';
+                default: return 'unknown';
+            }
+        },
+        
+        // 显示通过审核对话框
+        showApproveDialog() {
+            this.$refs.approveDialog.open();
+        },
+        
+        // 显示拒绝审核对话框
+        showRejectDialog() {
+            this.$refs.rejectDialog.open();
+        },
+        
+        // 确认通过审核
+        confirmApprove(comment) {
             uni.showModal({
-                title: '提示',
-                content: '确定通过该商户的入驻申请吗？',
+                title: '确认通过',
+                content: '确定要通过该商户的申请吗？',
                 success: (res) => {
                     if (res.confirm) {
-                        this.auditStatus = 'approved';
-                        this.submitAuditResult('approved');
+                        this.submitAuditResult('审核通过', comment);
                     }
-                },
+                }
             });
         },
-        // 处理拒绝操作
-        handleReject() {
-            uni.showModal({
-                title: '提示',
-                content: '确定拒绝该商户的入驻申请吗？',
-                success: (res) => {
-                    if (res.confirm) {
-                        this.auditStatus = 'rejected';
-                        this.submitAuditResult('rejected');
+        
+        // 确认拒绝审核
+        confirmReject(comment) {
+            if (!comment) {
+                uni.showModal({
+                    title: '提示',
+                    content: '建议填写拒绝原因，是否继续提交？',
+                    success: (res) => {
+                        if (res.confirm) {
+                            this.submitAuditResult('审核不通过', comment);
+                        }
                     }
-                },
-            });
+                });
+            } else {
+                uni.showModal({
+                    title: '确认拒绝',
+                    content: '确定要拒绝该商户的申请吗？',
+                    success: (res) => {
+                        if (res.confirm) {
+                            this.submitAuditResult('审核不通过', comment);
+                        }
+                    }
+                });
+            }
         },
+        
         // 提交审核结果
-        submitAuditResult(status) {
-            // 这里可以添加提交审核结果的逻辑，如发送请求到服务器
-            console.log('审核结果：', status);
-            console.log('审核备注：', this.remark);
-            uni.showToast({
-                title: `审核${status === 'approved'? '通过' : '拒绝'}成功`,
-                icon:'success',
-            });
-        },
+        async submitAuditResult(status, comment = '') {
+            try {
+              this.isLoading = true;
+                const response = await request({
+                    method: 'POST',
+                    url: '/admin/auditapplication',
+                    data: {
+                        id: Number.isInteger(this.merchantId) ? this.merchantId : parseInt(this.merchantId),
+                        applicationStatus: status,
+                        auditComment: comment
+                    }
+                });
+                
+                if (response) {
+                    uni.showToast({
+                        title: `审核${status === '审核通过' ? '通过' : '拒绝'}成功`,
+                        icon: 'success'
+                    });
+                    this.merchantInfo.applicationStatus = status;
+                    setTimeout(() => {
+                        uni.navigateBack();
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error('提交审核结果失败:', error);
+                uni.showToast({
+                    title: '提交审核结果失败',
+                    icon: 'none'
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        }
     },
 };
 </script>
@@ -140,6 +216,7 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
+    background-color: #f5f5f5;
 }
 
 /* 商户信息 */
@@ -150,6 +227,7 @@ export default {
     margin-bottom: 30px;
     width: 90%;
     max-width: 800px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .info-item {
@@ -182,10 +260,11 @@ export default {
 
 .license-image {
     width: 80%;
-    height: 100px;
+    height: 200px;
     border-radius: 10px;
     border: 1px solid #e0e0e0;
-    object-fit: cover;
+    object-fit: contain;
+    background-color: #f9f9f9;
 }
 
 /* 审核状态 */
@@ -198,6 +277,7 @@ export default {
     max-width: 800px;
     display: flex;
     align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .status-label {
@@ -224,6 +304,10 @@ export default {
     color: #ff3d00; 
 }
 
+.status.unknown {
+    color: #999;
+}
+
 /* 审核操作 */
 .audit-actions {
     display: flex;
@@ -236,7 +320,7 @@ export default {
 .action-btn {
     flex: 1;
     border-radius: 10px;
-    padding: 5px;
+    padding: 15px;
     font-size: 18px;
     text-align: center;
     border: none;
@@ -265,33 +349,5 @@ export default {
 .action-btn.reject:active {
     background-color: #c51162; 
     transform: translateY(2px); 
-}
-
-/* 备注输入 */
-.remark-input {
-    background-color: #ffffff;
-    border-radius: 16px;
-    padding: 15px;
-    width: 90%;
-    max-width: 800px;
-}
-
-.remark-textarea {
-    width: 100%;
-    height: 50px;
-    /* border: 1px solid #e0e0e0; */
-    border-radius: 10px;
-    /* padding: 15px; */
-    padding-left: 10px;
-    padding-top: 10px;
-    font-size: 16px;
-    color: #333333;
-    background-color: #f5f5f5;
-    transition: border-color 0.3s ease;
-}
-
-.remark-textarea:focus {
-    border-color: #007aff; 
-    outline: none;
 }
 </style>

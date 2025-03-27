@@ -9,10 +9,12 @@
 
             <!-- 商户列表项 -->
             <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item" @click="navigateToDetail(merchant)">
-                <image :src="merchant.shopAvatar" class="merchant-avatar"></image>
+                <image :src="merchant.shopPhoto || '/static/default-avatar.png'" class="merchant-avatar"></image>
                 <view class="merchant-info">
                     <text class="shop-name">{{ merchant.shopName }}</text>
-                    <text :class="['status', merchant.auditStatus]">{{ getStatusText(merchant.auditStatus) }}</text>
+                    <text :class="['status', getStatusClass(merchant.applicationStatus)]">
+                        {{ getStatusDisplayText(merchant.applicationStatus) }}
+                    </text>
                 </view>
                 <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
             </view>
@@ -21,51 +23,57 @@
 </template>
 
 <script>
+import { request } from '@/utils/request'
+
 export default {
     data() {
         return {
-            // 商户列表数据
-            merchantList: [
-                {
-                    id: 1,
-                    shopName: '拼小圈',
-                    shopAvatar: '/static/merchant_pic.jpg',
-                    auditStatus: 'pending', // 审核状态：pending（待审核）、approved（通过）、rejected（拒绝）
-                },
-                {
-                    id: 2,
-                    shopName: '美食坊',
-                    shopAvatar: '/static/merchant_pic.jpg',
-                    auditStatus: 'approved',
-                },
-                {
-                    id: 3,
-                    shopName: '饮品店',
-                    shopAvatar: '/static/merchant_pic.jpg',
-                    auditStatus: 'rejected',
-                },
-            ],
+            merchantList: [],
+            isLoading: false
         };
     },
+    created() {
+        this.fetchMerchantList();
+    },
     methods: {
-        // 处理搜索
-        handleSearch(value) {
-            console.log('搜索内容：', value);
-            // 这里可以添加搜索逻辑
-        },
-        // 获取审核状态文本
-        getStatusText(status) {
-            switch (status) {
-                case 'pending':
-                    return '待审核';
-                case 'approved':
-                    return '已通过';
-                case 'rejected':
-                    return '已拒绝';
-                default:
-                    return '未知状态';
+        // 获取商户列表
+        async fetchMerchantList() {
+            try {
+                this.isLoading = true;
+                const response = await request({
+                    method: 'GET',
+                    url: '/admin/getapplications',
+                });
+                
+                if (response && response.data) {
+                    this.merchantList = response.data;
+                }
+            } catch (error) {
+                console.error('获取商户列表失败:', error);
+                uni.showToast({
+                    title: '获取商户列表失败',
+                    icon: 'none'
+                });
+            } finally {
+                this.isLoading = false;
             }
         },
+        
+        // 获取状态对应的CSS类名
+        getStatusClass(status) {
+            switch (status) {
+                case '待审核': return 'pending';
+                case '审核通过': return 'approved';
+                case '审核不通过': return 'rejected';
+                default: return 'unknown';
+            }
+        },
+        
+        // 获取状态显示文本（直接使用接口返回的状态文本）
+        getStatusDisplayText(status) {
+            return status; // 直接显示接口返回的状态文本
+        },
+        
         // 跳转到商户详情页面
         navigateToDetail(merchant) {
             uni.navigateTo({
@@ -77,13 +85,13 @@ export default {
 </script>
 
 <style scoped>
+/* 原有样式保持不变 */
 .merchant-list-container {
     padding: 20px;
     background-color: #f5f5f5;
     min-height: 100vh;
 }
 
-/* 商户列表 */
 .merchant-list {
     background-color: #fff;
     border-radius: 8px;
@@ -91,7 +99,6 @@ export default {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 商户列表项 */
 .merchant-item {
     display: flex;
     align-items: center;
@@ -135,14 +142,17 @@ export default {
 }
 
 .status.approved {
-    color: #52c41a; /* 已通过：绿色 */
+    color: #52c41a; /* 审核通过：绿色 */
 }
 
 .status.rejected {
-    color: #f5222d; /* 已拒绝：红色 */
+    color: #f5222d; /* 审核不通过：红色 */
 }
 
-/* 无数据提示 */
+.status.unknown {
+    color: #999; /* 未知状态：灰色 */
+}
+
 .empty-tip {
     display: flex;
     justify-content: center;
