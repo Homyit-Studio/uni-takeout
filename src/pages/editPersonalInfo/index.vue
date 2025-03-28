@@ -138,7 +138,7 @@ export default {
           filePath: this.tempAvatarPath, // 确保文件路径有效
           name: 'file',
           formData: {
-            userDTO: userDTO, // 直接传递字段值
+            "nickName": userDTO.nickname, // 直接传递字段值
           },
           header: { 'Content-Type': 'multipart/form-data' },
           success: (res) => {

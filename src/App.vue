@@ -42,6 +42,7 @@ const login = async () => {
         )
         console.log(data)
         useToken.setToken(data.data)
+
       } catch (e) {
         console.log("登录失败", e)
       }

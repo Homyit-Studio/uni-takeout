@@ -331,13 +331,14 @@ onShow(async () => {
         defaultAddress.value = savedAddress.address
     }
     allStore()
+    loadHotStores()
 })
 
 // 使用onReachBottom替代scrolltolower
 onReachBottom(() => {
     if (!hasMore.value) return
     page.value++
-    // loadHotStores()
+    loadHotStores()
 })
 
 const isNavSticky = ref(false)
@@ -371,34 +372,34 @@ const switchTab = (index) => {
 }
 
 // // 方法
-// const loadHotStores = () => {
-//     return new Promise((resolve) => {
-//         setTimeout(() => {
-//             const mockData = Array.from({ length: 10 }, (_, i) => ({
-//                 id: i + (page.value - 1) * pageSize.value,
-//                 name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
-//                 description: '特色美食，欢迎品尝',
-//                 image: '/static/goods.png',
-//                 hotProduct: {
-//                     name: '招牌菜品',
-//                     price: Math.floor(Math.random() * 50 + 10)
-//                 }
-//             }))
+const loadHotStores = () => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const mockData = Array.from({ length: 10 }, (_, i) => ({
+                id: i + (page.value - 1) * pageSize.value,
+                name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
+                description: '特色美食，欢迎品尝',
+                image: '/static/goods.png',
+                hotProduct: {
+                    name: '招牌菜品',
+                    price: Math.floor(Math.random() * 50 + 10)
+                }
+            }))
 
-//             if (page.value === 1) {
-//                 hotStores.value = mockData
-//             } else {
-//                 hotStores.value = [...hotStores.value, ...mockData]
-//             }
+            if (page.value === 1) {
+                hotStores.value = mockData
+            } else {
+                hotStores.value = [...hotStores.value, ...mockData]
+            }
 
-//             if (page.value >= 3) {
-//                 hasMore.value = false
-//             }
+            if (page.value >= 3) {
+                hasMore.value = false
+            }
 
-//             resolve()
-//         }, 1000)
-//     })
-// }
+            resolve()
+        }, 1000)
+    })
+}
 
 // 获取商家数据
 const allStore = async () => {

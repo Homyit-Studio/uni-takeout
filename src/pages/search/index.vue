@@ -26,9 +26,10 @@
       <view class="result-count">共找到{{ filteredGoods.length }}件商品</view>
       <view class="goods-list">
         <view class="goods-item" v-for="item in filteredGoods" :key="item.id">
-          <image class="goods-image" :src="item.image" mode="aspectFit"></image>
+          <image class="goods-image" :src="item.image" mode="aspectFill"></image>
           <view class="goods-info">
             <text class="goods-title">{{ item.name }}</text>
+            <text class="goods-intro">{{ item.introduction }}</text>
             <text class="goods-price">¥{{ item.price }}</text>
           </view>
         </view>
@@ -39,18 +40,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { request } from '../../utils/request'
 
 // 搜索相关状态
 const searchText = ref('')
 const showResults = ref(false)
 const searchHistory = ref([])
-
-// 模拟商品数据
-const goodsList = ref([
-  { id: 1, name: '苹果 iPhone 13', price: 5999, image: '/static/phone.jpg' },
-  { id: 2, name: '小米 智能电视', price: 3299, image: '/static/tv.jpg' },
-  // 更多商品数据...
-])
+const goodsList = ref([])
 
 // 初始化读取本地历史记录
 onMounted(() => {
@@ -59,9 +55,22 @@ onMounted(() => {
 })
 
 // 处理搜索
-const handleSearch = () => {
+const handleSearch = async () => {
   if (!searchText.value.trim()) return
+  try {
+    // 从接口获取商品数据
+    const res = await request({
+      url: '/product/userselect',
+      method: 'POST',
+      data: { name: searchText.value }
+    })
+    console.log(res.data)
 
+    // 将接口返回的数据赋值给 goodsList
+    goodsList.value = res.data
+  } catch (error) {
+    console.error('搜索失败', error)
+  }
   addToHistory(searchText.value.trim())
   showResults.value = true
 }
@@ -175,7 +184,7 @@ const filteredGoods = computed(() => {
   .goods-list {
     .goods-item {
       display: flex;
-      padding: 30rpx;
+      padding: 10rpx;
       background: white;
       border-radius: 16rpx;
       margin-bottom: 20rpx;
@@ -183,6 +192,7 @@ const filteredGoods = computed(() => {
       .goods-image {
         width: 200rpx;
         height: 200rpx;
+        border-radius: 20rpx;
         margin-right: 30rpx;
       }
 
@@ -202,6 +212,11 @@ const filteredGoods = computed(() => {
         font-size: 32rpx;
         color: #ff5500;
         font-weight: bold;
+      }
+
+      .goods-intro {
+        font-size: 24rpx;
+        color: #666;
       }
     }
   }
