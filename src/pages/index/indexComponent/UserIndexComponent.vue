@@ -3,8 +3,7 @@
 
         <!-- 第一导航栏（需要上滑隐藏的） -->
         <view class="first-nav" :style="{
-            transform: `translateY(${-scrollY * 0.5}px) scale(${1 - scrollProgress})`,
-            opacity: 1 - scrollProgress,
+            transform: `scale(${1 - scrollProgress * 0.1})`,
             paddingTop: statusBarHeight + 'px'
         }">
             <!-- 位置信息 -->
@@ -24,11 +23,11 @@
                 </view>
             </view>
             <!-- 搜索框 -->
-            <view class="search-box">
-                <view class="search-input" @click="goToSearch">
-                    <uni-icons type="search" size="18" color="#999"></uni-icons>
+            <view class="search-box" @click="goToSearch">
+                <view class="search-input">
                     <text class="placeholder">搜索商家、美食</text>
                 </view>
+                <uni-icons style="padding: 0 50rpx;" type="search" size="30" color="#999"></uni-icons>
             </view>
 
             <swiper class="banner-swiper" :autoplay="true" :circular="true" indicator-active-color="#FF719A">
@@ -36,17 +35,6 @@
                     <image :src="item.image" mode="aspectFill" class="banner-image" />
                 </swiper-item>
             </swiper>
-
-            <view class="scrolling-alert">
-                <view class="scroll-container">
-                    <transition-group name="fade-slide" tag="view" class="scroll-content">
-                        <view v-for="(message, index) in visibleMessages" :key="message" class="scroll-item">
-                            {{ message }} 最近{{ recentJoinCount }}人正在拼团...
-                        </view>
-                    </transition-group>
-                </view>
-            </view>
-
         </view>
 
         <!-- 第二导航栏（固定显示的） -->
@@ -107,6 +95,19 @@
                     :class="{ active: currentTab === index }" @click="switchTab(index)">
                     {{ tab.name }}
                     <view class="tab-line" v-if="currentTab === index"></view>
+                </view>
+            </view>
+        </view>
+        <!-- 滚动提示部分 -->
+        <view class="scrolling-alert">
+            <view class="scroll-container">
+                <view class="scroll-content">
+                    <view v-for="(message, index) in visibleMessages" :key="index" class="scroll-item" :class="{
+                        'item-active': index === 0,
+                        'item-next': index === 1
+                    }">
+                        {{ message }} 最近{{ recentJoinCount }}人正在拼团...
+                    </view>
                 </view>
             </view>
         </view>
@@ -183,8 +184,10 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { onPageScroll, onReachBottom, onShow } from '@dcloudio/uni-app'
+import { request } from '../../../utils/request'
 /*
-* 重要：使用 defineProps() 定义 props
+* 重要：
+* 不然滚动无效果
 */
 const props = defineProps({
     scrollTop: {
@@ -227,7 +230,8 @@ const scrollingMessages = ref([
     '用户F 的拼团即将满员！'
 ])
 // 修改后的数据逻辑
-const visibleMessages = ref([])
+const currentIndex = ref(0)
+const visibleMessages = ref([scrollingMessages.value[0]])
 
 // 响应式状态
 const hotStores = ref([])
@@ -277,18 +281,17 @@ const tabsStyle = computed(() => ({
 }))
 
 
-watch(() => props.scrollTop, (newVal) => {
-    const progress = Math.min(newVal / 100, 1)
-    scrollProgress.value = progress
-})
+// watch(() => props.scrollTop, (newVal) => {
+//     const progress = Math.min(newVal / 50, 1)
+//     scrollProgress.value = progress
+// })
 
 onPageScroll((e) => {
     scrollY.value = e.scrollTop
     // 计算滚动进度（0-1之间）
     const maxScroll = 200 // 控制滚动效果的最大滚动距离
     scrollProgress.value = Math.min(e.scrollTop / maxScroll, 1)
-    const progress = Math.min(e.scrollTop / 100, 1)
-    scrollProgress.value = progress
+
 })
 onMounted(() => {
     startMessageRotation()
@@ -309,9 +312,6 @@ onMounted(() => {
             tabsOffsetTop.value = rect.top
         }
     }).exec()
-
-    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
-    loadHotStores()
     // 获取搜索栏的初始位置
     query.select('.search-bar-anchor').boundingClientRect(rect => {
         if (rect) {
@@ -330,13 +330,14 @@ onShow(async () => {
         // defaultAddress.value = `${defaultAddr.province}${defaultAddr.city}${defaultAddr.area}${defaultAddr.detail}`
         defaultAddress.value = savedAddress.address
     }
+    allStore()
 })
 
 // 使用onReachBottom替代scrolltolower
 onReachBottom(() => {
     if (!hasMore.value) return
     page.value++
-    loadHotStores()
+    // loadHotStores()
 })
 
 const isNavSticky = ref(false)
@@ -348,14 +349,20 @@ onPageScroll(({ scrollTop }) => {
 })
 // 动态滚动
 const startMessageRotation = () => {
-    let currentIndex = 0
-    // 初始显示第一条
-    visibleMessages.value = [scrollingMessages.value[currentIndex]]
     setInterval(() => {
-        currentIndex = (currentIndex + 1) % scrollingMessages.value.length
-        // 先添加新消息
-        visibleMessages.value = [scrollingMessages.value[currentIndex]]
-    }, 3000) // 3秒切换一次
+        currentIndex.value = (currentIndex.value + 1) % scrollingMessages.value.length
+
+        // 先添加新消息（保持两条数据）
+        visibleMessages.value = [
+            scrollingMessages.value[currentIndex.value],
+            scrollingMessages.value[(currentIndex.value + 1) % scrollingMessages.value.length]
+        ]
+
+        // 500ms后移除旧消息
+        setTimeout(() => {
+            visibleMessages.value = [scrollingMessages.value[currentIndex.value]]
+        }, 500)
+    }, 3000)
 }
 
 // 切换标签
@@ -363,34 +370,46 @@ const switchTab = (index) => {
     currentTab.value = index
 }
 
-// 方法
-const loadHotStores = () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const mockData = Array.from({ length: 10 }, (_, i) => ({
-                id: i + (page.value - 1) * pageSize.value,
-                name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
-                description: '特色美食，欢迎品尝',
-                image: '/static/goods.png',
-                hotProduct: {
-                    name: '招牌菜品',
-                    price: Math.floor(Math.random() * 50 + 10)
-                }
-            }))
+// // 方法
+// const loadHotStores = () => {
+//     return new Promise((resolve) => {
+//         setTimeout(() => {
+//             const mockData = Array.from({ length: 10 }, (_, i) => ({
+//                 id: i + (page.value - 1) * pageSize.value,
+//                 name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
+//                 description: '特色美食，欢迎品尝',
+//                 image: '/static/goods.png',
+//                 hotProduct: {
+//                     name: '招牌菜品',
+//                     price: Math.floor(Math.random() * 50 + 10)
+//                 }
+//             }))
 
-            if (page.value === 1) {
-                hotStores.value = mockData
-            } else {
-                hotStores.value = [...hotStores.value, ...mockData]
-            }
+//             if (page.value === 1) {
+//                 hotStores.value = mockData
+//             } else {
+//                 hotStores.value = [...hotStores.value, ...mockData]
+//             }
 
-            if (page.value >= 3) {
-                hasMore.value = false
-            }
+//             if (page.value >= 3) {
+//                 hasMore.value = false
+//             }
 
-            resolve()
-        }, 1000)
-    })
+//             resolve()
+//         }, 1000)
+//     })
+// }
+
+// 获取商家数据
+const allStore = async () => {
+    try {
+        const res = await request({
+            url: '/shop/getshops'
+        })
+        console.log(res.data)
+    } catch (error) {
+        console.log("获取商家数据失败", error)
+    }
 }
 
 // 跳转到地址页面
@@ -523,18 +542,19 @@ $secondary-color: #FFA99F;
 
     }
 
-
-
-
     .search-box {
         transition: all 0.3s;
         transform-origin: top center;
         box-sizing: border-box;
+        display: flex;
+        // width: calc(100% - 80rpx);
+        justify-content: space-between;
         margin: 0 40rpx;
+        border-radius: 10rpx;
+        background: #fff;
 
         .search-input {
-            background: #fff;
-            border-radius: 40rpx;
+
             transition: all 0.3s;
             // 初始状态
             // width: 600rpx;
@@ -562,7 +582,7 @@ $secondary-color: #FFA99F;
     z-index: 100;
     transform: translateY(0);
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+    // box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
     background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
     // padding-bottom: 20rpx;
 
@@ -652,72 +672,56 @@ $secondary-color: #FFA99F;
     }
 }
 
-/* 修改后的动画样式 */
-.scroll-container {
-    height: 80rpx;
+.scrolling-alert {
+    height: 60rpx;
     overflow: hidden;
     position: relative;
-}
-
-.scroll-content {
-    position: relative;
-    height: 100%;
-}
-
-/* 入场动画 */
-.fade-slide-enter-active {
-    transition: all 0.5s ease;
-    position: absolute;
-    width: 100%;
-}
-
-.fade-slide-leave-active {
-    transition: all 0.5s ease;
-    position: absolute;
-    width: 100%;
-}
-
-.fade-slide-enter-from {
-    opacity: 0;
-    transform: translateY(100%);
-}
-
-.fade-slide-leave-to {
-    opacity: 0;
-    transform: translateY(-100%);
-}
-
-.fade-slide-enter-to,
-.fade-slide-leave-from {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* 调整后的滚动提示样式 */
-.scrolling-alert {
     background: #fff8e6;
-    margin: 30rpx;
+    margin: 20rpx 20rpx;
     border-radius: 10rpx;
-    height: 80rpx;
-    position: relative;
-    padding-left: 80rpx;
-}
 
-.scroll-item {
-    height: 80rpx;
-    line-height: 80rpx;
-    font-size: 26rpx;
-    color: #ff9900;
-    white-space: nowrap;
-    padding-right: 30rpx;
+    .scroll-container {
+        height: 100%;
+        position: relative;
+        margin-left: 100rpx;
+
+        .scroll-content {
+            height: 100%;
+            position: relative;
+
+            .scroll-item {
+                position: absolute;
+                width: 100%;
+                height: 60rpx;
+                line-height: 60rpx;
+                font-size: 26rpx;
+                color: #ff9900;
+                transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                transform: translateY(100%);
+                opacity: 0;
+
+                &.item-active {
+                    transform: translateY(0);
+                    opacity: 1;
+                    z-index: 2;
+                }
+
+                &.item-next {
+                    transform: translateY(-100%);
+                    opacity: 0;
+                    z-index: 1;
+                }
+            }
+        }
+    }
 }
 
 
 
 .banner-swiper {
     height: 300rpx;
-    margin: 10rpx;
-    border-radius: 20rpx;
+    margin: 25rpx;
+    border-radius: 10rpx;
     overflow: hidden;
 
     .banner-image {

@@ -1,13 +1,13 @@
 <template>
     <view class="container">
         <!-- 页面标题 -->
-        <view class="header" :style="{ paddingTop: statusBarHeight + 8 + 'px' }">
+        <view class="header" :style="{ paddingTop: statusBarHeight + 'px' }">
             <text class="title">我的订单</text>
             <view class="header-gradient"></view>
         </view>
 
         <!-- 订单类型选项卡 -->
-        <scroll-view class="tabs" :style="{ top: statusBarHeight + 36 + 'px' }" scroll-x :scroll-with-animation="true">
+        <scroll-view class="tabs" :style="{ top: statusBarHeight + 40 + 'px' }" scroll-x :scroll-with-animation="true">
             <view class="tab-container">
                 <view class="tab-item" v-for="(tab, index) in tabs" :key="index"
                     :class="{ active: currentTab === index }" @click="switchTab(index)">
@@ -259,7 +259,7 @@ $border-color: #eee;
         font-size: 48rpx;
         font-weight: 600;
         color: #fff;
-        text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+        // text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
     }
 
     .header-gradient {
