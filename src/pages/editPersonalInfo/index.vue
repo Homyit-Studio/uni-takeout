@@ -4,7 +4,7 @@
     <view class="profile-header">
       <view class="header-bg"></view>
     </view>
-    
+
     <!-- 用户信息卡片 -->
     <view class="profile-card">
       <!-- 头像区域 -->
@@ -12,7 +12,7 @@
         <image class="avatar" :src="userInfo.avatar" mode="aspectFill"></image>
         <view class="avatar-mask">点击更换</view>
       </view>
-      
+
       <!-- 昵称编辑 -->
       <view class="info-item">
         <text class="label">昵称</text>
@@ -20,7 +20,7 @@
         <uni-icons type="compose" size="18" color="#999"></uni-icons>
       </view>
     </view>
-    
+
     <!-- 保存按钮 -->
     <button class="save-btn" :disabled="isLoading" @click="saveProfile">
       <text>{{ isLoading ? '保存中...' : '保存修改' }}</text>
@@ -50,12 +50,12 @@ export default {
       try {
         this.isLoading = true
         uni.showLoading({ title: '加载中...' })
-        
+
         const response = await request({
           method: 'GET',
           url: '/user/getUserInfo'
         })
-        
+
         if (response?.code === 200 && response.data) {
           this.userInfo = {
             avatar: response.data.avatar || '/static/default-avatar.png',
@@ -76,11 +76,11 @@ export default {
         uni.hideLoading()
       }
     },
-    
+
     // 修改头像
     changeAvatar() {
       if (this.isLoading) return
-      
+
       uni.chooseImage({
         count: 1,
         sizeType: ['compressed'],
@@ -100,97 +100,91 @@ export default {
         }
       })
     },
-    
-    // 保存个人信息
+
     async saveProfile() {
-      if (this.isLoading) return
-      
+      if (this.isLoading) return;
+
       // 验证昵称
       if (!this.userInfo.nickname.trim()) {
         uni.showToast({
           title: '昵称不能为空',
           icon: 'none'
-        })
-        return
+        });
+        return;
       }
-      
+
       // 检查是否有修改
       if (!this.hasChanged && !this.tempAvatarPath) {
         uni.showToast({
           title: '未修改任何信息',
           icon: 'none'
-        })
-        return
+        });
+        return;
       }
-      
-    try {
-    this.isLoading = true;
-    uni.showLoading({ title: '保存中...' });
 
-    // 准备用户数据
-    const userDTO = {
-      nickname: this.userInfo.nickname,
-    };
+      try {
+        this.isLoading = true;
+        uni.showLoading({ title: '保存中...' });
 
-    // 统一使用uni.uploadFile上传
-    const uploadRes = await new Promise((resolve, reject) => {
-      const uploadTask = uni.uploadFile({
-        url: '/user/updateInfo', 
-        file: this.tempAvatarFile,
-        filePath: this.tempAvatarPath,
-        name: 'file',
-        formData: {
-          // 将userDTO转为JSON字符串传递
-          userDTO: JSON.stringify(userDTO)
-        },
-        success: (res) => {
-          // 小程序环境需要手动解析响应数据
-          try {
-            const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-            resolve({ ...res, data }); // 合并解析后的数据
-          } catch (e) {
-            reject(new Error('解析响应失败'));
+        // 准备用户数据
+        const userDTO = {
+          nickname: this.userInfo.nickname,
+        };
+
+        // 统一使用uni.uploadFile上传
+
+        const uploadRes = uni.uploadFile({
+          url: '/user/updateInfo', // 确保接口地址正确
+          filePath: this.tempAvatarPath, // 确保文件路径有效
+          name: 'file',
+          formData: {
+            userDTO: userDTO, // 直接传递字段值
+          },
+          header: { 'Content-Type': 'multipart/form-data' },
+          success: (res) => {
+            console.log('上传响应:', res);
+          },
+          fail: (err) => {
+            console.error('上传失败:', err);
           }
-        },
-        fail: reject
-      });
+        });
 
-      // 上传进度监听
-      uploadTask.onProgressUpdate((res) => {
-        console.log('上传进度:', res.progress);
-      });
-    });
+        // 上传进度监听
+        uploadRes.onProgressUpdate((res) => {
+          console.log('上传进度:', res.progress);
+        });
 
-    // 处理响应
-    if (uploadRes.data?.code === 200) {
-      uni.showToast({ title: '保存成功', icon: 'success' });
-      
-      // 更新本地数据
-      if (uploadRes.data.data?.avatar) {
-        this.userInfo.avatar = uploadRes.data.data.avatar;
-        this.originalAvatar = uploadRes.data.data.avatar;
+        // 处理响应
+        if (uploadRes.data?.code === 200) {
+          uni.showToast({ title: '保存成功', icon: 'success' });
+
+          // 更新本地数据
+          if (uploadRes.data.data?.avatar) {
+            this.userInfo.avatar = uploadRes.data.data.avatar;
+            this.originalAvatar = uploadRes.data.data.avatar;
+          }
+
+          // 重置状态
+          this.tempAvatarPath = '';
+          this.hasChanged = false;
+          uni.$emit('userInfoUpdated', this.userInfo);
+        } else {
+          throw new Error(uploadRes.data?.message || '保存失败');
+        }
+      } catch (error) {
+        console.error('保存失败:', error);
+        console.error('后端返回的响应:', error.response?.data || error.message);
+        uni.showToast({
+          title: error.response?.data?.message || '保存失败',
+          icon: 'none'
+        });
+      } finally {
+        this.isLoading = false;
+        uni.hideLoading();
       }
-      
-      // 重置状态
-      this.tempAvatarPath = '';
-      this.hasChanged = false;
-      uni.$emit('userInfoUpdated', this.userInfo);
-    } else {
-      throw new Error(uploadRes.data?.message || '保存失败');
     }
-  } catch (error) {
-    console.error('保存失败:', error);
-    uni.showToast({
-      title: error.message || '保存失败',
-      icon: 'none'
-    });
-  } finally {
-    this.isLoading = false;
-    uni.hideLoading();
-  }
-}
   },
-  
+
   onLoad() {
     this.getUserInfo()
   }
