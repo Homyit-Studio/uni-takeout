@@ -9,9 +9,9 @@
 
             <!-- 商户列表项 -->
             <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item" @click="navigateToDetail(merchant)">
-                <image :src="merchant.shopAvatar" class="merchant-avatar"></image>
+                <image :src="merchant.avatar" class="merchant-avatar"></image>
                 <view class="merchant-info">
-                    <text class="shop-name">{{ merchant.shopName }}</text>
+                    <text class="shop-name">{{ merchant.name }}</text>
                 </view>
                 <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
             </view>
@@ -20,37 +20,47 @@
 </template>
 
 <script>
+import { request } from '@/utils/request'
+
 export default {
     data() {
         return {
             // 商户列表数据
-            merchantList: [
-                {
-                    id: 1,
-                    shopName: '拼小圈',
-                    shopAvatar: '/static/merchant_pic.jpg',
-                },
-                {
-                    id: 2,
-                    shopName: '美食坊',
-                    shopAvatar: '/static/merchant_pic.jpg',
-                },
-                {
-                    id: 3,
-                    shopName: '饮品店',
-                    shopAvatar: '/static/merchant_pic.jpg',
-                },
-            ],
+            merchantList: [],
         };
     },
     methods: {
+    // 获取商户列表
+    async fetchMerchantList() {
+      try {
+        const response = await request({
+          method: 'POST',
+          url: '/admin/selectallshop',
+        });
+        console.log(response)
+        if (response && response.data) {
+            this.merchantList = response.data;
+            console.log(this.merchantList)
+        }
+      } catch (error) {
+        console.error('获取本地信息失败:', error);
+        uni.showToast({
+          title: '获取本地信息失败',
+          icon: 'none'
+        });
+        this.loading = false;
+      }
+    },
         // 跳转到商户详情页面
         navigateToDetail(merchant) {
             uni.navigateTo({
-                url: `/pages/revenue_details/index?id=${merchant.id}`, // 跳转到商户详情页面，传递商户ID
+                url: `/pages/revenue_detail/index?id=${merchant.id}`, // 跳转到商户详情页面，传递商户ID
             });
         },
     },
+    onLoad() {
+        this.fetchMerchantList();
+    }
 };
 </script>
 

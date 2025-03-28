@@ -65,6 +65,7 @@ import { request } from '@/utils/request'
 export default {
   data() {
     return {
+      shopid: '', // 从页面参数获取的 shopid
       localid: '',
       totalIncome: 0,
       totalExpense: 0,
@@ -79,30 +80,6 @@ export default {
       const date = new Date(timestamp);
       return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
     },
-
-    // 获取商户信息
-    async fetchPersonalInfo() {
-      try {
-        const response = await request({
-          method: 'GET',
-          url: '/user/getUserInfo',
-        });
-        // console.log(response)
-        if (response && response.data) {
-          this.localid = response.data.id;
-          // console.log(this.localid)
-          await this.fetchMerchantList();
-        }
-      } catch (error) {
-        console.error('获取本地信息失败:', error);
-        uni.showToast({
-          title: '获取本地信息失败',
-          icon: 'none'
-        });
-        this.loading = false;
-      }
-    },
-
     // 获取商铺订单数据
     async fetchMerchantList() {
       try {
@@ -110,11 +87,10 @@ export default {
           method: 'POST', 
           url: '/order/merchantselect',
           data: {
-            shopid: 1
+            shopid: this.shopid 
           }
         });
         
-        // console.log(response)
         if (response?.code === 200) {
           this.processBillData(response.data);
         } else {
@@ -134,33 +110,30 @@ export default {
     // 处理账单数据
     processBillData(data) {
       try {
-    // 过滤只显示已支付和已退款的订单
-    const filteredData = data.filter(order => 
-      order.status === '已支付' || order.status === '已退款'
-    );
+        // 过滤只显示已支付和已退款的订单
+        const filteredData = data.filter(order => 
+          order.status === '已支付' || order.status === '已退款'
+        );
 
-    // console.log('过滤后的订单数据:', filteredData);
+        // 将订单数据转换为账单格式
+        this.billList = filteredData.map(order => ({
+          id: order.id,
+          amount: order.amount,
+          type: order.status === '已支付' ? 'income' : 'expense',
+          description: order.status === '已支付' ? '客户购买商品' : '钱款已退回',
+          createTime: order.orderTime,
+          date: this.formatDate(order.orderTime),
+          status: order.status,
+        }));
 
-    // 将订单数据转换为账单格式
-    this.billList = filteredData.map(order => ({
-      id: order.id,
-      amount: order.amount,
-      type: order.status === '已支付' ? 'income' : 'expense',
-      description: order.status === '已支付' ? '客户购买商品' : '钱款已退回',
-      createTime: order.orderTime,
-      date: this.formatDate(order.orderTime),
-      status: order.status,
-    }));
+        this.calculateTotals();
+        this.groupBillByMonth();
+      } catch (error) {
+        console.error('处理账单数据出错:', error);
+        throw error;
+      }
+    },
 
-    // console.log('处理后的账单数据:', this.billList);
-    
-    this.calculateTotals();
-    this.groupBillByMonth();
-  } catch (error) {
-    console.error('处理账单数据出错:', error);
-    throw error;
-  }
-},
     // 计算总收入和总支出
     calculateTotals() {
       this.totalIncome = this.billList
@@ -198,8 +171,18 @@ export default {
         }));
     }
   },
-  onLoad() {
-    this.fetchPersonalInfo();
+  onLoad(options) {
+    // 从页面参数中获取 shopid
+    if (options && options.id) {
+      this.shopid = options.id;
+      this.fetchMerchantList();
+    } else {
+      uni.showToast({
+        title: '缺少商户ID参数',
+        icon: 'none'
+      });
+      this.loading = false;
+    }
   }
 };
 </script>
