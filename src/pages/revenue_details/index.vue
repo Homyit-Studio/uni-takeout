@@ -60,6 +60,8 @@
 </template>
 
 <script>
+import { request } from '@/utils/request'
+
 export default {
   data() {
     return {
@@ -71,6 +73,39 @@ export default {
     };
   },
   methods: {
+     // 获取商户信息
+        async fetchMerchantInfo() {
+            try {
+                this.isLoading = true;
+                const response = await request({
+                    method: 'GET',
+                    url: '/user/getUserInfo',
+                });
+                
+                if (response && response.data) {
+                    const merchant = response.data.find(item => item.id == this.merchantId);
+                    if (merchant) {
+                        this.merchantInfo = merchant;
+                    } else {
+                        uni.showToast({
+                            title: '未找到商户信息',
+                            icon: 'none'
+                        });
+                        setTimeout(() => {
+                            uni.navigateBack();
+                        }, 1500);
+                    }
+                }
+            } catch (error) {
+                console.error('获取商户信息失败:', error);
+                uni.showToast({
+                    title: '获取商户信息失败',
+                    icon: 'none'
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
     // 计算总收入和总支出
     calculateTotals() {
       this.totalIncome = this.billList

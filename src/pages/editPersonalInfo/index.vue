@@ -10,6 +10,7 @@
       <!-- 头像区域 -->
       <view class="avatar-section" @click="changeAvatar">
         <image class="avatar" :src="userInfo.avatar" mode="aspectFill"></image>
+        <view class="avatar-mask">点击更换</view>
       </view>
       
       <!-- 昵称编辑 -->
@@ -21,9 +22,9 @@
     </view>
     
     <!-- 保存按钮 -->
-    <view class="save-btn" @click="saveProfile">
-      <text>保存修改</text>
-    </view>
+    <button class="save-btn" :disabled="isLoading" @click="saveProfile">
+      <text>{{ isLoading ? '保存中...' : '保存修改' }}</text>
+    </button>
   </view>
 </template>
 
@@ -35,11 +36,12 @@ export default {
     return {
       userInfo: {
         avatar: '',
-        nickname: '',
-        id: null
+        nickname: ''
       },
+      originalAvatar: '', // 存储原始头像URL
+      tempAvatarPath: '', // 临时存储新选择的头像路径
       isLoading: false,
-      originalInfo: {} // 用于保存原始数据，比较是否有修改
+      hasChanged: false // 标记是否有修改
     }
   },
   methods: {
@@ -57,11 +59,9 @@ export default {
         if (response?.code === 200 && response.data) {
           this.userInfo = {
             avatar: response.data.avatar || '/static/default-avatar.png',
-            nickname: response.data.nickname || '未设置昵称',
-            id: response.data.id
+            nickname: response.data.nickname || '未设置昵称'
           }
-          // 保存原始数据用于比较
-          this.originalInfo = JSON.parse(JSON.stringify(this.userInfo))
+          this.originalAvatar = response.data.avatar // 保存原始头像URL
         } else {
           throw new Error(response?.message || '获取用户信息失败')
         }
@@ -79,107 +79,116 @@ export default {
     
     // 修改头像
     changeAvatar() {
-      if (this.isLoading) return;
+      if (this.isLoading) return
+      
       uni.chooseImage({
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
         success: (res) => {
-          this.userInfo.avatar = res.tempFilePaths[0];
+          this.tempAvatarPath = res.tempFilePaths[0]
+          this.tempAvatarFile = res.tempFiles[0] // 保存文件对象
+          this.userInfo.avatar = res.tempFilePaths[0]
+          this.hasChanged = true
         },
         fail: (err) => {
-          console.error('选择图片失败:', err);
+          console.error('选择图片失败:', err)
           uni.showToast({
             title: '选择图片失败',
             icon: 'none'
-          });
+          })
         }
-      });
+      })
     },
     
     // 保存个人信息
     async saveProfile() {
-      if (this.isLoading) return;
+      if (this.isLoading) return
+      
       // 验证昵称
       if (!this.userInfo.nickname.trim()) {
         uni.showToast({
-            title: '昵称不能为空',
-            icon: 'none'
-        });
-        return;
+          title: '昵称不能为空',
+          icon: 'none'
+        })
+        return
       }
+      
       // 检查是否有修改
-      if (JSON.stringify(this.userInfo) === JSON.stringify(this.originalInfo)) {
+      if (!this.hasChanged && !this.tempAvatarPath) {
         uni.showToast({
-            title: '未修改任何信息',
-            icon: 'none'
-        });
-        return;
+          title: '未修改任何信息',
+          icon: 'none'
+        })
+        return
       }
-      try {
-        this.isLoading = true;
-        uni.showLoading({ title: '保存中...' });
-        const userDTO = {
-            nickname: this.userInfo.nickname,
-            id: this.userInfo.id
-        };
-        let formData = {
-            userDTO: JSON.stringify(userDTO)
-        };
-        if (this.userInfo.avatar) {
-            // 如果头像为网络图片路径，直接添加到formData
-            if (this.userInfo.avatar.startsWith('http')) {
-                formData.file = this.userInfo.avatar;
-            } else {
-                // 将本地头像转换为base64格式
-                const base64Data = await new Promise((resolve, reject) => {
-                    uni.getFileSystemManager().readFile({
-                        filePath: this.userInfo.avatar,
-                        encoding: 'base64',
-                        success: (res) => resolve(res.data),
-                        fail: (err) => reject(err)
-                    });
-                });
-                formData.file = base64Data;
-            }
-        } else {
-            formData.file = '';
-        }
-        const response = await request({
-            method: 'POST',
-            url: '/user/updateInfo',
-            data: formData,
-            header: {
-                'Content-Type': 'application/json'
-            }
-        });
-        this.handleSaveResponse(response);
-      } catch (error) {
-        console.error('保存失败:', error);
-        uni.showToast({
-            title: error.message || '保存失败',
-            icon: 'none'
-        });
-      } finally {
-        this.isLoading = false;
-        uni.hideLoading();
+      
+    try {
+    this.isLoading = true;
+    uni.showLoading({ title: '保存中...' });
+
+    // 准备用户数据
+    const userDTO = {
+      nickname: this.userInfo.nickname,
+    };
+
+    // 统一使用uni.uploadFile上传
+    const uploadRes = await new Promise((resolve, reject) => {
+      const uploadTask = uni.uploadFile({
+        url: '/user/updateInfo', 
+        file: this.tempAvatarFile,
+        filePath: this.tempAvatarPath,
+        name: 'file',
+        formData: {
+          // 将userDTO转为JSON字符串传递
+          userDTO: JSON.stringify(userDTO)
+        },
+        success: (res) => {
+          // 小程序环境需要手动解析响应数据
+          try {
+            const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+            resolve({ ...res, data }); // 合并解析后的数据
+          } catch (e) {
+            reject(new Error('解析响应失败'));
+          }
+        },
+        fail: reject
+      });
+
+      // 上传进度监听
+      uploadTask.onProgressUpdate((res) => {
+        console.log('上传进度:', res.progress);
+      });
+    });
+
+    // 处理响应
+    if (uploadRes.data?.code === 200) {
+      uni.showToast({ title: '保存成功', icon: 'success' });
+      
+      // 更新本地数据
+      if (uploadRes.data.data?.avatar) {
+        this.userInfo.avatar = uploadRes.data.data.avatar;
+        this.originalAvatar = uploadRes.data.data.avatar;
       }
-    },
-    // 处理保存响应
-    handleSaveResponse(response) {
-      if (response?.code === 200) {
-        uni.showToast({
-            title: '保存成功',
-            icon:'success'
-        });
-        // 更新原始数据
-        this.originalInfo = JSON.parse(JSON.stringify(this.userInfo));
-        // 通知其他组件用户信息已更新
-        uni.$emit('userInfoUpdated', this.userInfo);
-      } else {
-        throw new Error(response?.message || '保存失败');
-      }
+      
+      // 重置状态
+      this.tempAvatarPath = '';
+      this.hasChanged = false;
+      uni.$emit('userInfoUpdated', this.userInfo);
+    } else {
+      throw new Error(uploadRes.data?.message || '保存失败');
     }
+  } catch (error) {
+    console.error('保存失败:', error);
+    uni.showToast({
+      title: error.message || '保存失败',
+      icon: 'none'
+    });
+  } finally {
+    this.isLoading = false;
+    uni.hideLoading();
+  }
+}
   },
   
   onLoad() {
@@ -237,6 +246,19 @@ export default {
   height: 100%;
 }
 
+.avatar-mask {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40rpx;
+  line-height: 40rpx;
+  text-align: center;
+  font-size: 20rpx;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
 .info-item {
   display: flex;
   align-items: center;
@@ -271,5 +293,9 @@ export default {
   border-radius: 45rpx;
   font-size: 32rpx;
   box-shadow: 0 4rpx 20rpx rgba(79, 172, 254, 0.3);
+}
+
+.save-btn[disabled] {
+  opacity: 0.6;
 }
 </style>
