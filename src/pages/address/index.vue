@@ -169,7 +169,7 @@ const setDefault = async (index) => {
     uni.setStorageSync('defaultAddress', targetAddress)
 
     // 重新排序
-    addressList.value.sort((a, b) => b.isDefault - a.isDefault)
+    // addressList.value.sort((a, b) => b.isDefault - a.isDefault)
 
     uni.showToast({ title: '设置默认成功', icon: 'success' })
 }
