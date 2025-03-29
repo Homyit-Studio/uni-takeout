@@ -16,179 +16,193 @@
       <!-- 昵称编辑 -->
       <view class="info-item">
         <text class="label">昵称</text>
-        <input class="input" v-model="userInfo.nickname" placeholder="请输入昵称" />
+        <input
+          class="input"
+          v-model="userInfo.nickname"
+          placeholder="请输入昵称"
+        />
         <uni-icons type="compose" size="18" color="#999"></uni-icons>
       </view>
     </view>
 
     <!-- 保存按钮 -->
     <button class="save-btn" :disabled="isLoading" @click="saveProfile">
-      <text>{{ isLoading ? '保存中...' : '保存修改' }}</text>
+      <text>{{ isLoading ? "保存中..." : "保存修改" }}</text>
     </button>
   </view>
 </template>
 
 <script>
-import { request } from '@/utils/request'
+import { request } from "@/utils/request";
 
 export default {
   data() {
     return {
       userInfo: {
-        avatar: '',
-        nickname: ''
+        avatar: "",
+        nickname: "",
       },
-      originalAvatar: '', // 存储原始头像URL
-      tempAvatarPath: '', // 临时存储新选择的头像路径
+      originalAvatar: "", // 存储原始头像URL
+      tempAvatarPath: "", // 临时存储新选择的头像路径
+      originalNickname: "", // 存储原始昵称
       isLoading: false,
-      hasChanged: false // 标记是否有修改
-    }
+      hasChanged: false, // 标记是否有修改
+    };
   },
   methods: {
     // 获取用户信息
     async getUserInfo() {
       try {
-        this.isLoading = true
-        uni.showLoading({ title: '加载中...' })
+        this.isLoading = true;
+        uni.showLoading({ title: "加载中..." });
 
         const response = await request({
-          method: 'GET',
-          url: '/user/getUserInfo'
-        })
+          method: "GET",
+          url: "/user/getUserInfo",
+        });
 
         if (response?.code === 200 && response.data) {
           this.userInfo = {
-            avatar: response.data.avatar || '/static/default-avatar.png',
-            nickname: response.data.nickname || '未设置昵称'
-          }
-          this.originalAvatar = response.data.avatar // 保存原始头像URL
+            avatar: response.data.avatar || "/static/default-avatar.png",
+            nickname: response.data.nickname || "未设置昵称",
+          };
+          this.originalAvatar = response.data.avatar; // 保存原始头像URL
+          this.originalNickname = response.data.nickname; // 保存原始昵称
         } else {
-          throw new Error(response?.message || '获取用户信息失败')
+          throw new Error(response?.message || "获取用户信息失败");
         }
       } catch (error) {
-        console.error('获取用户信息失败:', error)
+        console.error("获取用户信息失败:", error);
         uni.showToast({
-          title: error.message || '获取信息失败',
-          icon: 'none'
-        })
+          title: error.message || "获取信息失败",
+          icon: "none",
+        });
       } finally {
-        this.isLoading = false
-        uni.hideLoading()
+        this.isLoading = false;
+        uni.hideLoading();
       }
     },
 
     // 修改头像
     changeAvatar() {
-      if (this.isLoading) return
+      if (this.isLoading) return;
 
       uni.chooseImage({
         count: 1,
-        sizeType: ['compressed'],
-        sourceType: ['album', 'camera'],
+        sizeType: ["compressed"],
+        sourceType: ["album", "camera"],
         success: (res) => {
-          this.tempAvatarPath = res.tempFilePaths[0]
-          this.tempAvatarFile = res.tempFiles[0] // 保存文件对象
-          this.userInfo.avatar = res.tempFilePaths[0]
-          this.hasChanged = true
+          this.tempAvatarPath = res.tempFilePaths[0];
+          this.tempAvatarFile = res.tempFiles[0]; // 保存文件对象
+          this.userInfo.avatar = res.tempFilePaths[0];
+          this.hasChanged = true;
         },
         fail: (err) => {
-          console.error('选择图片失败:', err)
+          console.error("选择图片失败:", err);
           uni.showToast({
-            title: '选择图片失败',
-            icon: 'none'
-          })
-        }
-      })
+            title: "选择图片失败",
+            icon: "none",
+          });
+        },
+      });
     },
 
+    // 保存修改
     async saveProfile() {
       if (this.isLoading) return;
 
       // 验证昵称
       if (!this.userInfo.nickname.trim()) {
         uni.showToast({
-          title: '昵称不能为空',
-          icon: 'none'
+          title: "昵称不能为空",
+          icon: "none",
         });
         return;
       }
 
       // 检查是否有修改
-      if (!this.hasChanged && !this.tempAvatarPath) {
+      const isNicknameChanged =
+        this.userInfo.nickname !== this.originalNickname;
+      if (!this.hasChanged && !this.tempAvatarPath && !isNicknameChanged) {
         uni.showToast({
-          title: '未修改任何信息',
-          icon: 'none'
+          title: "未修改任何信息",
+          icon: "none",
         });
         return;
       }
 
       try {
         this.isLoading = true;
-        uni.showLoading({ title: '保存中...' });
+        uni.showLoading({ title: "保存中..." });
 
-        // 准备用户数据
-        const userDTO = {
-          nickname: this.userInfo.nickname,
-        };
+        const userDTO = { nickname: this.userInfo.nickname };
 
-        // 统一使用uni.uploadFile上传
+        // 使用Promise包装上传过程
+        const result = await new Promise((resolve, reject) => {
+          const uploadTask = uni.uploadFile({
+            url: "/user/updateInfo",
+            filePath: this.tempAvatarPath,
+            name: "file",
+            formData: { nickName: userDTO.nickname },
+            header: { "Content-Type": "multipart/form-data" },
+            success: (uploadRes) => {
+              try {
+                // 解析响应数据
+                const data =
+                  typeof uploadRes.data === "string"
+                    ? JSON.parse(uploadRes.data)
+                    : uploadRes.data;
+                resolve(data);
+              } catch (e) {
+                console.error("解析响应失败:", e);
+                reject(new Error("解析响应数据失败"));
+              }
+            },
+            fail: (err) => {
+              reject(err);
+            },
+          });
 
-        const uploadRes = uni.uploadFile({
-          url: '/user/updateInfo', // 确保接口地址正确
-          filePath: this.tempAvatarPath, // 确保文件路径有效
-          name: 'file',
-          formData: {
-            "nickName": userDTO.nickname, // 直接传递字段值
-          },
-          header: { 'Content-Type': 'multipart/form-data' },
-          success: (res) => {
-            console.log('上传响应:', res);
-          },
-          fail: (err) => {
-            console.error('上传失败:', err);
-          }
+          uploadTask.onProgressUpdate((res) => {
+            console.log("上传进度:", res.progress);
+          });
         });
 
-        // 上传进度监听
-        uploadRes.onProgressUpdate((res) => {
-          console.log('上传进度:', res.progress);
-        });
-
-        // 处理响应
-        if (uploadRes.data?.code === 200) {
-          uni.showToast({ title: '保存成功', icon: 'success' });
+        // 统一处理响应
+        if (result?.code === 200) {
+          uni.showToast({ title: "保存成功", icon: "success" });
 
           // 更新本地数据
-          if (uploadRes.data.data?.avatar) {
-            this.userInfo.avatar = uploadRes.data.data.avatar;
-            this.originalAvatar = uploadRes.data.data.avatar;
+          if (result.data?.avatar) {
+            this.userInfo.avatar = result.data.avatar;
+            this.originalAvatar = result.data.avatar;
           }
+          this.originalNickname = this.userInfo.nickname;
 
           // 重置状态
-          this.tempAvatarPath = '';
+          this.tempAvatarPath = "";
           this.hasChanged = false;
-          uni.$emit('userInfoUpdated', this.userInfo);
+          uni.$emit("userInfoUpdated", this.userInfo);
         } else {
-          throw new Error(uploadRes.data?.message || '保存失败');
+          throw new Error(result?.message || "保存失败");
         }
       } catch (error) {
-        console.error('保存失败:', error);
-        console.error('后端返回的响应:', error.response?.data || error.message);
+        console.error("保存失败:", error);
         uni.showToast({
-          title: error.response?.data?.message || '保存失败',
-          icon: 'none'
+          title: error.message || "保存失败",
+          icon: "none",
         });
       } finally {
         this.isLoading = false;
         uni.hideLoading();
       }
-    }
+    },
   },
 
   onLoad() {
-    this.getUserInfo()
-  }
-}
+    this.getUserInfo();
+  },
+};
 </script>
 
 <style scoped>
