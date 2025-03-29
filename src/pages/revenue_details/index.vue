@@ -26,7 +26,11 @@
       </view>
 
       <!-- 按月分组展示 -->
-      <view v-for="(group, index) in groupedBillList" :key="index" class="month-group">
+      <view
+        v-for="(group, index) in groupedBillList"
+        :key="index"
+        class="month-group"
+      >
         <!-- 月份分割 -->
         <view class="month-divider">
           <text class="month-text">{{ group.month }}</text>
@@ -45,13 +49,17 @@
         </view>
 
         <!-- 当月账单列表 -->
-        <view v-for="(item, subIndex) in group.items" :key="subIndex" class="bill-item">
+        <view
+          v-for="(item, subIndex) in group.items"
+          :key="subIndex"
+          class="bill-item"
+        >
           <view class="content">
             <text class="description">{{ item.description }}</text>
             <text class="date">{{ formatDate(item.createTime) }}</text>
           </view>
           <text :class="['amount', item.type]">
-            {{ item.type === 'income' ? '+' : '-' }}￥{{ item.amount }}
+            {{ item.type === "income" ? "+" : "-" }}￥{{ item.amount }}
           </text>
         </view>
       </view>
@@ -60,12 +68,12 @@
 </template>
 
 <script>
-import { request } from '@/utils/request'
+import { request } from "@/utils/request";
 
 export default {
   data() {
     return {
-      localid: '',
+      localid: "",
       totalIncome: 0,
       totalExpense: 0,
       billList: [],
@@ -77,15 +85,17 @@ export default {
     // 格式化日期
     formatDate(timestamp) {
       const date = new Date(timestamp);
-      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+      return `${date.getFullYear()}-${(date.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
     },
 
     // 获取商户信息
     async fetchPersonalInfo() {
       try {
         const response = await request({
-          method: 'GET',
-          url: '/user/getUserInfo',
+          method: "GET",
+          url: "/user/getUserInfo",
         });
         // console.log(response)
         if (response && response.data) {
@@ -94,10 +104,10 @@ export default {
           await this.fetchMerchantList();
         }
       } catch (error) {
-        console.error('获取本地信息失败:', error);
+        console.error("获取本地信息失败:", error);
         uni.showToast({
-          title: '获取本地信息失败',
-          icon: 'none'
+          title: "获取本地信息失败",
+          icon: "none",
         });
         this.loading = false;
       }
@@ -107,24 +117,24 @@ export default {
     async fetchMerchantList() {
       try {
         const response = await request({
-          method: 'POST', 
-          url: '/order/merchantselect',
+          method: "POST",
+          url: "/order/merchantselect",
           data: {
-            shopid: 1
-          }
+            shopid: this.localid,
+          },
         });
-        
+
         // console.log(response)
         if (response?.code === 200) {
           this.processBillData(response.data);
         } else {
-          throw new Error(response?.message || '获取订单数据失败');
+          throw new Error(response?.message || "获取订单数据失败");
         }
       } catch (error) {
-        console.error('获取订单数据失败:', error);
+        console.error("获取订单数据失败:", error);
         uni.showToast({
-          title: error.message || '获取订单数据失败',
-          icon: 'none'
+          title: error.message || "获取订单数据失败",
+          icon: "none",
         });
       } finally {
         this.loading = false;
@@ -134,41 +144,42 @@ export default {
     // 处理账单数据
     processBillData(data) {
       try {
-    // 过滤只显示已支付和已退款的订单
-    const filteredData = data.filter(order => 
-      order.status === '已支付' || order.status === '已退款'
-    );
+        // 过滤只显示已支付和已退款的订单
+        const filteredData = data.filter(
+          (order) => order.status === "已支付" || order.status === "已退款"
+        );
 
-    // console.log('过滤后的订单数据:', filteredData);
+        // console.log('过滤后的订单数据:', filteredData);
 
-    // 将订单数据转换为账单格式
-    this.billList = filteredData.map(order => ({
-      id: order.id,
-      amount: order.amount,
-      type: order.status === '已支付' ? 'income' : 'expense',
-      description: order.status === '已支付' ? '客户购买商品' : '钱款已退回',
-      createTime: order.orderTime,
-      date: this.formatDate(order.orderTime),
-      status: order.status,
-    }));
+        // 将订单数据转换为账单格式
+        this.billList = filteredData.map((order) => ({
+          id: order.id,
+          amount: order.amount,
+          type: order.status === "已支付" ? "income" : "expense",
+          description:
+            order.status === "已支付" ? "客户购买商品" : "钱款已退回",
+          createTime: order.orderTime,
+          date: this.formatDate(order.orderTime),
+          status: order.status,
+        }));
 
-    // console.log('处理后的账单数据:', this.billList);
-    
-    this.calculateTotals();
-    this.groupBillByMonth();
-  } catch (error) {
-    console.error('处理账单数据出错:', error);
-    throw error;
-  }
-},
+        // console.log('处理后的账单数据:', this.billList);
+
+        this.calculateTotals();
+        this.groupBillByMonth();
+      } catch (error) {
+        console.error("处理账单数据出错:", error);
+        throw error;
+      }
+    },
     // 计算总收入和总支出
     calculateTotals() {
       this.totalIncome = this.billList
-        .filter(item => item.type === 'income')
+        .filter((item) => item.type === "income")
         .reduce((sum, item) => sum + item.amount, 0);
 
       this.totalExpense = this.billList
-        .filter(item => item.type === 'expense')
+        .filter((item) => item.type === "expense")
         .reduce((sum, item) => sum + item.amount, 0);
     },
 
@@ -186,21 +197,21 @@ export default {
       // 转换为数组并按月份排序
       this.groupedBillList = Object.keys(grouped)
         .sort((a, b) => b.localeCompare(a))
-        .map(month => ({
+        .map((month) => ({
           month: `${month}月`,
           items: grouped[month],
           monthIncome: grouped[month]
-            .filter(item => item.type === 'income')
+            .filter((item) => item.type === "income")
             .reduce((sum, item) => sum + item.amount, 0),
           monthExpense: grouped[month]
-            .filter(item => item.type === 'expense')
-            .reduce((sum, item) => sum + item.amount, 0)
+            .filter((item) => item.type === "expense")
+            .reduce((sum, item) => sum + item.amount, 0),
         }));
-    }
+    },
   },
   onLoad() {
     this.fetchPersonalInfo();
-  }
+  },
 };
 </script>
 
@@ -261,8 +272,12 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {

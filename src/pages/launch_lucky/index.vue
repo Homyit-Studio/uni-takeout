@@ -50,37 +50,39 @@
 </template>
 
 <script>
+import { request } from '@/utils/request'
+
 export default {
   data() {
     return {
       // 模拟从后端获取的数据
-      sponsorAvatar: '', // 头像地址
-      sponsorName: '', // 店名
-      drawRules: '', // 抽奖说明
-      prizeInfo: '', // 奖品信息
+      sponsorAvatar: "", // 头像地址
+      sponsorName: "", // 店名
+      drawRules: "", // 抽奖说明
+      prizeInfo: "", // 奖品信息
       isDrawed: false, // 是否已抽奖
     };
   },
   onLoad() {
     // 模拟从后端获取数据的过程，这里直接赋值拟定数据
-    this.sponsorAvatar = '/static/merchant_pic.jpg'; 
-    this.sponsorName = '美味烧烤店';
+    this.sponsorAvatar = "/static/merchant_pic.jpg";
+    this.sponsorName = "美味烧烤店";
     this.drawRules =
-      '1、本次抽奖奖品为5份免单猪肉串,20份半价猪肉串;\n2、兑奖方式:群内小程序下单，下单后加群主微信报销;\n3、奖品有效期一天,需当天使用,逾期无效喔';
-    this.prizeInfo = '半价猪肉串七串';
+      "1、本次抽奖奖品为5份免单猪肉串,20份半价猪肉串;\n2、兑奖方式:群内小程序下单，下单后加群主微信报销;\n3、奖品有效期一天,需当天使用,逾期无效喔";
+    this.prizeInfo = "半价猪肉串七串";
   },
   methods: {
     // 抽奖逻辑
     startDraw() {
       uni.showLoading({
-        title: '抽奖中...',
+        title: "抽奖中...",
         mask: true,
       });
       setTimeout(() => {
         uni.hideLoading();
         // 模拟抽奖结果
         this.isDrawed = true; // 设置为已抽奖
-        this.prizeInfo = '半价猪肉串七串'; // 模拟中奖奖品
+        this.prizeInfo = "半价猪肉串七串"; // 模拟中奖奖品
       }, 2000);
     },
   },
@@ -160,7 +162,7 @@ export default {
 }
 
 .draw-button {
-  background-color: #d81e06; 
+  background-color: #d81e06;
   padding: 15px 80px;
   border-radius: 20px;
   display: inline-block;
@@ -179,10 +181,10 @@ export default {
 }
 
 .prize-info {
-  background-color: #d81e06; 
+  background-color: #d81e06;
   padding: 20px;
   border-radius: 16px;
-  color: #ffffff; 
+  color: #ffffff;
 }
 
 .prize-content {
