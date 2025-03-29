@@ -135,26 +135,42 @@ export default {
         this.isLoading = true;
         uni.showLoading({ title: "保存中..." });
 
-        const userDTO = { nickname: this.userInfo.nickname };
+        // 处理头像路径：如果是网络 URL，先下载到本地
+        let avatarPath = this.tempAvatarPath;
+        if (!avatarPath && this.originalAvatar) {
+          if (this.originalAvatar.startsWith("http")) {
+            // 下载网络图片到本地临时文件
+            const downloadRes = await uni.downloadFile({
+              url: this.originalAvatar,
+            });
+            avatarPath = downloadRes.tempFilePath;
+          } else {
+            // 已经是本地路径（如 static/ 或 wxfile:// 路径）
+            avatarPath = this.originalAvatar;
+          }
+        }
+
+        // 确保有可用的头像路径（如果没有头像，可能需要上传一个默认头像或跳过）
+        if (!avatarPath) {
+          throw new Error("无法获取有效的头像路径");
+        }
 
         // 使用Promise包装上传过程
         const result = await new Promise((resolve, reject) => {
           const uploadTask = uni.uploadFile({
             url: "/user/updateInfo",
-            filePath: this.tempAvatarPath,
+            filePath: avatarPath,
             name: "file",
-            formData: { nickName: userDTO.nickname },
+            formData: { nickName: this.userInfo.nickname },
             header: { "Content-Type": "multipart/form-data" },
             success: (uploadRes) => {
               try {
-                // 解析响应数据
                 const data =
                   typeof uploadRes.data === "string"
                     ? JSON.parse(uploadRes.data)
                     : uploadRes.data;
                 resolve(data);
               } catch (e) {
-                console.error("解析响应失败:", e);
                 reject(new Error("解析响应数据失败"));
               }
             },
