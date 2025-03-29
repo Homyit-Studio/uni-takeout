@@ -40,16 +40,10 @@ export const request = (options) => {
                     // console.log(res)
                     // 其他错误 -> 根据后端错误信息轻提示
                     if (res.data?.code == 403) {
-                        uni.removeStorageSync("token")
-                        uni.showToast({
-                            icon: 'none',
-                            title: '登录过期',
-                        })
+                        useToken.removeToken()
+                        console.log(res.data)
                     } else {
-                        uni.showToast({
-                            icon: 'none',
-                            title: res.data?.message || '请重新登录',
-                        })
+                        console.log(res.data)
                     }
                     reject(res)
                 }

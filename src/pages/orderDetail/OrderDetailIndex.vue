@@ -98,6 +98,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { request } from '../../utils/request'
 
 const statusBarHeight = ref(uni.getWindowInfo().statusBarHeight)
 
@@ -128,6 +129,22 @@ const copyOrderNo = () => {
     }
   })
 }
+
+onLoad((options) => {
+  fetchOrderDetail(options.id)
+})
+
+const fetchOrderDetail = async (id) => {
+  const res = await request({
+    url: '/order/selectorderdetail',
+    method: 'GET',
+    data: {
+      id
+    }
+  })
+  orderData.value = res.data
+
+}
 </script>
 
 <style lang="scss" scoped>
@@ -137,12 +154,12 @@ const copyOrderNo = () => {
   padding-bottom: 100rpx;
 
   .status-bar {
-    background-color: #07c160;
+    background-color: #ff5500;
     height: 40rpx;
   }
 
   .order-status {
-    background-color: #07c160;
+    background-color: #ff5500;
     padding: 40rpx 30rpx;
     color: #fff;
     text-align: center;
@@ -270,10 +287,10 @@ const copyOrderNo = () => {
         }
 
         .copy-btn {
-          color: #07c160;
+          color: #ff5500;
           font-size: 24rpx;
           padding: 8rpx 16rpx;
-          border: 1rpx solid #07c160;
+          border: 1rpx solid #ff5500;
           border-radius: 30rpx;
         }
 
@@ -329,7 +346,7 @@ const copyOrderNo = () => {
       }
 
       &.primary {
-        background: #07c160;
+        background: #ff5500;
         color: #fff;
       }
     }

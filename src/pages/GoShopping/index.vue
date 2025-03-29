@@ -17,7 +17,7 @@
           <text class="name">{{ address.name }}</text>
           <text class="phone">{{ address.phone }}</text>
         </view>
-        <view class="address">{{ address.province }}{{ address.city }}{{ address.district }}{{ address.detail }}</view>
+        <view class="address">{{ address.address }}</view>
       </view>
       <view v-else class="no-address">
         请选择收货地址
@@ -72,6 +72,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 
 const address = ref(null)
 const orderData = ref({
@@ -89,17 +90,20 @@ const storeInfo = ref({
   storePhone: '138-1234-5678'
 })
 
+// 在 setup 中添加
+onShow(() => {
+  // 页面显示时重新获取地址数据
+  const savedAddress = uni.getStorageSync('defaultAddress')
+  if (savedAddress) {
+    address.value = savedAddress
+  }
+})
+
 onMounted(() => {
   // 获取本地存储的订单数据
   const data = uni.getStorageSync('orderData')
   if (data) {
     orderData.value = data
-  }
-
-  // 获取默认地址
-  const savedAddress = uni.getStorageSync('selectedAddress')
-  if (savedAddress) {
-    address.value = savedAddress
   }
 })
 

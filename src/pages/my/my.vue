@@ -493,7 +493,7 @@ $secondary-color: #FFA99F;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                width: 150rpx;
+                max-width: 150rpx;
             }
 
             .role-tag {

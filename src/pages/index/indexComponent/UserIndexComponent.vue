@@ -3,7 +3,7 @@
 
         <!-- 第一导航栏（需要上滑隐藏的） -->
         <view class="first-nav" :style="{
-            transform: `scale(${1 - scrollProgress * 0.1})`,
+            transform: `scale(${1 - scrollY * 0.1})`,
             paddingTop: statusBarHeight + 'px'
         }">
             <!-- 位置信息 -->
@@ -145,33 +145,40 @@
             </view>
 
             <!-- 热门商铺 -->
+            <!-- 修改后的热门商铺部分 -->
             <view v-show="currentTab === 1" class="tab-content">
                 <view class="store-list">
                     <view class="store-card" v-for="(store, index) in hotStores" :key="index"
                         @click="goToStoreDetail(store.id)">
-                        <image class="store-cover" :src="store.image" mode="aspectFill"></image>
+                        <image class="store-cover" :src="store.photo" mode="aspectFill">
+                        </image>
                         <view class="store-info">
                             <view class="store-header">
-                                <text class="store-name">{{ store.name }}</text>
-                                <view class="rating">
-                                    <uni-icons type="star-filled" size="16" color="#FFB400"></uni-icons>
-                                    <text class="text">4.8</text>
+                                <view style="display: flex;align-items: center;">
+                                    <image class="store-avatar" :src="store.avatar" mode="aspectFill"></image>
+                                    <view class="store-name">{{ store.name }}</view>
+                                </view>
+
+                                <view class="store-status">
+                                    <text class="status-text"
+                                        :style="{ color: isStoreOpen(store) ? '#07C160' : '#FF5500' }">
+                                        {{ isStoreOpen(store) ? '营业中' : '已打烊' }}
+                                    </text>
                                 </view>
                             </view>
-                            <text class="store-desc">{{ store.description }}</text>
-                            <view class="promotion-tag">
-                                <text class="text">满30减5</text>
-                                <text class="text">新用户立减8元</text>
+                            <view class="store-desc-wrapper">
+                                <text class="store-desc">{{ store.shopIntroduction || '暂无介绍' }}</text>
+                                <text class="delivery-fee">起送 ¥{{ store.minDeliveryFee }} | 打包费 ¥{{ store.packageAmount
+                                    }}</text>
                             </view>
-                            <view class="hot-product">
-                                <text class="product-name">{{ store.hotProduct.name }}</text>
-                                <text class="product-price">¥{{ store.hotProduct.price }}</text>
+                            <view class="store-address">
+                                <uni-icons type="location-filled" color="#999" size="24" />
+                                {{ store.address }}
                             </view>
                         </view>
                     </view>
                 </view>
             </view>
-
             <!-- 加载状态 -->
             <view class="loading-status">
                 <text v-if="hasMore && hotProducts.length > 0">正在加载更多...</text>
@@ -287,13 +294,21 @@ const tabsStyle = computed(() => ({
 // })
 
 onPageScroll((e) => {
-    scrollY.value = e.scrollTop
     // 计算滚动进度（0-1之间）
-    const maxScroll = 200 // 控制滚动效果的最大滚动距离
-    scrollProgress.value = Math.min(e.scrollTop / maxScroll, 1)
+    const maxScroll = 100 // 控制滚动效果的最大滚动距离
+    scrollProgress.value = Math.min((e.scrollTop - 100) / maxScroll, 1)
+    scrollY.value = Math.min(e.scrollTop / maxScroll, 1)
 
 })
 onMounted(() => {
+    /*
+    * 延时获取热门店铺数据
+    * 非常重要
+    **/
+    setTimeout(() => {
+        allStore()
+    }, 1000)
+
     startMessageRotation()
     // 获取状态栏高度
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
@@ -330,15 +345,14 @@ onShow(async () => {
         // defaultAddress.value = `${defaultAddr.province}${defaultAddr.city}${defaultAddr.area}${defaultAddr.detail}`
         defaultAddress.value = savedAddress.address
     }
-    allStore()
-    loadHotStores()
+    // loadHotStores()
 })
 
 // 使用onReachBottom替代scrolltolower
 onReachBottom(() => {
     if (!hasMore.value) return
     page.value++
-    loadHotStores()
+    // loadHotStores()
 })
 
 const isNavSticky = ref(false)
@@ -371,45 +385,45 @@ const switchTab = (index) => {
     currentTab.value = index
 }
 
-// // 方法
-const loadHotStores = () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const mockData = Array.from({ length: 10 }, (_, i) => ({
-                id: i + (page.value - 1) * pageSize.value,
-                name: `商家${i + (page.value - 1) * pageSize.value + 1}`,
-                description: '特色美食，欢迎品尝',
-                image: '/static/goods.png',
-                hotProduct: {
-                    name: '招牌菜品',
-                    price: Math.floor(Math.random() * 50 + 10)
-                }
-            }))
-
-            if (page.value === 1) {
-                hotStores.value = mockData
-            } else {
-                hotStores.value = [...hotStores.value, ...mockData]
-            }
-
-            if (page.value >= 3) {
-                hasMore.value = false
-            }
-
-            resolve()
-        }, 1000)
-    })
-}
-
-// 获取商家数据
+// 修改后的脚本部分
 const allStore = async () => {
     try {
         const res = await request({
             url: '/shop/getshops'
         })
-        console.log(res.data)
+        hotStores.value = res.data.map(store => ({
+            ...store,
+            photo: store.photo,
+            avatar: store.avatar
+        }))
+        console.log("获取商家数据成功", hotStores.value)
+        // 判断是否还有更多数据
+        hasMore.value = res.data.length >= pageSize.value
     } catch (error) {
         console.log("获取商家数据失败", error)
+    }
+}
+
+// 新增营业状态判断方法
+const isStoreOpen = (store) => {
+    if (!store.openTime || !store.closeTime) return false
+
+    const now = new Date()
+    const currentHours = now.getHours()
+    const currentMinutes = now.getMinutes()
+
+    const [openHour, openMinute] = store.openTime.split(':').map(Number)
+    const [closeHour, closeMinute] = store.closeTime.split(':').map(Number)
+
+    const currentTime = currentHours * 60 + currentMinutes
+    const openTime = openHour * 60 + openMinute
+    const closeTime = closeHour * 60 + closeMinute
+
+    // 处理跨天营业
+    if (openTime < closeTime) {
+        return currentTime >= openTime && currentTime <= closeTime
+    } else {
+        return currentTime >= openTime || currentTime <= closeTime
     }
 }
 
@@ -924,81 +938,96 @@ $secondary-color: #FFA99F;
     }
 }
 
-/* 店铺列表样式 */
+/* 修改后的店铺列表样式 */
 .store-list {
     .store-card {
-        background: #fff;
-        border-radius: 20rpx;
-        margin-bottom: 30rpx;
+        margin: 20rpx;
+        border-radius: 16rpx;
         overflow: hidden;
-        box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.03);
+        background: #fff;
+        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 
         .store-cover {
             width: 100%;
-            height: 300rpx;
+            height: 400rpx;
+            background: #f5f5f5;
         }
 
         .store-info {
-            padding: 25rpx;
+            padding: 24rpx;
 
             .store-header {
                 display: flex;
+                align-items: center;
                 justify-content: space-between;
-                margin-bottom: 15rpx;
+                margin-bottom: 20rpx;
+
+                .store-avatar {
+                    width: 60rpx;
+                    height: 60rpx;
+                    border-radius: 5rpx;
+                    background-color: #999;
+                }
 
                 .store-name {
                     font-size: 32rpx;
-                    font-weight: 500;
+                    font-weight: 600;
+                    max-width: 70%;
+                    margin-left: 20rpx;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
                 }
 
-                .rating {
-                    display: flex;
-                    align-items: center;
-                    color: #FFB400;
+                .store-status {
                     font-size: 26rpx;
-
-                    .text {
-                        margin-left: 8rpx;
-                    }
+                    font-weight: 500;
                 }
             }
 
-            .store-desc {
-                color: #666;
-                font-size: 26rpx;
-                margin-bottom: 20rpx;
+            .store-desc-wrapper {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 16rpx;
+
+                .store-desc {
+                    color: #666;
+                    font-size: 26rpx;
+                    line-height: 1.4;
+                    display: -webkit-box;
+                    line-clamp: 2;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                    max-width: 60%;
+                }
+
+                .delivery-fee {
+                    color: #666;
+                    font-size: 26rpx;
+                }
+            }
+
+            .store-address {
+                color: #999;
+                font-size: 24rpx;
+                margin-bottom: 24rpx;
+                display: flex;
+                align-items: center;
             }
 
             .promotion-tag {
                 display: flex;
-                gap: 15rpx;
-                margin-bottom: 20rpx;
+                flex-wrap: wrap;
+                gap: 12rpx;
 
                 .text {
                     background: #FFF0F3;
                     color: $primary-color;
-                    font-size: 22rpx;
-                    padding: 6rpx 15rpx;
-                    border-radius: 6rpx;
-                }
-            }
-
-            .hot-product {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding-top: 20rpx;
-                border-top: 2rpx solid #f8f8f8;
-
-                .product-name {
-                    color: #666;
-                    font-size: 26rpx;
-                }
-
-                .product-price {
-                    color: $primary-color;
-                    font-size: 32rpx;
-                    font-weight: 600;
+                    font-size: 24rpx;
+                    padding: 6rpx 20rpx;
+                    border-radius: 30rpx;
                 }
             }
         }

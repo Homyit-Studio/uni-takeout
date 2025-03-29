@@ -8,7 +8,7 @@
                     <text class="store-name">{{ storeInfo.name }}</text>
                     <view class="status-badge">
                         <uni-icons type="checkmark-filled" size="14" color="#fff" />
-                        <text class="store-status">{{ storeInfo.status }}</text>
+                        <text class="store-status">{{ isStoreOpen ? '营业中' : '已打烊' }}</text>
                     </view>
                 </view>
             </view>
@@ -27,8 +27,8 @@
 
         <!-- 功能导航 -->
         <view class="management-panel">
-            <view class="panel-item product-manage" @click="goToProductManage" @touchstart="handleTouchStart"
-                @touchend="handleTouchEnd">
+            <view class="panel-item product-manage" @click="goToProductManage(storeInfo.id)"
+                @touchstart="handleTouchStart" @touchend="handleTouchEnd">
                 <view class="icon-wrapper">
                     <uni-icons type="shop-filled" size="42" color="#fff" />
                 </view>
@@ -50,14 +50,6 @@
 
         <!-- 快捷操作 -->
         <view class="quick-actions">
-            <!-- <view class="action-item" @click="handleStockCheck">
-                <uni-icons type="smallcircle" size="28" color="#FF5500" />
-                <text class="text">库存盘点</text>
-            </view> -->
-            <!-- <view class="action-item" @click="handleSalesReport">
-                <uni-icons type="compose" size="28" color="#FF5500" />
-                <text class="text">管理商品</text>
-            </view> -->
             <view class="action-item" @click="handleSalesReport">
                 <uni-icons type="compose" size="28" color="#FF5500" />
                 <text class="text">发布抽奖</text>
@@ -66,7 +58,6 @@
                 <uni-icons type="list" size="28" color="#FF5500" />
                 <text class="text">营收细则</text>
             </view>
-
             <view class="action-item" @click="handleSalesReport">
                 <uni-icons type="compose" size="28" color="#FF5500" />
                 <text class="text">个人信息修改</text>
@@ -79,20 +70,64 @@
         </view>
     </view>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
+import { request } from '../../../utils/request'
+import { onShow } from '@dcloudio/uni-app'
 
 const statusBarHeight = ref(0)
 const storeInfo = ref({
-    avatar: '/static/logo.png',
-    name: '星悦烘焙坊',
-    status: '营业中'
+    id: 0,
+    avatar: '',
+    name: '',
+    openTime: '',
+    closeTime: '',
+    address: ''
+})
+const isStoreOpen = ref(false)
+
+// 获取商家信息
+const fetchShopInfo = async () => {
+    try {
+        const res = await request({
+            url: '/shop/mershopinfo',
+            method: 'GET'
+        })
+        console.log('获取商家信息:', res)
+        storeInfo.value = res.data
+        isStoreOpen.value = isStoreOpenNow(res.data.openTime, res.data.closeTime)
+
+    } catch (error) {
+        console.error('获取商家信息失败', error)
+    }
+}
+
+// 判断当前是否在营业时间内
+const isStoreOpenNow = (openTime, closeTime) => {
+    const now = new Date()
+    const currentHours = now.getHours()
+    const currentMinutes = now.getMinutes()
+
+    const [openHour, openMinute] = openTime.split(':').map(Number)
+    const [closeHour, closeMinute] = closeTime.split(':').map(Number)
+
+    const currentTime = currentHours * 60 + currentMinutes
+    const openTimeInMinutes = openHour * 60 + openMinute
+    const closeTimeInMinutes = closeHour * 60 + closeMinute
+
+    // 处理跨天营业
+    if (openTimeInMinutes < closeTimeInMinutes) {
+        return currentTime >= openTimeInMinutes && currentTime <= closeTimeInMinutes
+    } else {
+        return currentTime >= openTimeInMinutes || currentTime <= closeTimeInMinutes
+    }
+}
+
+onShow(() => {
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
+    fetchShopInfo()
 })
 
-onMounted(() => {
-    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
-})
 // 点击动画处理
 const handleTouchStart = (e) => {
     // e.currentTarget.style.transform = 'scale(0.98)'
@@ -102,8 +137,8 @@ const handleTouchEnd = (e) => {
     // e.currentTarget.style.transform = 'scale(1)'
 }
 
-const goToProductManage = () => {
-    uni.navigateTo({ url: '/pages/productManage/ProductManageIndex' })
+const goToProductManage = (id) => {
+    uni.navigateTo({ url: `/pages/productManage/ProductManageIndex?id=${id}` })
 }
 
 const goToOrderManage = () => {

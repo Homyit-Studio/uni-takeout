@@ -22,36 +22,34 @@
             :show-scrollbar="false">
             <block v-if="orders.length > 0">
                 <view class="order-card" v-for="(order, index) in orders" :key="index"
-                    @click="viewOrderDetail(order.id)" :class="[order.status]">
+                    @click="viewOrderDetail(order.id)">
                     <view class="card-header">
                         <view class="store-info">
                             <image class="store-icon" src="/static/logo.png" />
-                            <text class="store-name">{{ order.storeName }}</text>
+                            <text class="store-name">{{ order.shopName || '未命名商家' }}</text>
                         </view>
-                        <text class="order-status">{{ orderStatusText[order.status] }}</text>
+                        <text class="order-status">{{ order.status }}</text>
                     </view>
 
                     <view class="card-body">
-                        <image class="goods-thumb" :src="order.goodsImage" mode="aspectFill" />
+                        <image class="goods-thumb" src="/static/goods.png" mode="aspectFill" />
                         <view class="goods-info">
-                            <text class="goods-title">{{ order.goodsName }}</text>
+                            <text class="goods-title">{{ order.remark || '订单备注' }}</text>
                             <view class="goods-meta">
-                                <text class="goods-count">{{ order.goodsCount }}件</text>
+                                <text class="goods-count">1件</text>
                                 <text class="goods-price">¥{{ order.amount.toFixed(2) }}</text>
                             </view>
                         </view>
                     </view>
 
                     <view class="card-footer">
-                        <text class="order-time">{{ order.createTime }}</text>
-                        <view class="action-buttons">
-                            <button v-if="order.status === 'pending'" class="btn cancel"
+                        <text class="order-time">{{ formatDate(order.orderTime) }}</text>
+                        <!-- <view class="action-buttons">
+                            <button v-if="order.status === '待支付'" class="btn cancel"
                                 @click.stop="cancelOrder(order.id)">取消订单</button>
-                            <button v-if="order.status === 'delivered'" class="btn confirm"
+                            <button v-if="order.status === '已支付'" class="btn confirm"
                                 @click.stop="completeOrder(order.id)">确认收货</button>
-                            <button v-if="order.status === 'completed'" class="btn review"
-                                @click.stop="reviewOrder(order.id)">立即评价</button>
-                        </view>
+                        </view> -->
                     </view>
                 </view>
             </block>
@@ -70,33 +68,32 @@
         </scroll-view>
     </view>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { onPullDownRefresh } from '@dcloudio/uni-app'
+import { request } from '@/utils/request'
 
 // 响应式状态
 const statusBarHeight = ref(0)
-const tabs = ref(['全部', '待付款', '待发货', '待收货', '待评价', '已退款'])
+const tabs = ref(['全部', '待支付', '已支付', '已退款'])
 const currentTab = ref(0)
 const orders = ref([])
 const page = ref(1)
 const pageSize = ref(10)
 const hasMore = ref(true)
 const isRefreshing = ref(false)
-const orderStatusText = ref({
-    'pending': '待付款',
-    'paid': '待发货',
-    'shipped': '待收货',
-    'delivered': '待收货',
-    'completed': '已完成',
-    'refunded': '已退款',
-    'canceled': '已取消'
-})
+
+// 格式化日期
+const formatDate = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+}
 
 // 生命周期
 onMounted(() => {
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
-    console.log(statusBarHeight.value)
     loadOrders()
 })
 
@@ -110,54 +107,41 @@ const switchTab = (index) => {
     loadOrders()
 }
 
-const loadOrders = () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const statusMap = ['all', 'pending', 'paid', 'shipped', 'delivered', 'refunded']
-            const currentStatus = statusMap[currentTab.value]
+const loadOrders = async () => {
+    try {
+        const res = await request({
+            url: '/order/userselect',
+            method: 'GET'
+        })
+        console.log('获取订单成功:', res)
+        if (res.code === 200 && res.data) {
+            let filteredOrders = res.data
 
-            let mockData = []
-            for (let i = 0; i < pageSize.value; i++) {
-                const orderIndex = i + (page.value - 1) * pageSize.value
-                const statuses = ['pending', 'paid', 'shipped', 'delivered', 'completed', 'refunded', 'canceled']
-                let status = statuses[Math.floor(Math.random() * statuses.length)]
-
-                if (currentStatus !== 'all' && status !== currentStatus) {
-                    status = currentStatus
-                }
-
-                const order = {
-                    id: `order${orderIndex}`,
-                    storeName: `商家${orderIndex % 5 + 1}`,
-                    goodsName: `美食套餐${orderIndex}`,
-                    goodsCount: Math.floor(Math.random() * 5) + 1,
-                    goodsImage: '/static/goods.png',
-                    amount: Math.floor(Math.random() * 100) + 20,
-                    status: status,
-                    createTime: `2023-${Math.floor(Math.random() * 12) + 1}-${Math.floor(Math.random() * 28) + 1}`
-                }
-
-                mockData.push(order)
-            }
-
-            if (currentStatus !== 'all') {
-                mockData = mockData.filter(order => order.status === currentStatus)
+            // 根据当前选项卡过滤订单
+            if (currentTab.value > 0) {
+                const statusMap = ['全部', '待支付', '已支付', '已退款']
+                const currentStatus = statusMap[currentTab.value]
+                filteredOrders = res.data.filter(order => order.status === currentStatus)
             }
 
             if (page.value === 1) {
-                orders.value = mockData
+                orders.value = filteredOrders
             } else {
-                orders.value = [...orders.value, ...mockData]
+                orders.value = [...orders.value, ...filteredOrders]
             }
 
-            if (page.value >= 3) {
-                hasMore.value = false
-            }
-
-            isRefreshing.value = false
-            resolve()
-        }, 1000)
-    })
+            // 简单分页控制，实际应根据接口返回的分页信息
+            hasMore.value = filteredOrders.length >= pageSize.value
+        }
+    } catch (error) {
+        console.error('获取订单失败:', error)
+        uni.showToast({
+            title: '获取订单失败',
+            icon: 'none'
+        })
+    } finally {
+        isRefreshing.value = false
+    }
 }
 
 const loadMoreOrders = () => {
@@ -211,12 +195,6 @@ const completeOrder = (orderId) => {
     })
 }
 
-const reviewOrder = (orderId) => {
-    uni.navigateTo({
-        url: `/pages/order/review?id=${orderId}`
-    })
-}
-
 // 添加页面级下拉刷新
 onPullDownRefresh(() => {
     page.value = 1
@@ -226,7 +204,6 @@ onPullDownRefresh(() => {
         uni.stopPullDownRefresh()
     })
 })
-
 </script>
 
 <style lang="scss" scoped>
@@ -259,7 +236,6 @@ $border-color: #eee;
         font-size: 48rpx;
         font-weight: 600;
         color: #fff;
-        // text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
     }
 
     .header-gradient {
@@ -280,8 +256,8 @@ $border-color: #eee;
     margin-top: -40rpx;
     padding: 0 32rpx;
     background: transparent;
-    width: 100%; // 确保宽度约束
-    max-width: 100vw; // 最大宽度不超过屏幕
+    width: 100%;
+    max-width: 100vw;
     box-sizing: border-box;
     display: flex;
     justify-content: center;
@@ -340,8 +316,8 @@ $border-color: #eee;
 }
 
 .order-list {
-    width: 100%; // 确保宽度约束
-    max-width: 100vw; // 最大宽度不超过屏幕
+    width: 100%;
+    max-width: 100vw;
     box-sizing: border-box;
     padding: 0 32rpx 32rpx;
     margin-top: 24rpx;
@@ -387,30 +363,7 @@ $border-color: #eee;
         .order-status {
             font-size: 26rpx;
             font-weight: 500;
-
-            &.pending {
-                color: $secondary-color;
-            }
-
-            &.paid {
-                color: $info-color;
-            }
-
-            &.shipped {
-                color: $info-color;
-            }
-
-            &.delivered {
-                color: $info-color;
-            }
-
-            &.completed {
-                color: $success-color;
-            }
-
-            &.refunded {
-                color: $text-secondary;
-            }
+            color: $primary-color;
         }
     }
 
@@ -434,7 +387,6 @@ $border-color: #eee;
             .goods-title {
                 font-size: 28rpx;
                 color: $text-primary;
-                // @include text-ellipsis(2);
             }
 
             .goods-meta {
@@ -487,11 +439,6 @@ $border-color: #eee;
 
                 &.confirm {
                     background: linear-gradient(45deg, #4CAF50, #66BB6A);
-                    color: #fff;
-                }
-
-                &.review {
-                    background: linear-gradient(45deg, #2196F3, #42A5F5);
                     color: #fff;
                 }
             }

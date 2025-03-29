@@ -5,51 +5,45 @@
       paddingTop: statusBarHeight + 'px',
       'backgroundColor': backgroundColor
     }">
-      <!-- <view class="state_height"></view> -->
       <view class="nav_bar_inner">
-        <view class=" nav-icon" @click="onBack()">
-          <uni-icons :type="backIcon" color="#000" size="30"></uni-icons>
+        <view class="nav-icon" @click="onBack()">
+          <uni-icons :type="backIcon" :color="backIconColor" size="30"></uni-icons>
         </view>
       </view>
     </view>
+
     <!-- 顶部区域背景 -->
     <view class="top_area area_height" :style="{
       paddingTop: statusBarHeight + 44 + 'px',
-      'background-image': `url(${shopInfo.avatar})`,
-      'background-size': 'cover',
-      'background-position': 'center',
-      'background-blend-mode': 'multiply'
+      'background-image': `url(${shopInfo.photo})`
     }" data-type="1">
-      <view class="shop-header" style="backdrop-filter: blur(20px); 
-               background: rgba(255,255,255,0.5); 
-               padding: 40rpx;">
-        <!-- 店铺信息 -->
+      <view class="shop-header">
         <image class="shop-avatar" :src="shopInfo.avatar" mode="aspectFill" />
-
         <view class="shop-details">
           <text class="shop-name">{{ shopInfo.name }}</text>
-          <view class="status-tag" :class="shopInfo.status === 'open' ? 'open' : 'closed'">
-            {{ shopInfo.statusText }}
+          <view class="status-tag" :style="{ color: isStoreOpen(shopInfo) ? '#07C160' : '#FF5500' }">
+            {{ isStoreOpen(shopInfo) ? '营业中' : '已打烊' }}
           </view>
           <view class="delivery-info">
             <uni-icons type="location" size="24" color="#ff5500" />
-            <text class="delivery-text">{{ shopInfo.deliveryInfo }}</text>
+            <text class="delivery-text">{{ shopInfo.address }}</text>
           </view>
         </view>
       </view>
     </view>
+
     <!-- tab切换 -->
     <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 38 + 'px' }">
-      <!-- 替换u-tabs为自定义tab -->
       <view class="tab-list">
-        <view v-for="(item, index) in list4" :key="index" class="tab-item" :class="{ active: tabIndex === index }"
-          @click="onChangeTab({ index })">
+        <view v-for="(item, index) in tabList" :key="index" class="tab-item" :class="{ active: tabIndex === index }"
+          @click="onChangeTab(index)">
           {{ item.name }}
         </view>
       </view>
     </view>
 
-    <template v-if="tabIndex == 0">
+    <!-- 内容区域 -->
+    <view id="item-1" class="content-section">
       <view class="advert_area area_height" data-type="1">
         <view class="group-entry">
           <view class="entry-header">
@@ -65,10 +59,8 @@
         </view>
       </view>
 
-      <!-- 跟团人员滚动 -->
       <view class="purchase-container">
-        <scroll-view scroll-x class="purchase-scroll" :scroll-left="scrollLeft" @touchstart.prevent @touchmove.prevent
-          @touchend.prevent>
+        <scroll-view scroll-x class="purchase-scroll" :scroll-left="scrollLeft">
           <view class="scroll-content">
             <view class="purchase-item" v-for="(item, index) in purchaseList" :key="index">
               <image class="user-avatar" :src="item.avatar" mode="aspectFill" />
@@ -78,25 +70,20 @@
           </view>
         </scroll-view>
       </view>
-      <view
-        style="width: 100%;height: 80rpx;text-align: center;background-color: #fff;font-size: 40rpx;color: #ff5500; ">
-        常售餐饮</view>
-    </template>
 
-
+    </view>
+    <view class="section-title">常售餐饮</view>
     <!-- 菜品区域 -->
-    <view class="cate_content">
+    <view id="item-2" class="cate_content">
       <scroll-view scroll-y="true" :scroll-top="leftScrollTop" class="left"
         :style="{ 'height': scrollHeight + 'px', 'top': stickyTop + 40 + 'px' }">
-        <view class="">
-          <view class="menu_name" :id="'menu_name' + index" :class="{ 'menu_name_active': currentIndex == index }"
-            v-for="(item, index) in productList" @click="onChangeCate(item, index)" :key="index">
-            {{ item.name }}
-          </view>
+        <view class="menu_name" :id="'menu_name' + index" :class="{ 'menu_name_active': currentIndex == index }"
+          v-for="(item, index) in productList" :key="index" @click="onChangeCate(item, index)">
+          {{ item.name }}
         </view>
       </scroll-view>
       <view class="right">
-        <view class="item" v-for="(item, index) in productList" :key="index">
+        <view class="item" v-for="(item, index) in productList" :key="index" :id="'right-item-' + index">
           <view class="title sticky_title" :style="{ 'top': stickyTop + 37 + 'px' }">
             {{ item.name }}
           </view>
@@ -107,7 +94,6 @@
                 <view class="name">{{ cell.name }}</view>
                 <view class="price-action">
                   <text class="price">￥{{ cell.price }}</text>
-                  <!-- 添加数量控制 -->
                   <view class="action-buttons">
                     <text class="btn minus" @click.stop="decreaseCount(cell)">-</text>
                     <text class="count">{{ cell.count || 0 }}</text>
@@ -120,7 +106,6 @@
         </view>
       </view>
     </view>
-
     <!-- 底部购物车 -->
     <view class="foot">
       <view class="inner">
@@ -138,6 +123,7 @@
           {{ totalPrice < minDeliveryPrice ? `¥${minDeliveryPrice}起送` : '去结算' }} </view>
         </view>
       </view>
+
       <!-- 购物车弹窗 -->
       <uni-popup ref="popup" type="bottom" background-color="#fff">
         <view class="cart_list">
@@ -168,385 +154,322 @@
           </scroll-view>
         </view>
       </uni-popup>
-
-      <!-- 规格选择弹窗 -->
-      <!-- <uni-popup ref="specPopup" type="bottom" background-color="#fff" :mask-click="true" :safe-area="true">
-        <view class="spec-popup">
-          <view class="spec-header">
-            <view class="product-info">
-              <image :src="currentProduct.img" mode="aspectFill" class="product-img"></image>
-              <view class="info">
-                <view class="name">{{ currentProduct.name }}</view>
-                <view class="price">￥{{ currentProduct.price }}</view>
-              </view>
-            </view>
-            <view class="close" @click="closeSpecPopup">×</view>
-          </view>
-          <view class="spec-content">
-            <view class="spec-group" v-for="(group, index) in currentProduct.specs" :key="index">
-              <view class="spec-title">{{ group.name }}</view>
-              <view class="spec-items">
-                <view v-for="(item, idx) in group.items" :key="idx"
-                  :class="['spec-item', { 'active': selectedSpecs[group.name] === item.name }]"
-                  @click="selectSpec(group.name, item.name)">
-                  {{ item.name }}
-                </view>
-              </view>
-            </view>
-          </view>
-          <view class="spec-footer">
-            <view class="action-buttons">
-              <text class="btn minus" @click.stop="decreaseCount(currentProduct)">-</text>
-              <text class="count">{{ specCount }}</text>
-              <text class="btn plus" @click.stop="increaseCount(currentProduct)">+</text>
-            </view>
-            <view class="confirm-btn" @click="confirmSpec">加入购物车</view>
-          </view>
-        </view>
-      </uni-popup> -->
     </view>
 </template>
 
 <script setup>
 import { ref, reactive, nextTick, onMounted, computed, onUnmounted } from 'vue'
-import { onPageScroll } from '@dcloudio/uni-app' // 添加这行
+import { onPageScroll, onLoad } from '@dcloudio/uni-app'
+import { request } from '../../utils/request'
+
+const shopDetail = ref({}) // 用于存储店铺详情
 
 // 响应式数据
 const windowHeight = uni.getWindowInfo().windowHeight
 const scrollHeight = ref(uni.getWindowInfo().windowHeight)
 const statusBarHeight = ref(uni.getWindowInfo().statusBarHeight)
 const backgroundColor = ref("rgba(255,255,255,0)")
-const backIconColor = ref("#000")
-const backIcon = ref("back") // 将 "arrow-left" 改为 "back"
+const backIconColor = ref("#fff")
+const backIcon = ref("back")
 const allAreaHeight = ref(0)
-const topList = ref([])
 const currentIndex = ref(0)
 const leftScrollTop = ref(0)
 const rightItemHeight = ref(0)
 const stickyTop = ref(0)
 const tabIndex = ref(0)
 const isClick = ref(false)
+const isTabClick = ref(false)
 
+const tabThreshold = 50 // 滚动阈值
 
-const shopInfo = ref({
-  avatar: '/static/logo.png', // 店铺头像
-  name: '绿茶餐厅旗舰店', // 店铺名称
-  status: 'open', // 状态：open/ closed
-  statusText: '营业中', // 状态文案
-  deliveryInfo: '门店自提/同城配送' // 发货方式
-});
-// 其他响应式数据保持不变
-const productList = reactive([{
-  name: "中餐",
-  id: "1",
-  icon: "",
-  list: [{
-    name: "七味盐黄金豆腐",
-    img: "https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 188,
-  },
-  {
-    name: "龙井凤尾虾仁",
-    img: "https://qcloud.dpfile.com/pc/oUbzBcAwYHbcXkxpAKlEs-C8fJQSNvsbJU8yORW5Ev8LwkSAC8kXSFYMi29l17Qs5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶饼",
-    img: "https://qcloud.dpfile.com/pc/BDNSIx7XBHIm2AZ-68Yq8CsI0vGyA_Bjnzl6bPXAAqciRqcwCz8FTdU3fU3gYaOR5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 18,
-  }
-  ],
-},
-{
-  name: "西餐",
-  id: "2",
-  icon: "",
-  list: [{
-    name: "绿茶烤鸡",
-    img: "https://qcloud.dpfile.com/pc/qnYmJT9l5QbBNCNfezzLojGCAHfoE6xmprOQlvoyvpiwK8Lj0colHBWeX6r06i-Y5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 36,
-  },
-  {
-    name: "石锅鸡汤",
-    img: "https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶葱香",
-    img: "https://qcloud.dpfile.com/pc/8To1nn0bLS0Z8UXhWs7d_6_4hgdHYJDB9PY0bTHn51l0M4tvZgWeKDKSXjsROSf95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 48,
-  },
-  {
-    name: "面包诱惑",
-    img: "https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 32,
+const shopInfo = ref({})
 
-  },
-  {
-    name: "石锅鸡汤",
-    img: "https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶葱香",
-    img: "https://qcloud.dpfile.com/pc/8To1nn0bLS0Z8UXhWs7d_6_4hgdHYJDB9PY0bTHn51l0M4tvZgWeKDKSXjsROSf95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 48,
-  },
-  {
-    name: "面包诱惑",
-    img: "https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 32,
+// 其他响应式数据...
+const anchorPositions = ref([]); // 存储tab区域的top位置
+const topList = ref([]); // 存储右侧分类项的位置
 
-  }
-  ],
-},
-{
-  name: "中餐",
-  id: "1",
-  icon: "",
-  list: [{
-    name: "七味盐黄金豆腐",
-    img: "https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 188,
-  },
-  {
-    name: "龙井凤尾虾仁",
-    img: "https://qcloud.dpfile.com/pc/oUbzBcAwYHbcXkxpAKlEs-C8fJQSNvsbJU8yORW5Ev8LwkSAC8kXSFYMi29l17Qs5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 58,
-  },
-  {
-    name: "绿茶饼",
-    img: "https://qcloud.dpfile.com/pc/BDNSIx7XBHIm2AZ-68Yq8CsI0vGyA_Bjnzl6bPXAAqciRqcwCz8FTdU3fU3gYaOR5g_3Oo7Z9EXqcoVvW9arsw.jpg",
-    price: 18,
-  }
-  ],
-},
+const tabList = reactive([
+  { name: '跟团新讯' },
+  { name: '常售餐饮' }
 ])
-const list4 = reactive([{
-  name: '跟团新讯'
-},
-{
-  name: '常售餐饮',
-}
+
+const productList = ref([])
+
+const purchaseList = ref([
+  { avatar: '/static/logo.png', name: '张先生', product: '七味盐黄金豆腐' },
+  { avatar: '/static/logo.png', name: '李小姐', product: '龙井凤尾虾仁' },
+  { avatar: '/static/logo.png', name: '王女士', product: '绿茶饼' }
 ])
+
 const popup = ref(null)
-
-// 新增购物车相关数据
 const cartCount = ref(0)
 const totalPrice = ref(0)
-const deliveryFee = ref(5)
-const minDeliveryPrice = ref(20)
-
-// 添加购买记录数据
-const purchaseList = ref([
-  {
-    avatar: '/static/logo.png',
-    name: '张先生',
-    product: '七味盐黄金豆腐'
-  },
-  {
-    avatar: '/static/logo.png',
-    name: '李小姐',
-    product: '龙井凤尾虾仁'
-  },
-  {
-    avatar: '/static/logo.png',
-    name: '王女士',
-    product: '绿茶饼'
-  },
-  {
-    avatar: '/static/logo.png',
-    name: '赵先生',
-    product: '绿茶烤鸡'
-  },
-  {
-    avatar: '/static/logo.png',
-    name: '陈女士',
-    product: '石锅鸡汤'
-  }
-])
-
-// 滚动位置
+const deliveryFee = ref(0)
+const minDeliveryPrice = ref(0)
 const scrollTop = ref(0)
-
-// 自动滚动
+const scrollLeft = ref(0)
 let scrollTimer = null
+let scrollInterval = null
 
+// 计算属性
+const cartList = computed(() => {
+  const list = []
+  productList.value.forEach(cate => {
+    cate.list.forEach(item => {
+      if (item.count && item.count > 0) {
+        list.push(item)
+      }
+    })
+  })
+  return list
+})
+
+onLoad(async (options) => {
+  console.log('接收到的参数:', options)
+  await fetchShopDetail(options.id)
+  await fetchShopInfo(options.id)
+})
+
+// 生命周期
 onMounted(() => {
   startScroll()
   startAutoScroll()
+
   nextTick(() => {
-    const query = uni.createSelectorQuery()
-    query.selectAll('.area_height').boundingClientRect(data => {
-      if (data) {
-        allAreaHeight.value = 0
-        let addHeight = 0
-        for (var i = 0; i < data.length; i++) {
-          if (data[i].dataset.type == '1') {
-            allAreaHeight.value += data[i].height
-          } else {
-            addHeight += data[i].height
-          }
-        }
-        scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
-        // scrollHeight.value = addHeight * 20
-      }
-    }).exec()
-
-    query.select('.tabs').boundingClientRect(data => {
-      if (data) {
-        stickyTop.value = statusBarHeight.value + data.height
-      }
-    }).exec()
-
+    initLayout()
+    initAnchorPositions()
     getTop()
   })
 
-  if (getCurrentPages().length == 1) {
-    backIcon.value = "home"
-  } else {
-    backIcon.value = "back"  // 将 "arrow-left" 改为 "back"
-  }
+  backIcon.value = getCurrentPages().length === 1 ? "home" : "back"
 })
 
-function startScroll() {
-  scrollTimer = setInterval(() => {
-    scrollTop.value--
-    if (Math.abs(scrollTop.value) >= (purchaseList.length * 60)) {
-      scrollTop.value = 0
-    }
-  }, 50)
+onUnmounted(() => {
+  if (scrollTimer) clearInterval(scrollTimer)
+  if (scrollInterval) clearInterval(scrollInterval)
+})
+
+// 页面滚动处理
+onPageScroll(({ scrollTop: currentScrollTop }) => {
+  if (isTabClick.value) return
+
+  scrollTop.value = currentScrollTop
+  updateOpacity(currentScrollTop)
+  updateActiveTab(currentScrollTop)
+  updateMenuActive(currentScrollTop)
+})
+
+const fetchShopInfo = async (id) => {
+  try {
+    const res = await request({
+      url: '/shop/getshopInfo',
+      method: 'POST',
+      data: {
+        shopid: id
+      }
+    })
+    console.log('获取店铺详情:', res)
+    shopInfo.value = { ...shopInfo.value, ...res.data }
+    minDeliveryPrice.value = res.data.minDeliveryFee
+  } catch (error) {
+    console.error("获取店铺信息失败", error)
+  }
 }
 
-// 组件卸载时清除定时器
-onUnmounted(() => {
-  if (scrollTimer) {
-    clearInterval(scrollTimer)
+const fetchShopDetail = async (id) => {
+  try {
+    const res = await request({
+      url: '/product/shopproduct',
+      method: 'POST',
+      data: {
+        shopid: id
+      }
+    })
+    console.log('请求响应:', res)
+    if (res.data && res.data.length > 0) {
+      productList.value = res.data.map(category => ({
+        name: category.name,
+        id: category.categoryId,
+        list: category.productList.map(product => ({
+          id: product.id,
+          name: product.name,
+          img: product.image,
+          price: product.price,
+          count: 0
+        }))
+      }))
+    }
+  } catch (error) {
+    console.error("获取店铺详情失败", error)
   }
+}
 
-})
+// 初始化布局
+const initLayout = () => {
+  const query = uni.createSelectorQuery()
+  query.selectAll('.area_height').boundingClientRect(data => {
+    if (data) {
+      allAreaHeight.value = 0
+      let addHeight = 0
+      for (let i = 0; i < data.length; i++) {
+        data[i].dataset.type === '1' ? allAreaHeight.value += data[i].height : addHeight += data[i].height
+      }
+      scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
+    }
+  }).exec()
 
-// 页面滚动事件处理
-onPageScroll(({ scrollTop }) => {
-  let opacity = (scrollTop / 100).toFixed(2)
-  backgroundColor.value = "rgba(255,255,255," + (opacity >= 1 ? 1 : opacity) + ")"
+  query.select('.tabs').boundingClientRect(data => {
+    if (data) stickyTop.value = statusBarHeight.value + data.height
+  }).exec()
+}
+
+// 初始化锚点位置
+const initAnchorPositions = () => {
+  const query = uni.createSelectorQuery()
+  tabList.forEach((_, index) => {
+    query.select(`#item-${index + 1}`).boundingClientRect()
+  })
+
+  query.exec(res => {
+    if (res) {
+      anchorPositions.value = res.map(item => ({
+        top: item.top,
+        bottom: item.bottom
+      }))
+    }
+  })
+}
+
+// 初始化右侧分类项位置
+const getTop = () => {
+  const query = uni.createSelectorQuery();
+  query.selectAll('.right .item').boundingClientRect();
+  query.exec(res => {
+    if (res?.[0]) {
+      topList.value = res[0].map(item => ({
+        top: item.top,
+        bottom: item.bottom,
+        height: item.height // 添加高度属性
+      }));
+      // 初始化rightItemHeight为第一个分类项的高度
+      if (res[0].length > 0) {
+        rightItemHeight.value = res[0][0].height;
+      }
+    }
+  });
+};
+
+// 更新透明度
+const updateOpacity = (scrollTop) => {
+  const opacity = Math.min(scrollTop / 100, 1)
+  backgroundColor.value = `rgba(255,255,255,${opacity})`
   backIconColor.value = opacity >= 1 ? "#000" : "#fff"
 
   uni.setNavigationBarColor({
     frontColor: opacity >= 1 ? "#000000" : "#ffffff",
     backgroundColor: opacity >= 1 ? "#ffffff" : "#000000",
   })
+}
 
-  if (!isClick.value) {
-    scrollTop = parseInt(scrollTop)
-    for (let i = 0; i < topList.value.length; i++) {
-      if (scrollTop >= topList.value[i].top && scrollTop <= topList.value[i].bottom) {
-        currentIndex.value = i
-        leftScrollTop.value = rightItemHeight.value * i
-        break
+// 更新活动tab
+const updateActiveTab = (currentScrollTop) => {
+  if (isTabClick.value) return
+
+  const currentPosition = currentScrollTop + stickyTop.value
+
+  // 检查是否在第一个tab区域
+  if (currentPosition <= tabThreshold) {
+    tabIndex.value = 0
+    return
+  }
+
+  // 检查其他tab区域
+  for (let i = 0; i < anchorPositions.value.length; i++) {
+    const pos = anchorPositions.value[i]
+    if (currentPosition >= pos.top && currentPosition < pos.bottom) {
+      if (tabIndex.value !== i) {
+        tabIndex.value = i
       }
+      break
     }
   }
-})
-
-// 获取右边内容距离顶部的距离
-function getTop() {
-  const query = uni.createSelectorQuery()
-  query.select('.menu_name').boundingClientRect()  // 查询单个元素
-  query.selectAll('.item').boundingClientRect()      // 查询多个元素
-  query.exec(res => {
-    // res[0] 为 .menu_name 元素的节点信息
-    if (res && res[0]) {
-      // 如果 height 不存在则设置为 0 或其他默认值
-      rightItemHeight.value = res[0].height || 0
-    } else {
-      console.log('未找到 .menu_name 元素或 height 属性不存在')
-    }
-    // res[1] 为 .item 元素集合的信息数组
-    if (res && res[1]) {
-      res[1].forEach(item => {
-        topList.value.push({
-          top: parseInt(item.top - stickyTop.value),
-          bottom: parseInt(item.bottom - stickyTop.value)
-        })
-      })
-    } else {
-      console.error('未找到 .item 元素集合')
-    }
-  })
 }
 
-// 点击商品分类
-function onChangeCate(item, index) {
-  if (currentIndex.value == index) return
+const onChangeTab = async (index) => {
+  if (tabIndex.value === index) return
 
-  isClick.value = true
-  currentIndex.value = index
-  leftScrollTop.value = rightItemHeight.value * index
+  isTabClick.value = true
+  tabIndex.value = index
 
-  uni.pageScrollTo({
-    scrollTop: topList.value[index].top
-  })
+  await nextTick()
 
-  setTimeout(() => {
-    isClick.value = false
-  }, 600)
-}
-
-// 显示购物车弹窗
-function onShowCart() {
-  if (cartCount.value > 0) {
-    popup.value.open()
-  } else {
-    uni.showToast({
-      title: '购物车是空的',
-      icon: 'none'
+  const targetElement = anchorPositions.value[index]
+  if (targetElement) {
+    uni.pageScrollTo({
+      scrollTop: targetElement.top - stickyTop.value,
+      duration: 300,
+      complete: () => {
+        updateOpacity(targetElement.top - stickyTop.value)
+        setTimeout(() => {
+          isTabClick.value = false
+        }, 350) // 比滚动时间长一点确保完成
+      }
     })
   }
 }
 
-// 切换tab
-function onChangeTab(data) {
-  tabIndex.value = data.index
+const onChangeCate = async (item, index) => {
+  currentIndex.value = index
+  leftScrollTop.value = rightItemHeight.value * index
+
+  await nextTick()
+
+  const targetElement = topList.value[index]
+  if (targetElement) {
+    uni.pageScrollTo({
+      scrollTop: targetElement.top - stickyTop.value,
+      duration: 300,
+    })
+  }
 }
-
-// 拼团滚动逻辑
-const scrollLeft = ref(0)
-let scrollInterval = null
-
-
-function startAutoScroll() {
-  scrollInterval = setInterval(() => {
-    scrollLeft.value += 2
-    if (scrollLeft.value >= purchaseList.value.length * 300) {
-      scrollLeft.value = 0
+const updateMenuActive = (currentScrollTop) => {
+  currentScrollTop = parseInt(currentScrollTop)
+  for (let i = 0; i < topList.value.length; i++) {
+    if (currentScrollTop >= topList.value[i].top && currentScrollTop <= topList.value[i].bottom) {
+      if (currentIndex.value !== i) {
+        currentIndex.value = i
+        leftScrollTop.value = rightItemHeight.value * i
+      }
+      break
     }
-  }, 50)
+  }
 }
 
-onUnmounted(() => {
-  clearInterval(scrollInterval)
-})
+// 购物车相关方法
+const onShowCart = () => {
+  if (cartCount.value > 0) {
+    popup.value.open()
+  } else {
+    uni.showToast({ title: '购物车是空的', icon: 'none' })
+  }
+}
 
-// 增减商品数量
-function increaseCount(item) {
+const increaseCount = (item) => {
   if (!item.count) item.count = 0
   item.count++
   updateCart()
-  // }
 }
 
-function decreaseCount(item) {
+const decreaseCount = (item) => {
   if (!item.count) return
   item.count--
   updateCart()
 }
 
-// 更新购物车
-function updateCart() {
+const updateCart = () => {
   let count = 0
   let price = 0
-  productList.forEach(cate => {
+  productList.value.forEach(cate => {
     cate.list.forEach(item => {
       if (item.count) {
         count += item.count
@@ -555,44 +478,16 @@ function updateCart() {
     })
   })
   cartCount.value = count
-  totalPrice.value = price
+  totalPrice.value = price.toFixed(2)
 }
 
-// 提交订单
-function onSubmit() {
-  if (totalPrice.value < minDeliveryPrice.value) return
-  // 保存购物车数据到本地
-  const orderData = {
-    cartList: cartList.value,
-    totalPrice: totalPrice.value,
-    deliveryFee: deliveryFee.value
-  }
-  uni.setStorageSync('orderData', orderData)
-
-  uni.navigateTo({
-    url: '/pages/GoShopping/index'
-  })
-}
-
-// 返回上一级
-function onBack() {
-  if (getCurrentPages().length == 1) {
-    uni.switchTab({
-      url: "/pages/index/index"
-    })
-  } else {
-    uni.navigateBack()
-  }
-}
-
-// 清空购物车
-function clearCart() {
+const clearCart = () => {
   uni.showModal({
     title: '提示',
     content: '确定要清空购物车吗？',
     success: (res) => {
       if (res.confirm) {
-        productList.forEach(cate => {
+        productList.value.forEach(cate => {
           cate.list.forEach(item => {
             item.count = 0
           })
@@ -604,27 +499,71 @@ function clearCart() {
   })
 }
 
-// 计算购物车列表
-const cartList = computed(() => {
-  const list = []
-  productList.forEach(cate => {
-    cate.list.forEach(item => {
-      if (item.count && item.count > 0) {
-        list.push(item)
-      }
-    })
-  })
-  return list
-})
+const onSubmit = () => {
+  if (totalPrice.value < minDeliveryPrice.value) return
+  const orderData = {
+    cartList: cartList.value,
+    totalPrice: totalPrice.value,
+    deliveryFee: deliveryFee.value
+  }
+  uni.setStorageSync('orderData', orderData)
+  uni.navigateTo({ url: '/pages/GoShopping/index' })
+}
+
+// 其他方法
+const onBack = () => {
+  if (getCurrentPages().length === 1) {
+    uni.switchTab({ url: "/pages/index/index" })
+  } else {
+    uni.navigateBack()
+  }
+}
+
+const startScroll = () => {
+  scrollTimer = setInterval(() => {
+    scrollTop.value--
+    if (Math.abs(scrollTop.value) >= (purchaseList.value.length * 60)) {
+      scrollTop.value = 0
+    }
+  }, 50)
+}
+
+const startAutoScroll = () => {
+  scrollInterval = setInterval(() => {
+    scrollLeft.value += 2
+    if (scrollLeft.value >= purchaseList.value.length * 300) {
+      scrollLeft.value = 0
+    }
+  }, 50)
+}
+
+// 营业状态判断方法
+const isStoreOpen = (store) => {
+  if (!store.openTime || !store.closeTime) return false
+
+  const now = new Date()
+  const currentHours = now.getHours()
+  const currentMinutes = now.getMinutes()
+
+  const [openHour, openMinute] = store.openTime.split(':').map(Number)
+  const [closeHour, closeMinute] = store.closeTime.split(':').map(Number)
+
+  const currentTime = currentHours * 60 + currentMinutes
+  const openTime = openHour * 60 + openMinute
+  const closeTime = closeHour * 60 + closeMinute
+
+  // 处理跨天营业
+  if (openTime < closeTime) {
+    return currentTime >= openTime && currentTime <= closeTime
+  } else {
+    return currentTime >= openTime || currentTime <= closeTime
+  }
+}
 </script>
 
 <style lang="scss" scoped>
 view {
   box-sizing: border-box;
-}
-
-.state_height {
-  height: var(--status-bar-height);
 }
 
 .page {
@@ -639,142 +578,91 @@ view {
   left: 0;
   right: 0;
   z-index: 999;
-  // background: rgba(0, 0, 0, 0);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 
   .nav_bar_inner {
     display: flex;
-    padding: 20rpx 20rpx;
+    padding: 20rpx;
     align-items: center;
-    justify-content: space-between;
+
+    .nav-icon {
+      width: 44rpx;
+      height: 44rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20rpx;
+    }
   }
 }
 
 .top_area {
   width: 100%;
-  height: 400rpx;
+  height: 500rpx;
   background-color: #f0f0f0;
-  /* 备用颜色防止图片加载失败 */
   transition: background 0.3s ease;
-  /* 平滑过渡 */
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+  background-blend-mode: multiply;
   display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
-  justify-content: center;
-  // margin: 0 100rpx;
-
-  .status-tag {
-    margin: 10rpx 0;
-  }
 
   .shop-header {
-    border-radius: 20rpx;
+    border-radius: 10rpx;
     box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     width: 100%;
-    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
-  }
+    background: rgba(0, 0, 0, 0.1);
+    padding: 40rpx;
 
-  .shop-avatar {
-    width: 160rpx;
-    height: 160rpx;
-    border-radius: 16rpx;
-    margin-right: 30rpx;
-  }
-
-  .shop-details {
-    flex: 1;
-  }
-
-  .shop-name {
-    font-size: 36rpx;
-    font-weight: 600;
-    margin-bottom: 20rpx;
-    color: #ffffff;
-  }
-
-  .status-tag {
-    display: inline-block;
-    padding: 8rpx 24rpx;
-    font-size: 24rpx;
-    border-radius: 40rpx;
-    margin-bottom: 16rpx;
-
-    &.open {
-      background: #d1ffd8;
-      color: #2ac06d;
+    .shop-avatar {
+      width: 160rpx;
+      height: 160rpx;
+      background-color: #999;
+      border-radius: 16rpx;
+      margin-right: 30rpx;
     }
 
-    &.closed {
-      background: #fff1f0;
-      color: #ff4d4f;
-    }
-  }
+    .shop-details {
+      flex: 1;
 
-  .delivery-info {
-    display: flex;
-    align-items: center;
-    font-size: 28rpx;
-    color: #666;
-    margin-top: 10rpx;
-  }
+      .shop-name {
+        font-size: 36rpx;
+        font-weight: 600;
+        margin-bottom: 20rpx;
+        color: #ffffff;
+      }
 
-  .delivery-text {
-    color: #ff5500;
-    background-color: #ffffff7c;
-    border-radius: 20rpx;
-    padding: 0 20rpx;
-    margin-left: 10rpx;
-  }
-}
+      .status-tag {
+        display: inline-block;
+        padding: 8rpx 24rpx;
+        font-size: 24rpx;
+        border-radius: 40rpx;
+        margin-bottom: 16rpx;
+        background-color: rgba(255, 255, 255, 0.8);
+      }
 
-.group-entry {
-  margin: 20rpx 20rpx 0rpx 20rpx;
-  background: #fff9e6;
-  border-radius: 16rpx;
-  overflow: hidden;
-  box-shadow: 0 4rpx 12rpx rgba(255, 153, 0, 0.1);
+      .delivery-info {
+        display: flex;
+        align-items: center;
+        font-size: 28rpx;
+        color: #666;
+        margin-top: 10rpx;
 
-  .entry-header {
-    padding: 24rpx;
-    background: linear-gradient(90deg, #fff1da, #ffe8c4);
-
-    .title {
-      font-size: 32rpx;
-      color: #ff5500;
-      font-weight: bold;
-      margin-right: 20rpx;
-    }
-
-    .subtitle {
-      font-size: 26rpx;
-      color: #ff9900;
-    }
-  }
-
-  .group-banner {
-    width: 100%;
-    height: 240rpx;
-    display: block;
-  }
-
-  .action-box {
-    padding: 0 20rpx 40rpx 20rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    // background: #fff3d9;
-
-    .action-text {
-      font-size: 26rpx;
-      color: #666;
-      margin-right: 10rpx;
+        .delivery-text {
+          color: #ff5500;
+          background-color: #ffffff7c;
+          border-radius: 20rpx;
+          padding: 0 20rpx;
+          margin-left: 10rpx;
+        }
+      }
     }
   }
 }
@@ -785,47 +673,156 @@ view {
   height: 100rpx;
   background: #fff;
   border-bottom: 0.0685rem solid #ddd;
-  // box-shadow: 0 3px 10px -4px rgba(0, 0, 0, 0.2);
   z-index: 999;
-}
 
-.tab-list {
-  display: flex;
-  height: 100%;
-
-  .tab-item {
-    flex: 1;
+  .tab-list {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28rpx;
-    color: #666;
-    position: relative;
+    height: 100%;
 
-    &.active {
-      color: #333;
-      font-weight: bold;
+    .tab-item {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28rpx;
+      color: #666;
+      position: relative;
+      transition: color 0.2s ease;
 
-      &:after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 40rpx;
-        height: 4rpx;
-        background: #ff5500;
-        border-radius: 2rpx;
+      &.active {
+        color: #333;
+        font-weight: bold;
+
+        &:after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 40rpx;
+          height: 4rpx;
+          background: #ff5500;
+          border-radius: 2rpx;
+          transition: width 0.3s ease, opacity 0.2s ease;
+        }
+      }
+
+      &:not(.active):after {
+        opacity: 0;
+        width: 0;
       }
     }
   }
 }
 
-// .swiper_wrap {}
+.content-section {
+  margin-bottom: 20rpx;
+
+  .group-entry {
+    margin: 20rpx 20rpx 0;
+    background: #fff9e6;
+    border-radius: 16rpx;
+    overflow: hidden;
+    box-shadow: 0 4rpx 12rpx rgba(255, 153, 0, 0.1);
+
+    .entry-header {
+      padding: 24rpx;
+      background: linear-gradient(90deg, #fff1da, #ffe8c4);
+
+      .title {
+        font-size: 32rpx;
+        color: #ff5500;
+        font-weight: bold;
+        margin-right: 20rpx;
+      }
+
+      .subtitle {
+        font-size: 26rpx;
+        color: #ff9900;
+      }
+    }
+
+    .group-banner {
+      width: 100%;
+      height: 240rpx;
+      display: block;
+    }
+
+    .action-box {
+      padding: 0 20rpx 40rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .action-text {
+        font-size: 26rpx;
+        color: #666;
+        margin-right: 10rpx;
+      }
+    }
+  }
+
+  .purchase-container {
+    margin: 0 20rpx 20rpx;
+    background: #fff9e6;
+    border-radius: 16rpx;
+    overflow: hidden;
+
+    .purchase-scroll {
+      width: 100%;
+      height: 100rpx;
+      white-space: nowrap;
+
+      .scroll-content {
+        display: inline-flex;
+        align-items: center;
+        padding: 0 20rpx;
+
+        .purchase-item {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 50rpx;
+          padding: 12rpx 24rpx;
+          margin-right: 20rpx;
+          box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+          background: rgba(255, 255, 255, 0.9);
+
+          .user-avatar {
+            width: 60rpx;
+            height: 60rpx;
+            border-radius: 50%;
+            margin-right: 16rpx;
+          }
+
+          .purchase-text {
+            font-size: 26rpx;
+            color: #666;
+            margin-right: 16rpx;
+          }
+
+          .badge {
+            background: #ff5500;
+            color: white;
+            font-size: 20rpx;
+            padding: 4rpx 12rpx;
+            border-radius: 20rpx;
+          }
+        }
+      }
+    }
+  }
+}
+
+.section-title {
+  width: 100%;
+  height: 80rpx;
+  text-align: center;
+  background-color: #fff;
+  font-size: 40rpx;
+  color: #ff5500;
+}
 
 .cate_content {
-  /* 	position: sticky;
-        top: 100rpx; */
   display: flex;
   flex-direction: row;
 
@@ -834,22 +831,22 @@ view {
     top: 100rpx;
     width: 200rpx;
     background: #fff;
-    // border: 1px solid red;
 
     .menu_name {
-      /* 	position: sticky;
-                top: 0; */
       height: 100rpx;
       line-height: 100rpx;
       text-align: center;
       color: #8d8d8d;
+      font-size: 24rpx;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
-    }
-
-    .menu_name_active {
-      background: #f5f5f5;
-      color: #333;
-      border-left: 4px solid #ff5500;
+      &.menu_name_active {
+        background: #f5f5f5;
+        color: #333;
+        border-left: 4px solid #ff5500;
+      }
     }
   }
 
@@ -891,6 +888,53 @@ view {
         .product_info {
           flex: 1;
           padding-left: 20rpx;
+
+          .name {
+            font-size: 28rpx;
+            font-weight: 500;
+            margin-bottom: 16rpx;
+          }
+
+          .price-action {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .price {
+              color: #ff5500;
+              font-size: 32rpx;
+              font-weight: bold;
+            }
+
+            .action-buttons {
+              display: flex;
+              align-items: center;
+
+              .btn {
+                width: 44rpx;
+                height: 44rpx;
+                border-radius: 50%;
+                background: #f5f5f5;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                &.minus {
+                  color: #999;
+                }
+
+                &.plus {
+                  background: #ff5500;
+                  color: #fff;
+                }
+              }
+
+              .count {
+                margin: 0 20rpx;
+                font-size: 28rpx;
+              }
+            }
+          }
         }
       }
     }
@@ -902,7 +946,7 @@ view {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 999; // 修改层级，确保在规格弹窗下方
+  z-index: 999;
   min-height: 100rpx;
   padding-bottom: constant(safe-area-inset-bottom);
   padding-bottom: env(safe-area-inset-bottom);
@@ -912,76 +956,64 @@ view {
   .inner {
     height: 100rpx;
     display: flex;
-    flex-direction: row;
     align-items: center;
     justify-content: space-between;
     padding: 0 20rpx;
-  }
 
-  .icon_box {
-    width: 80rpx;
-    height: 80rpx;
-    border-radius: 50%;
-    background: #f5f5f5;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-  }
+    .cart-left {
+      display: flex;
+      align-items: center;
 
-  .cart-left {
-    display: flex;
-    align-items: center;
+      .icon-box {
+        position: relative;
+        margin-right: 20rpx;
 
-    .icon-box {
-      position: relative;
-      margin-right: 20rpx;
+        .badge {
+          position: absolute;
+          top: -10rpx;
+          right: -10rpx;
+          min-width: 32rpx;
+          height: 32rpx;
+          border-radius: 16rpx;
+          background: #ff5500;
+          color: #fff;
+          font-size: 20rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 6rpx;
+        }
+      }
 
-      .badge {
-        position: absolute;
-        top: -10rpx;
-        right: -10rpx;
-        min-width: 32rpx;
-        height: 32rpx;
-        border-radius: 16rpx;
-        background: #ff5500;
-        color: #fff;
-        font-size: 20rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 6rpx;
+      .price-box {
+        .total-price {
+          font-size: 36rpx;
+          font-weight: bold;
+          color: #333;
+        }
+
+        .tip {
+          font-size: 22rpx;
+          color: #999;
+          margin-left: 10rpx;
+        }
       }
     }
 
-    .price-box {
-      .total-price {
-        font-size: 36rpx;
-        font-weight: bold;
-        color: #333;
+    .submit-btn {
+      width: 200rpx;
+      height: 72rpx;
+      background: #ff5500;
+      color: #fff;
+      border-radius: 36rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28rpx;
+
+      &.disabled {
+        background: #ccc;
       }
-
-      .tip {
-        font-size: 22rpx;
-        color: #999;
-        margin-left: 10rpx;
-      }
-    }
-  }
-
-  .submit-btn {
-    width: 200rpx;
-    height: 72rpx;
-    background: #ff5500;
-    color: #fff;
-    border-radius: 36rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28rpx;
-
-    &.disabled {
-      background: #ccc;
     }
   }
 }
@@ -1009,39 +1041,68 @@ view {
 
   .cart-content {
     max-height: calc(60vh - 100rpx);
-  }
 
-  .cart_item {
-    display: flex;
-    padding: 20rpx;
-    border-bottom: 1rpx solid #eee;
-
-    .cart-img {
-      width: 120rpx;
-      height: 120rpx;
-      border-radius: 6rpx;
-    }
-
-    .cart-info {
-      flex: 1;
-      margin-left: 20rpx;
+    .cart_item {
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      padding: 20rpx;
+      border-bottom: 1rpx solid #eee;
 
-      .name {
-        font-size: 28rpx;
+      .cart-img {
+        width: 120rpx;
+        height: 120rpx;
+        border-radius: 6rpx;
       }
 
-      .price-wrap {
+      .cart-info {
+        flex: 1;
+        margin-left: 20rpx;
         display: flex;
+        flex-direction: column;
         justify-content: space-between;
-        align-items: center;
 
-        .price {
-          color: #ff5500;
-          font-size: 32rpx;
-          font-weight: bold;
+        .name {
+          font-size: 28rpx;
+        }
+
+        .price-wrap {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .price {
+            color: #ff5500;
+            font-size: 32rpx;
+            font-weight: bold;
+          }
+
+          .action-buttons {
+            display: flex;
+            align-items: center;
+
+            .btn {
+              width: 44rpx;
+              height: 44rpx;
+              border-radius: 50%;
+              background: #f5f5f5;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              &.minus {
+                color: #999;
+              }
+
+              &.plus {
+                background: #ff5500;
+                color: #fff;
+              }
+            }
+
+            .count {
+              margin: 0 20rpx;
+              font-size: 28rpx;
+            }
+          }
         }
       }
     }
@@ -1051,258 +1112,6 @@ view {
     padding: 40rpx;
     text-align: center;
     color: #999;
-  }
-}
-
-/* 替换组件相关样式 */
-.nav-icon {
-  width: 44rpx;
-  height: 44rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20rpx; // 增加点击区域
-}
-
-/* 商品卡片样式优化 */
-.product_item {
-  margin: 20rpx 0;
-  background: #fff;
-  border-radius: 12rpx;
-  overflow: hidden;
-
-  .product_img {
-    width: 160rpx;
-    height: 160rpx;
-    border-radius: 8rpx;
-  }
-
-  .product_info {
-    padding: 16rpx;
-
-    .name {
-      font-size: 28rpx;
-      font-weight: 500;
-      margin-bottom: 16rpx;
-    }
-
-    .price-action {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .price {
-        color: #ff5500;
-        font-size: 32rpx;
-        font-weight: bold;
-      }
-
-
-    }
-  }
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-
-  .btn {
-    width: 44rpx;
-    height: 44rpx;
-    border-radius: 50%;
-    background: #f5f5f5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &.minus {
-      color: #999;
-    }
-
-    &.plus {
-      background: #ff5500;
-      color: #fff;
-    }
-  }
-
-  .count {
-    margin: 0 20rpx;
-    font-size: 28rpx;
-  }
-}
-
-.spec-popup {
-  position: relative;
-  max-height: 75vh;
-  z-index: 1001; // 确保在底部配送栏之上
-  border-radius: 24rpx 24rpx 0 0;
-  overflow: hidden;
-  background: #fff;
-
-  .spec-header {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: #fff;
-    padding: 20rpx;
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1rpx solid #eee;
-
-    .product-info {
-      display: flex;
-
-      .product-img {
-        width: 160rpx;
-        height: 160rpx;
-        border-radius: 8rpx;
-      }
-
-      .info {
-        margin-left: 20rpx;
-
-        .name {
-          font-size: 28rpx;
-          font-weight: bold;
-        }
-
-        .price {
-          color: #ff5500;
-          font-size: 32rpx;
-          margin-top: 10rpx;
-        }
-      }
-    }
-
-    .close {
-      font-size: 48rpx;
-      color: #999;
-      padding: 20rpx;
-    }
-  }
-
-  .spec-content {
-    padding: 20rpx;
-    max-height: 50vh;
-    overflow-y: auto;
-
-    .spec-group {
-      margin-bottom: 30rpx;
-
-      .spec-title {
-        font-size: 28rpx;
-        color: #666;
-        margin-bottom: 20rpx;
-      }
-
-      .spec-items {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20rpx;
-
-        .spec-item {
-          padding: 10rpx 30rpx;
-          border-radius: 30rpx;
-          background: #f5f5f5;
-          font-size: 26rpx;
-
-          &.active {
-            background: #ff5500;
-            color: #fff;
-          }
-        }
-      }
-    }
-  }
-
-  .spec-footer {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1;
-    background: #fff;
-    padding: 20rpx;
-    border-top: 1rpx solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .confirm-btn {
-      width: 200rpx;
-      height: 72rpx;
-      background: #ff5500;
-      color: #fff;
-      border-radius: 36rpx;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28rpx;
-    }
-  }
-}
-
-/* 添加popup全局样式覆盖 */
-:deep(.uni-popup) {
-  z-index: 1001 !important;
-}
-
-:deep(.uni-popup__mask) {
-  z-index: 1000 !important;
-}
-
-:deep(.uni-popup__wrapper) {
-  z-index: 1001 !important;
-}
-
-
-/* 参团人员滚动样式 */
-.purchase-container {
-  margin: 0 20rpx 20rpx 20rpx;
-  background: #fff9e6;
-  border-radius: 16rpx;
-  overflow: hidden;
-}
-
-.purchase-scroll {
-  width: 100%;
-  height: 100rpx;
-  white-space: nowrap;
-
-  .scroll-content {
-    align-items: center;
-    padding: 0 20rpx;
-  }
-
-  .purchase-item {
-    display: inline-flex;
-    align-items: center;
-    // background: rgba(255, 255, 255, 0.9);
-    border-radius: 50rpx;
-    padding: 12rpx 24rpx;
-    margin-right: 20rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-
-    .user-avatar {
-      width: 60rpx;
-      height: 60rpx;
-      border-radius: 50%;
-      margin-right: 16rpx;
-    }
-
-    .purchase-text {
-      font-size: 26rpx;
-      color: #666;
-      margin-right: 16rpx;
-    }
-
-    .badge {
-      background: #ff5500;
-      color: white;
-      font-size: 20rpx;
-      padding: 4rpx 12rpx;
-      border-radius: 20rpx;
-    }
   }
 }
 </style>

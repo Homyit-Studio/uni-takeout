@@ -28,6 +28,7 @@
                     </button>
                 </view>
             </view>
+            <view style="width: 100%;display: flex;justify-content: center;color: #999;">没有更多了~</view>
         </view>
 
         <!-- 添加地址按钮 -->

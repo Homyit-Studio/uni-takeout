@@ -20,11 +20,11 @@ onShow(() => {
    */
   // 设置tabBar
   tabBarSet()
+  // getOrderInfo()
 })
 onHide(() => {
   console.log('App Hide')
 })
-
 
 const login = async () => {
   uni.login({
@@ -67,7 +67,6 @@ function getOrderInfo() {
       console.error('连接错误:', err)
     }
   })
-
   // 发送消息
   ws.send('Hello Server')
 }
