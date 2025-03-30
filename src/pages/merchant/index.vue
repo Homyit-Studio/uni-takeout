@@ -76,10 +76,12 @@ export default {
       shopName: "",
       shopPhone: "",
       shopPhoto: "",
+      shopPhotoFile: null,
       shopAddress: "",
       shopIntroduction: "",
       businessLicenseCode: "",
       businessLicenseImage: "",
+      businessLicenseImageFile: null,
     };
   },
   methods: {
@@ -90,6 +92,7 @@ export default {
         sourceType: ["album", "camera"],
         success: (res) => {
           this.shopPhoto = res.tempFilePaths[0];
+          this.shopPhotoFile = res.tempFiles[0];
         },
         fail: (err) => {
           console.error("选择照片失败:", err);
@@ -118,6 +121,7 @@ export default {
         sourceType: ["album", "camera"],
         success: (res) => {
           this.businessLicenseImage = res.tempFilePaths[0];
+          this.businessLicenseImageFile = res.tempFiles[0];
         },
         fail: (err) => {
           console.error("选择营业执照照片失败:", err);
@@ -131,7 +135,7 @@ export default {
       }
 
       try {
-        // 使用Promise包装上传过程
+        // 准备表单数据
         const formData = {
           shopName: this.shopName,
           shopPhone: this.shopPhone,
@@ -140,60 +144,41 @@ export default {
           businessLicenseCode: this.businessLicenseCode,
         };
 
-        // 添加店铺照片
-        if (this.shopPhoto) {
-          const shopPhotoFileName = this.shopPhoto.split("/").pop();
-          formData.shopPhoto = {
-            uri: this.shopPhoto,
-            name: shopPhotoFileName,
-            type: "image/jpeg", // 这里假设图片类型为jpeg，可根据实际情况修改
-          };
+        // 上传店铺照片和营业执照照片
+        const shopPhotoRes = {
+          name: "shopPhoto",
+          uri: this.shopPhoto,
+          file: this.shopPhotoFile,
+        };
+
+        const licensePhotoRes = {
+          name: "businessLicenseImage",
+          uri: this.businessLicenseImage,
+          file: this.businessLicenseImageFile,
+        };
+
+        const files = [];
+        if (shopPhotoRes.uri) {
+          files.push(shopPhotoRes);
+        }
+        if (licensePhotoRes.uri) {
+          files.push(licensePhotoRes);
         }
 
-        // 添加营业执照照片
-        if (this.businessLicenseImage) {
-          const businessLicenseImageFileName = this.businessLicenseImage
-            .split("/")
-            .pop();
-          formData.businessLicenseImage = {
-            uri: this.businessLicenseImage,
-            name: businessLicenseImageFileName,
-            type: "image/jpeg", // 这里假设图片类型为jpeg，可根据实际情况修改
-          };
-        }
-
-        const result = await new Promise((resolve, reject) => {
-          const uploadTask = uni.uploadFile({
-            url: "/merchant/putapplication",
-            formData: formData,
-            header: { "Content-Type": "multipart/form-data" },
-            success: (uploadRes) => {
-              try {
-                const data =
-                  typeof uploadRes.data === "string"
-                    ? JSON.parse(uploadRes.data)
-                    : uploadRes.data;
-                resolve(data);
-              } catch (e) {
-                reject(new Error("解析响应数据失败"));
-              }
-            },
-            fail: (err) => {
-              reject(err);
-            },
-          });
-
-          uploadTask.onProgressUpdate((res) => {
-            console.log("上传进度:", res.progress);
-          });
+        console.log("提交数据:", formData, files);
+        const response = await uni.uploadFile({
+          url: "/merchant/putapplication",
+          files: files,
+          formData: formData,
         });
 
-        console.log("上传结果:", result);
-        // 统一处理响应
-        if (result?.code === 200) {
+        console.log("提交响应:", response);
+        console.log("提交数据:", formData, files);
+
+        if (response.code === 200) {
           uni.showToast({ title: "保存成功", icon: "success" });
         } else {
-          throw new Error(result?.message || "保存失败");
+          throw new Error(response?.message || "保存失败");
         }
       } catch (error) {
         console.error("保存失败:", error);
@@ -202,21 +187,6 @@ export default {
           icon: "none",
         });
       }
-      //   // 这里可以添加实际的提交逻辑
-      //   console.log("提交的信息:", {
-      //     shopName: this.shopName,
-      //     shopPhone: this.shopPhone,
-      //     shopPhoto: this.shopPhoto,
-      //     shopAddress: this.shopAddress,
-      //     shopIntroduction: this.shopIntroduction,
-      //     businessLicenseCode: this.businessLicenseCode,
-      //     businessLicenseImage: this.businessLicenseImage,
-      //   });
-
-      //   uni.showToast({
-      //     title: "提交成功",
-      //     icon: "success",
-      //   });
     },
     // 表单验证
     validateForm() {
