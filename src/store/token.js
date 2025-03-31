@@ -1,7 +1,7 @@
 // 封装的 token 操作方法
 export const useTokenStore = () => {
     // 硬编码的 token
-    const hardcodedToken = '4a41e0f1-ec4a-4479-914d-ffe317484ad2';
+    const hardcodedToken = '61a2ff44-1ebb-4ffa-8c47-fc0937c6f63f';
 
     const setToken = (token) => {
         // 如果需要保留设置功能，可以取消下面这行注释

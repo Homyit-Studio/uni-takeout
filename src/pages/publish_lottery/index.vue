@@ -9,9 +9,9 @@
 
     <!-- 抽奖列表 -->
     <view class="lottery-list">
-      <view v-if="lotteryList.length === 0" class="empty-tip"
-        >暂无抽奖活动</view
-      >
+      <view v-if="lotteryList.length === 0" class="empty-tip">
+        暂无抽奖活动
+      </view>
       <view v-else>
         <view
           v-for="(lottery, index) in lotteryList"
@@ -19,39 +19,55 @@
           class="lottery-item"
         >
           <view class="lottery-details">
-            <text class="lottery-title">{{ lottery.title }}</text>
+            <text class="lottery-title">{{ lottery.name }}</text>
+
             <view class="prize-info">
-              <text class="lottery-desc">{{ lottery.description }}</text>
+              <text class="prize-label">抽奖简介：</text>
+              <text class="prize-content">{{ lottery.introduction }}</text>
             </view>
 
             <view class="prize-info">
               <text class="prize-label">奖品：</text>
-              <text class="prize-content"
-                >{{ lottery.prize }} ({{ lottery.prizeCount }}份)</text
-              >
+              <text class="prize-content">{{ lottery.productName }}</text>
+            </view>
+
+            <view class="prize-info">
+              <text class="prize-label">奖品数量：</text>
+              <text class="prize-content">{{ lottery.amount }}份</text>
+            </view>
+
+            <view class="prize-info">
+              <text class="prize-label">抽奖开始时间：</text>
+              <text class="prize-content">{{
+                formatTimeRange(lottery.startTime)
+              }}</text>
+            </view>
+
+            <view class="prize-info">
+              <text class="prize-label">抽奖结束时间：</text>
+              <text class="prize-content">{{
+                formatTimeRange(lottery.endTime)
+              }}</text>
             </view>
           </view>
           <view class="lottery-actions">
             <button
               class="action-button edit-button"
-              @click="openEditLotteryDialog(index)"
+              @click="openEditLotteryDialog(lottery.id)"
             >
               编辑
             </button>
             <button
               class="action-button delete-button"
-              @click="confirmDeleteLottery(index)"
+              @click="confirmDeleteLottery(lottery.id)"
             >
               删除
             </button>
             <button
-              :class="
-                lottery.isPublished ? 'published-button' : 'publish-button'
-              "
-              :disabled="lottery.isPublished"
-              @click="publishLottery(index)"
+              :class="getStatusClass(lottery)"
+              :disabled="getStatus(lottery) === '已结束'"
             >
-              {{ lottery.isPublished ? "已发布" : "发布" }}
+              {{ getStatusText(lottery) }}
             </button>
           </view>
         </view>
@@ -73,33 +89,47 @@
         </view>
         <view class="form-item">
           <label>活动标题</label>
-          <input v-model="currentLottery.title" placeholder="请输入活动标题" />
+          <input v-model="currentLottery.name" placeholder="请输入活动标题" />
         </view>
         <view class="form-item">
           <label>活动描述</label>
           <input
-            v-model="currentLottery.description"
+            v-model="currentLottery.introduction"
             placeholder="请输入活动描述"
           />
         </view>
 
         <!-- 奖品设置 -->
-        <view class="prize-form-group">
-          <view class="form-item">
-            <label>奖品名称</label>
-            <input
-              v-model="currentLottery.prize"
-              placeholder="请输入奖品名称"
-            />
-          </view>
-          <view class="form-item">
-            <label>奖品数量</label>
-            <input
-              type="number"
-              v-model.number="currentLottery.prizeCount"
-              placeholder="请输入数量"
-            />
-          </view>
+        <view class="form-item">
+          <label>奖品名称</label>
+          <input
+            v-model="currentLottery.productName"
+            placeholder="请输入奖品名称"
+          />
+        </view>
+        <view class="form-item">
+          <label>奖品数量</label>
+          <input
+            type="number"
+            v-model.number="currentLottery.amount"
+            placeholder="请输入数量"
+          />
+        </view>
+
+        <view class="form-item">
+          <label>抽奖开始时间</label>
+          <input
+            v-model="currentLottery.startTime"
+            placeholder="格式为 xxxx-xx-xx xx:xx:xx"
+          />
+        </view>
+
+        <view class="form-item">
+          <label>抽奖结束时间</label>
+          <input
+            v-model="currentLottery.endTime"
+            placeholder="格式为 xxxx-xx-xx xx:xx:xx"
+          />
         </view>
 
         <view class="form-buttons">
@@ -119,31 +149,18 @@ import { request } from "@/utils/request";
 export default {
   data() {
     return {
-      lotteryList: [
-        {
-          id: 1,
-          title: "抽奖活动1",
-          description: "这是一个精彩的抽奖活动",
-          prize: "iPhone 15",
-          prizeCount: 10,
-          isPublished: false,
-        },
-        {
-          id: 2,
-          title: "抽奖活动2",
-          description: "快来参与抽奖吧",
-          prize: "MacBook Pro",
-          prizeCount: 5,
-          isPublished: true,
-        },
-      ],
+      lotteryList: [],
       currentLottery: {
         id: null,
-        title: "",
-        description: "",
-        prize: "",
-        prizeCount: 1,
-        isPublished: false,
+        name: "",
+        introduction: "",
+        productName: "",
+        amount: 1,
+        startTime: "",
+        endTime: "",
+        probability: 0.1,
+        totalAmount: 1,
+        shopid: "",
       },
       isEditing: false,
       editIndex: -1,
@@ -166,6 +183,7 @@ export default {
         if (response?.code === 200 && response.data) {
           console.log("获取用户信息成功:", response.data);
           this.shopid = response.data.shopid;
+          this.currentLottery.shopid = response.data.shopid; // 设置默认shopid
         } else {
           throw new Error(response?.message || "获取用户信息失败");
         }
@@ -180,20 +198,26 @@ export default {
         uni.hideLoading();
       }
     },
+
     // 获取抽奖活动列表
     async getLotteryList() {
       try {
+        // if (!this.shopid) {
+        //   await this.getUserInfo(); // 确保shopid已获取
+        // }
+
         this.isLoading = true;
         uni.showLoading({ title: "加载中..." });
 
         const response = await request({
           method: "GET",
-          url: "/category/get",
-          data: { shopid: this.shopid },
+          // url: `/prize/select/${this.shopid}`,
+          url: "/prize/select/1",
         });
 
-        if (response?.code === 200 && response.data) {
-          this.lotteryList = response.data;
+        console.log("获取抽奖活动列表成功:", response.data);
+        if (response?.code === 200) {
+          this.lotteryList = response.data || [];
         } else {
           throw new Error(response?.message || "获取抽奖活动列表失败");
         }
@@ -208,50 +232,156 @@ export default {
         uni.hideLoading();
       }
     },
+
     // 添加/编辑抽奖活动
     openAddLotteryDialog() {
       this.isEditing = false;
       this.currentLottery = {
         id: null,
-        title: "",
-        description: "",
-        prize: "",
-        prizeCount: "",
-        isPublished: false,
+        name: "",
+        introduction: "",
+        productName: "",
+        amount: 1,
+        startTime: "",
+        endTime: "",
+        probability: 0.1,
+        totalAmount: 1,
+        shopid: this.shopid,
       };
       this.$refs.lotteryPopup.open();
     },
+
     openEditLotteryDialog(index) {
       this.isEditing = true;
       this.editIndex = index;
-      this.currentLottery = { ...this.lotteryList[index] };
+      this.currentLottery = {
+        ...this.lotteryList[index],
+        shopid: this.shopid, // 确保编辑时也有shopid
+      };
       this.$refs.lotteryPopup.open();
     },
+
     closeLotteryDialog() {
       this.$refs.lotteryPopup.close();
     },
-    saveLottery() {
-      // 验证奖品数量
-      if (!this.validatePrizeCount()) {
-        return;
-      }
 
+    // 保存抽奖活动
+    saveLottery() {
       if (this.isEditing) {
-        // 编辑抽奖活动
-        this.lotteryList.splice(this.editIndex, 1, this.currentLottery);
+        this.updateLottery();
       } else {
-        // 添加抽奖活动
-        const newId =
-          this.lotteryList.length > 0
-            ? this.lotteryList[this.lotteryList.length - 1].id + 1
-            : 1;
-        this.currentLottery.id = newId;
-        this.lotteryList.push(this.currentLottery);
+        this.addLottery();
       }
-      this.closeLotteryDialog();
     },
+
+    // 新增抽奖活动
+    async addLottery() {
+      if (!this.validateForm()) return;
+
+      try {
+        this.isLoading = true;
+        uni.showLoading({ title: "添加中..." });
+
+        const lotteryData = {
+          ...this.currentLottery,
+          startTime: this.formatTime(this.currentLottery.startTime),
+          endTime: this.formatTime(this.currentLottery.endTime),
+          createTime: new Date().toISOString().slice(0, 19).replace("T", " "),
+        };
+
+        const response = await request({
+          method: "POST",
+          url: "/prize/add",
+          data: lotteryData,
+        });
+
+        if (response?.code === 200) {
+          uni.showToast({
+            title: "添加成功",
+            icon: "success",
+          });
+          this.getLotteryList();
+          this.closeLotteryDialog();
+        } else {
+          throw new Error(response?.message || "添加失败");
+        }
+      } catch (error) {
+        console.error("添加失败:", error);
+        uni.showToast({
+          title: error.message || "添加失败",
+          icon: "none",
+        });
+      } finally {
+        this.isLoading = false;
+        uni.hideLoading();
+      }
+    },
+
+    // 编辑抽奖活动
+    async updateLottery() {
+      if (!this.validateForm()) return;
+
+      try {
+        this.isLoading = true;
+        uni.showLoading({ title: "更新中..." });
+
+        const lotteryData = {
+          ...this.currentLottery,
+          startTime: this.formatTime(this.currentLottery.startTime),
+          endTime: this.formatTime(this.currentLottery.endTime),
+        };
+
+        const response = await request({
+          method: "POST",
+          url: "/prize/update",
+          data: lotteryData,
+        });
+
+        if (response?.code === 200) {
+          uni.showToast({
+            title: "更新成功",
+            icon: "success",
+          });
+          this.getLotteryList();
+          this.closeLotteryDialog();
+        } else {
+          throw new Error(response?.message || "更新失败");
+        }
+      } catch (error) {
+        console.error("更新失败:", error);
+        uni.showToast({
+          title: error.message || "更新失败",
+          icon: "none",
+        });
+      } finally {
+        this.isLoading = false;
+        uni.hideLoading();
+      }
+    },
+
+    // 表单验证
+    validateForm() {
+      // 验证必填字段
+      if (!this.currentLottery.name) {
+        uni.showToast({ title: "请填写活动标题", icon: "none" });
+        return false;
+      }
+      if (!this.currentLottery.productName) {
+        uni.showToast({ title: "请填写奖品名称", icon: "none" });
+        return false;
+      }
+      if (!this.validatePrizeCount()) {
+        return false;
+      }
+      if (!this.validateTime()) {
+        return false;
+      }
+      return true;
+    },
+
+    // 验证奖品数量
     validatePrizeCount() {
-      if (this.currentLottery.prizeCount <= 0) {
+      if (this.currentLottery.amount <= 0) {
         uni.showToast({
           title: "奖品数量必须大于0",
           icon: "none",
@@ -260,29 +390,165 @@ export default {
       }
       return true;
     },
-    confirmDeleteLottery(index) {
+
+    // 验证时间
+    validateTime() {
+      if (!this.validateTimeFormat(this.currentLottery.startTime)) {
+        uni.showToast({
+          title: "开始时间格式不正确",
+          icon: "none",
+        });
+        return false;
+      }
+      if (!this.validateTimeFormat(this.currentLottery.endTime)) {
+        uni.showToast({
+          title: "结束时间格式不正确",
+          icon: "none",
+        });
+        return false;
+      }
+
+      const startTime = this.parseTime(this.currentLottery.startTime);
+      const endTime = this.parseTime(this.currentLottery.endTime);
+
+      if (endTime <= startTime) {
+        uni.showToast({
+          title: "结束时间必须晚于开始时间",
+          icon: "none",
+        });
+        return false;
+      }
+
+      return true;
+    },
+
+    // 其他方法保持不变...
+    confirmDeleteLottery(prizeId) {
       uni.showModal({
         title: "提示",
         content: "确定删除该抽奖活动吗？",
         success: (res) => {
           if (res.confirm) {
-            this.lotteryList.splice(index, 1);
+            this.deleteLotteryList(prizeId);
           }
         },
       });
     },
-    publishLottery(index) {
-      // 这里可以调用后端接口发布抽奖活动，目前先更新前端状态
-      this.lotteryList[index].isPublished = true;
-      uni.showToast({
-        title: "发布成功",
-        icon: "success",
-      });
+
+    async deleteLotteryList(prizeId) {
+      try {
+        this.isLoading = true;
+        uni.showLoading({ title: "删除中..." });
+
+        const response = await request({
+          method: "POST",
+          url: "/prize/delete",
+          data: { prizeId },
+        });
+
+        if (response?.code === 200) {
+          uni.showToast({
+            title: "删除成功",
+            icon: "success",
+          });
+          this.getLotteryList();
+        } else {
+          throw new Error(response?.message || "删除失败");
+        }
+      } catch (error) {
+        console.error("删除失败:", error);
+        uni.showToast({
+          title: error.message || "删除失败",
+          icon: "none",
+        });
+      } finally {
+        this.isLoading = false;
+        uni.hideLoading();
+      }
+    },
+
+    // 其他工具方法保持不变...
+    formatTimeRange(timeStr) {
+      if (!timeStr) return "未设置";
+      const date = this.parseTime(timeStr);
+      return `${date.getFullYear()}-${(date.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${date
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${date
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")}`;
+    },
+
+    getStatus(lottery) {
+      if (!lottery.startTime || !lottery.endTime) return "未设置";
+      const now = new Date();
+      const startTime = this.parseTime(lottery.startTime);
+      const endTime = this.parseTime(lottery.endTime);
+      if (now < startTime) return "未开始";
+      if (now > endTime) return "已结束";
+      return "进行中";
+    },
+
+    parseTime(timeStr) {
+      if (!timeStr) return new Date();
+      if (timeStr.includes("T")) {
+        return new Date(timeStr);
+      }
+      return new Date(timeStr.replace(/-/g, "/"));
+    },
+
+    getStatusText(lottery) {
+      return this.getStatus(lottery);
+    },
+
+    getStatusClass(lottery) {
+      const status = this.getStatus(lottery);
+      switch (status) {
+        case "未开始":
+          return "action-button not-started-button";
+        case "进行中":
+          return "action-button in-progress-button";
+        case "已结束":
+          return "action-button ended-button";
+        default:
+          return "action-button default-button";
+      }
+    },
+
+    validateTimeFormat(timeStr) {
+      if (!timeStr) return false;
+      const pattern1 = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+      const pattern2 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+      return pattern1.test(timeStr) || pattern2.test(timeStr);
+    },
+
+    formatTime(timeStr) {
+      if (!timeStr) return "";
+      if (timeStr.includes("T")) {
+        const date = new Date(timeStr);
+        return `${date.getFullYear()}-${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${date
+          .getDate()
+          .toString()
+          .padStart(2, "0")} ${date
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${date
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")}`;
+      }
+      return timeStr;
     },
   },
   onLoad() {
-    // 获取用户信息
-    this.getUserInfo();
+    this.getUserInfo().then(() => {
+      this.getLotteryList();
+    });
   },
 };
 </script>
@@ -542,5 +808,19 @@ export default {
 
 .icon-hover {
   opacity: 0.7;
+}
+
+.picker {
+  border: 1rpx solid #ccc;
+  border-radius: 10rpx;
+  padding: 12rpx;
+  font-size: 28rpx;
+  width: 100%;
+  transition: border-color 0.3s ease;
+  color: #333;
+
+  &:focus {
+    border-color: #ff9a9e;
+  }
 }
 </style>
