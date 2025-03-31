@@ -25,21 +25,9 @@
             </view>
 
             <view class="prize-info">
-              <text class="prize-label">一等奖：</text>
+              <text class="prize-label">奖品：</text>
               <text class="prize-content"
-                >{{ lottery.prize1 }} ({{ lottery.prize1Count }}份)</text
-              >
-            </view>
-            <view class="prize-info">
-              <text class="prize-label">二等奖：</text>
-              <text class="prize-content"
-                >{{ lottery.prize2 }} ({{ lottery.prize2Count }}份)</text
-              >
-            </view>
-            <view class="prize-info">
-              <text class="prize-label">三等奖：</text>
-              <text class="prize-content"
-                >{{ lottery.prize3 }} ({{ lottery.prize3Count }}份)</text
+                >{{ lottery.prize }} ({{ lottery.prizeCount }}份)</text
               >
             </view>
           </view>
@@ -95,62 +83,21 @@
           />
         </view>
 
-        <!-- 一等奖设置 -->
+        <!-- 奖品设置 -->
         <view class="prize-form-group">
           <view class="form-item">
-            <label>一等奖奖品</label>
+            <label>奖品名称</label>
             <input
-              v-model="currentLottery.prize1"
-              placeholder="请输入一等奖奖品"
+              v-model="currentLottery.prize"
+              placeholder="请输入奖品名称"
             />
           </view>
           <view class="form-item">
-            <label>一等奖数量</label>
+            <label>奖品数量</label>
             <input
               type="number"
-              v-model.number="currentLottery.prize1Count"
+              v-model.number="currentLottery.prizeCount"
               placeholder="请输入数量"
-              min="1"
-            />
-          </view>
-        </view>
-
-        <!-- 二等奖设置 -->
-        <view class="prize-form-group">
-          <view class="form-item">
-            <label>二等奖奖品</label>
-            <input
-              v-model="currentLottery.prize2"
-              placeholder="请输入二等奖奖品"
-            />
-          </view>
-          <view class="form-item">
-            <label>二等奖数量</label>
-            <input
-              type="number"
-              v-model.number="currentLottery.prize2Count"
-              placeholder="请输入数量"
-              min="1"
-            />
-          </view>
-        </view>
-
-        <!-- 三等奖设置 -->
-        <view class="prize-form-group">
-          <view class="form-item">
-            <label>三等奖奖品</label>
-            <input
-              v-model="currentLottery.prize3"
-              placeholder="请输入三等奖奖品"
-            />
-          </view>
-          <view class="form-item">
-            <label>三等奖数量</label>
-            <input
-              type="number"
-              v-model.number="currentLottery.prize3Count"
-              placeholder="请输入数量"
-              min="1"
             />
           </view>
         </view>
@@ -177,24 +124,16 @@ export default {
           id: 1,
           title: "抽奖活动1",
           description: "这是一个精彩的抽奖活动",
-          prize1: "iPhone 15",
-          prize1Count: 1,
-          prize2: "iPad",
-          prize2Count: 3,
-          prize3: "AirPods",
-          prize3Count: 5,
+          prize: "iPhone 15",
+          prizeCount: 10,
           isPublished: false,
         },
         {
           id: 2,
           title: "抽奖活动2",
           description: "快来参与抽奖吧",
-          prize1: "MacBook Pro",
-          prize1Count: 1,
-          prize2: "Apple Watch",
-          prize2Count: 2,
-          prize3: "Beats耳机",
-          prize3Count: 3,
+          prize: "MacBook Pro",
+          prizeCount: 5,
           isPublished: true,
         },
       ],
@@ -202,12 +141,8 @@ export default {
         id: null,
         title: "",
         description: "",
-        prize1: "",
-        prize1Count: 1,
-        prize2: "",
-        prize2Count: 1,
-        prize3: "",
-        prize3Count: 1,
+        prize: "",
+        prizeCount: 1,
         isPublished: false,
       },
       isEditing: false,
@@ -280,12 +215,8 @@ export default {
         id: null,
         title: "",
         description: "",
-        prize1: "",
-        prize1Count: 1,
-        prize2: "",
-        prize2Count: 1,
-        prize3: "",
-        prize3Count: 1,
+        prize: "",
+        prizeCount: "",
         isPublished: false,
       };
       this.$refs.lotteryPopup.open();
@@ -320,11 +251,7 @@ export default {
       this.closeLotteryDialog();
     },
     validatePrizeCount() {
-      if (
-        this.currentLottery.prize1Count <= 0 ||
-        this.currentLottery.prize2Count <= 0 ||
-        this.currentLottery.prize3Count <= 0
-      ) {
+      if (this.currentLottery.prizeCount <= 0) {
         uni.showToast({
           title: "奖品数量必须大于0",
           icon: "none",
