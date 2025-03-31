@@ -92,6 +92,7 @@
               <image :src="cell.img" mode="aspectFill" class="product_img"></image>
               <view class="product_info">
                 <view class="name">{{ cell.name }}</view>
+                <view class="introduction">{{ cell.introduction }}</view>
                 <view class="price-action">
                   <text class="price">￥{{ cell.price }}</text>
                   <view class="action-buttons">
@@ -224,10 +225,42 @@ const cartList = computed(() => {
   return list
 })
 
+// 获取购物车数据
+const fetchCartData = async () => {
+  try {
+    const res = await request({
+      url: '/car/selectcar',
+      method: 'POST',
+      data: {
+        shopid: shopInfo.value.id
+      }
+    })
+    console.log('购物车数据:', res)
+    if (res.data && Array.isArray(res.data)) {
+      // 将购物车数据同步到现有商品列表中
+      productList.value.forEach(category => {
+        category.list.forEach(product => {
+          const cartItem = res.data.find(item => item.productid === product.id)
+          if (cartItem) {
+            product.count = cartItem.number
+            product.cartId = cartItem.id // 保存购物车项id，用于删除
+          } else {
+            product.count = 0
+          }
+        })
+      })
+      updateCart()
+    }
+  } catch (error) {
+    console.error("获取购物车数据失败", error)
+  }
+}
+
 onLoad(async (options) => {
   console.log('接收到的参数:', options)
   await fetchShopDetail(options.id)
   await fetchShopInfo(options.id)
+  await fetchCartData() // 获取购物车数据
 })
 
 // 生命周期
@@ -252,11 +285,10 @@ onUnmounted(() => {
 // 页面滚动处理
 onPageScroll(({ scrollTop: currentScrollTop }) => {
   if (isTabClick.value) return
-
   scrollTop.value = currentScrollTop
   updateOpacity(currentScrollTop)
   updateActiveTab(currentScrollTop)
-  updateMenuActive(currentScrollTop)
+  updateMenuActive(currentScrollTop - 40)
 })
 
 const fetchShopInfo = async (id) => {
@@ -294,6 +326,7 @@ const fetchShopDetail = async (id) => {
           id: product.id,
           name: product.name,
           img: product.image,
+          introduction: product.introduction,
           price: product.price,
           count: 0
         }))
@@ -375,7 +408,7 @@ const updateOpacity = (scrollTop) => {
 const updateActiveTab = (currentScrollTop) => {
   if (isTabClick.value) return
 
-  const currentPosition = currentScrollTop + stickyTop.value
+  const currentPosition = currentScrollTop + stickyTop.value + 10
 
   // 检查是否在第一个tab区域
   if (currentPosition <= tabThreshold) {
@@ -419,6 +452,9 @@ const onChangeTab = async (index) => {
 }
 
 const onChangeCate = async (item, index) => {
+  if (currentIndex.value == index) return
+
+  isTabClick.value = true
   currentIndex.value = index
   leftScrollTop.value = rightItemHeight.value * index
 
@@ -427,13 +463,19 @@ const onChangeCate = async (item, index) => {
   const targetElement = topList.value[index]
   if (targetElement) {
     uni.pageScrollTo({
-      scrollTop: targetElement.top - stickyTop.value,
+      scrollTop: targetElement.top - stickyTop.value - 30,
       duration: 300,
+      complete: () => {
+        setTimeout(() => {
+          isTabClick.value = false
+        }, 350) // 比滚动时间长一点确保完成
+      },
     })
   }
 }
 const updateMenuActive = (currentScrollTop) => {
-  currentScrollTop = parseInt(currentScrollTop)
+  if (isTabClick.value) return
+  currentScrollTop = parseInt(currentScrollTop) + stickyTop.value + 60
   for (let i = 0; i < topList.value.length; i++) {
     if (currentScrollTop >= topList.value[i].top && currentScrollTop <= topList.value[i].bottom) {
       if (currentIndex.value !== i) {
@@ -454,16 +496,87 @@ const onShowCart = () => {
   }
 }
 
-const increaseCount = (item) => {
-  if (!item.count) item.count = 0
-  item.count++
-  updateCart()
+// 修改 increaseCount 方法
+const increaseCount = async (item) => {
+  try {
+    if (!item.count || item.count === 0) {
+      // 第一次添加商品，调用添加接口
+      const res = await request({
+        url: '/car/addcar',
+        method: 'POST',
+        data: {
+          productid: item.id,
+          number: 1,
+          amount: item.price,
+          image: item.img,
+          shopid: shopInfo.value.id,
+          productname: item.name
+        }
+      })
+      if (!item.count) item.count = 0
+      item.count++
+      item.cartId = res.data.id
+    } else {
+      // 已有商品，调用更新接口
+      await request({
+        url: '/car/updatecat',
+        method: 'POST',
+        data: {
+          id: item.cartId,
+          number: item.count + 1
+        }
+      })
+      item.count++
+    }
+    // 更新购物车数据
+    await fetchCartData()
+    updateCart()
+  } catch (error) {
+    console.error("更新购物车失败", error)
+    uni.showToast({
+      title: '操作失败',
+      icon: 'none'
+    })
+  }
 }
 
-const decreaseCount = (item) => {
+// 修改 decreaseCount 方法
+const decreaseCount = async (item) => {
   if (!item.count) return
-  item.count--
-  updateCart()
+  try {
+    if (item.count === 1) {
+      // 最后一个商品，需要删除
+      await request({
+        url: '/car/deletecar',
+        method: 'POST',
+        data: {
+          id: item.cartId
+        }
+      })
+      item.count = 0
+      item.cartId = null
+    } else {
+      // 减少商品数量
+      await request({
+        url: '/car/updatecat',
+        method: 'POST',
+        data: {
+          id: item.cartId,
+          number: item.count - 1
+        }
+      })
+      item.count--
+    }
+    // 更新购物车数据
+    await fetchCartData()
+    updateCart()
+  } catch (error) {
+    console.error("更新购物车失败", error)
+    uni.showToast({
+      title: '操作失败',
+      icon: 'none'
+    })
+  }
 }
 
 const updateCart = () => {
@@ -485,15 +598,42 @@ const clearCart = () => {
   uni.showModal({
     title: '提示',
     content: '确定要清空购物车吗？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        productList.value.forEach(cate => {
-          cate.list.forEach(item => {
-            item.count = 0
+        try {
+          const deletePromises = []
+          productList.value.forEach(cate => {
+            cate.list.forEach(item => {
+              if (item.count > 0 && item.cartId) {
+                deletePromises.push(
+                  request({
+                    url: '/car/deletecar',
+                    method: 'POST',
+                    data: {
+                      id: item.cartId
+                    }
+                  })
+                )
+              }
+            })
           })
-        })
-        updateCart()
-        popup.value.close()
+          await Promise.all(deletePromises)
+
+          productList.value.forEach(cate => {
+            cate.list.forEach(item => {
+              item.count = 0
+              item.cartId = null
+            })
+          })
+          updateCart()
+          popup.value.close()
+        } catch (error) {
+          console.error("清空购物车失败", error)
+          uni.showToast({
+            title: '清空失败',
+            icon: 'none'
+          })
+        }
       }
     }
   })
@@ -501,11 +641,26 @@ const clearCart = () => {
 
 const onSubmit = () => {
   if (totalPrice.value < minDeliveryPrice.value) return
+
+  // 构建店铺信息
+  const shopInfoData = {
+    shopId: shopInfo.value.id,
+    shopName: shopInfo.value.name,
+    shopAvatar: shopInfo.value.avatar,
+    address: shopInfo.value.address,
+    closeTime: shopInfo.value.closeTime,
+    openTime: shopInfo.value.openTime,
+    phone: shopInfo.value.phone
+  }
+
+  // 构建订单数据
   const orderData = {
     cartList: cartList.value,
     totalPrice: totalPrice.value,
-    deliveryFee: deliveryFee.value
+    deliveryFee: deliveryFee.value,
+    shopInfo: shopInfoData // 添加店铺信息
   }
+
   uni.setStorageSync('orderData', orderData)
   uni.navigateTo({ url: '/pages/GoShopping/index' })
 }
@@ -577,7 +732,7 @@ view {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 999;
+  z-index: 10;
   display: flex;
   flex-direction: column;
 
@@ -673,7 +828,7 @@ view {
   height: 100rpx;
   background: #fff;
   border-bottom: 0.0685rem solid #ddd;
-  z-index: 999;
+  z-index: 10;
 
   .tab-list {
     display: flex;
@@ -867,11 +1022,11 @@ view {
         line-height: 60rpx;
         background: #fff;
         padding-left: 20rpx;
-        z-index: 10;
+        z-index: 5;
       }
 
       .product_item {
-        height: 120rpx;
+        height: 160rpx;
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -880,8 +1035,8 @@ view {
         padding: 0 20rpx;
 
         .product_img {
-          width: 120rpx;
-          height: 120rpx;
+          width: 160rpx;
+          height: 160rpx;
           border-radius: 6rpx;
         }
 
@@ -893,6 +1048,11 @@ view {
             font-size: 28rpx;
             font-weight: 500;
             margin-bottom: 16rpx;
+          }
+
+          .introduction {
+            font-size: 24rpx;
+            color: #666;
           }
 
           .price-action {
@@ -946,7 +1106,7 @@ view {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 999;
+  z-index: 15;
   min-height: 100rpx;
   padding-bottom: constant(safe-area-inset-bottom);
   padding-bottom: env(safe-area-inset-bottom);
@@ -1020,6 +1180,7 @@ view {
 
 .cart_list {
   max-height: 60vh;
+  z-index: 10;
 
   .cart-header {
     padding: 20rpx;

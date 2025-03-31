@@ -87,14 +87,14 @@
                         <view class="badge">3</view>
                     </view>
 
-                    <view class="grid-item user-manage" @click="goToManage(``)" @touchstart="handleTouchStart"
+                    <!-- <view class="grid-item user-manage" @click="goToManage(``)" @touchstart="handleTouchStart"
                         @touchend="handleTouchEnd">
                         <view class="icon-wrapper">
                             <uni-icons type="person-filled" size="36" color="#fff" />
                         </view>
                         <text class="item-title">用户管理</text>
                         <text class="item-subtitle">暂无</text>
-                    </view>
+                    </view> -->
 
                     <view class="grid-item user-manage" @click="goToManage(`banner_manage/index`)"
                         @touchstart="handleTouchStart" @touchend="handleTouchEnd">

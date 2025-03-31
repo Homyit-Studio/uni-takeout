@@ -105,11 +105,11 @@ const statusBarHeight = ref(uni.getWindowInfo().statusBarHeight)
 // 模拟订单数据
 const orderData = reactive({
   shopName: '绿茶餐厅（万象城店）',
-  images: [
-    'https://via.placeholder.com/100x100?text=Product1',
-    'https://via.placeholder.com/100x100?text=Product2',
-    'https://via.placeholder.com/100x100?text=Product3'
-  ],
+  // images: [
+  //   'https://via.placeholder.com/100x100?text=Product1',
+  //   'https://via.placeholder.com/100x100?text=Product2',
+  //   'https://via.placeholder.com/100x100?text=Product3'
+  // ],
   address: '浙江省杭州市西湖区文三路xxx号',
   deliveryTime: '立即配送（预计30分钟送达）',
   deliveryType: '商家配送',
@@ -130,20 +130,25 @@ const copyOrderNo = () => {
   })
 }
 
-onLoad((options) => {
-  fetchOrderDetail(options.id)
+onLoad(async (options) => {
+  console.log('接收到的参数:', options)
+  await fetchOrderDetail(options.id)
 })
 
 const fetchOrderDetail = async (id) => {
-  const res = await request({
-    url: '/order/selectorderdetail',
-    method: 'GET',
-    data: {
-      id
-    }
-  })
-  orderData.value = res.data
-
+  try {
+    const res = await request({
+      url: '/order/selectorderdetail',
+      method: 'POST',
+      data: {
+        order: id
+      }
+    })
+    console.log('获取订单详情:', res)
+    orderData.value = res.data
+  } catch (error) {
+    console.error("获取订单详情失败", error)
+  }
 }
 </script>
 

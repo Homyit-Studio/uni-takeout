@@ -29,9 +29,9 @@
     <view class="pickup-info" v-if="deliveryType === 2">
       <view class="title">自提点信息</view>
       <view class="content">
-        <text>店铺地址：{{ storeAddress }}</text>
-        <text>营业时间：{{ businessHours }}</text>
-        <text>联系电话：{{ storePhone }}</text>
+        <text>店铺地址：{{ orderData.shopInfo.address }}</text>
+        <text>营业时间：{{ orderData.shopInfo.openTime }}-{{ orderData.shopInfo.closeTime }}</text>
+        <text>联系电话：{{ orderData.shopInfo.phone }}</text>
       </view>
     </view>
 
@@ -41,6 +41,7 @@
         <image :src="item.img" mode="aspectFill" class="goods-img"></image>
         <view class="goods-info">
           <text class="name">{{ item.name }}</text>
+          <view style="color: #666;">{{ item.introduction }}</view>
           <view class="price-count">
             <text class="price">￥{{ item.price }}</text>
             <text class="count">x{{ item.count }}</text>
@@ -55,12 +56,35 @@
       <text>￥{{ orderData.deliveryFee }}</text>
     </view>
 
+    <!-- 添加备注和餐具数量选择 -->
+    <view class="order-options">
+      <view class="option-item">
+        <text>备注</text>
+        <input type="text" v-model="remark" placeholder="请输入备注信息" />
+      </view>
+
+      <view class="option-item">
+        <text>餐具数量</text>
+        <view class="tableware-select">
+          <text class="btn" @click="decreaseTableware">-</text>
+          <text class="count">{{ tablewareNumber }}</text>
+          <text class="btn" @click="increaseTableware">+</text>
+        </view>
+      </view>
+
+      <view class="option-item">
+        <text>打包费</text>
+        <text>￥{{ packAmount }}</text>
+      </view>
+    </view>
+
     <!-- 修改后的底部结算栏 -->
     <view class="footer">
       <view class="total">
         合计：<text class="price">￥{{
           orderData.totalPrice +
-          (deliveryType === 1 ? orderData.deliveryFee : 0)
+          (deliveryType === 1 ? orderData.deliveryFee : 0) +
+          packAmount
         }}</text>
       </view>
       <view class="submit-btn" @click="onSubmitOrder">
@@ -73,22 +97,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { request } from '../../utils/request'
 
 const address = ref(null)
 const orderData = ref({
   cartList: [],
   totalPrice: 0,
-  deliveryFee: 0
+  deliveryFee: 0,
+  shopInfo: null
 })
 
-// 新增配送类型（1: 外卖 2: 自取）
 const deliveryType = ref(1)
-// 新增店铺信息
-const storeInfo = ref({
-  storeAddress: '北京市朝阳区某某街道123号',
-  businessHours: '08:00-22:00',
-  storePhone: '138-1234-5678'
-})
+
+// 新增备注、餐具数量和打包费
+const remark = ref('')
+const tablewareNumber = ref(1)
+const packAmount = ref(1)
 
 // 在 setup 中添加
 onShow(() => {
@@ -113,46 +137,70 @@ function goToAddress() {
     url: '/pages/address/index'
   })
 }
+
+// 餐具数量加减
+const decreaseTableware = () => {
+  if (tablewareNumber.value > 0) {
+    tablewareNumber.value--
+  }
+}
+
+const increaseTableware = () => {
+  tablewareNumber.value++
+}
+
 // 修改后的提交订单逻辑
-function onSubmitOrder() {
+async function onSubmitOrder() {
   if (deliveryType.value === 1 && !address.value) {
     uni.showToast({ title: '请选择收货地址', icon: 'none' })
     return
   }
 
-  // 构造订单数据时加入配送类型
-  const orderParams = {
-    ...orderData.value,
-    deliveryType: deliveryType.value,
-    address: deliveryType.value === 1 ? address.value : null,
-    storeInfo: deliveryType.value === 2 ? storeInfo.value : null
-  }
+  try {
+    const params = {
+      addressId: address.value?.id,
+      remark: remark.value,
+      tablewareNumber: tablewareNumber.value,
+      packAmount: packAmount.value,
+      amount: orderData.value.totalPrice +
+        (deliveryType.value === 1 ? orderData.value.deliveryFee : 0) +
+        packAmount.value,
+      shopId: orderData.value.shopInfo.shopId,
+      shopName: orderData.value.shopInfo.shopName,
+      shopAvatar: orderData.value.shopInfo.shopAvatar,
+      deliveryType: deliveryType.value
+    }
 
-  // 后续支付逻辑...
-  // 调用支付接口
-  uni.showLoading({
-    title: '支付中...'
-  })
+    uni.showLoading({ title: '提交中...' })
 
-  // 模拟支付过程
-  setTimeout(() => {
+    const res = await request({
+      url: '/order/submit',
+      method: 'POST',
+      data: params
+    })
     uni.hideLoading()
+    console.log(res)
     uni.showToast({
-      title: '支付成功',
+      title: '下单成功',
       icon: 'success',
-      duration: 2000,
       success: () => {
-        // 清除本地订单数据
         uni.removeStorageSync('orderData')
-        // 跳转到订单页面或首页
-        setTimeout(() => {
-          uni.switchTab({
-            url: '/pages/index/index'
-          })
-        }, 2000)
+        // setTimeout(() => {
+        //   uni.switchTab({ url: '/pages/index/index' })
+        // }, 1500)
       }
     })
-  }, 1500)
+    // uni.showToast({
+    //   title: res.msg || '下单失败',
+    //   icon: 'none'
+    // })
+  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({
+      title: '下单失败',
+      icon: 'none'
+    })
+  }
 }
 </script>
 
@@ -332,4 +380,46 @@ function onSubmitOrder() {
   }
 }
 
-// 其他原有样式保持不变</style>
+.order-options {
+  background: #fff;
+  margin-bottom: 20rpx;
+
+  .option-item {
+    padding: 30rpx;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1rpx solid #eee;
+
+    input {
+      text-align: right;
+      width: 400rpx;
+    }
+
+    .tableware-select {
+      display: flex;
+      align-items: center;
+
+      .btn {
+        width: 44rpx;
+        height: 44rpx;
+        border-radius: 50%;
+        background: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:active {
+          opacity: 0.8;
+        }
+      }
+
+      .count {
+        margin: 0 20rpx;
+        min-width: 40rpx;
+        text-align: center;
+      }
+    }
+  }
+}
+</style>

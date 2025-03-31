@@ -6,9 +6,14 @@ import { useTokenStore } from './store/token'
 
 const useToken = useTokenStore()
 
-onLaunch(() => {
+onLaunch(async () => {
   console.log('App Launch')
-  login()
+  try {
+    const token = await login()
+    console.log('登录成功，Token:', token)
+  } catch (error) {
+    console.error('登录失败:', error)
+  }
 })
 
 onShow(() => {
@@ -25,31 +30,32 @@ onShow(() => {
 onHide(() => {
   console.log('App Hide')
 })
-
+// 登录请求的同步封装
 const login = async () => {
-  uni.login({
-    provider: 'weixin', //使用微信登录
-    success: async (res) => {
-      try {
-        const data = await request(
-          {
-            method: 'POST',
-            url: '/user/wxlogin',
-            data: {
-              code: res.code
-            }
-          }
-        )
-        console.log(data)
-        useToken.setToken(data.data)
+  try {
+    const loginRes = await new Promise((resolve, reject) => {
+      uni.login({
+        provider: 'weixin',
+        success: resolve,
+        fail: reject
+      })
+    })
 
-      } catch (e) {
-        console.log("登录失败", e)
-      }
-    }
-  })
+    const { code } = loginRes
+    const res = await request({
+      method: 'POST',
+      url: '/user/wxlogin',
+      data: { code }
+    })
+
+    // console.log(res)
+    useToken.setToken(res.data)
+    return res.data // 返回登录结果
+  } catch (e) {
+    console.error("登录失败", e)
+    throw e // 抛出错误，便于外部捕获
+  }
 }
-
 function getOrderInfo() {
   const ws = new WebSocket({
     heartMsg: 'ping', // 心跳消息

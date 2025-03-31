@@ -50,15 +50,15 @@
 
         <!-- 快捷操作 -->
         <view class="quick-actions">
-            <view class="action-item" @click="handleSalesReport">
+            <view class="action-item" @click="handleToManage(`shopLottery_manage/index`)">
                 <uni-icons type="compose" size="28" color="#FF5500" />
                 <text class="text">发布抽奖</text>
             </view>
-            <view class="action-item" @click="handleSalesReport">
+            <view class="action-item" @click="handleToManage(`shopRevenue_manage/index`)">
                 <uni-icons type="list" size="28" color="#FF5500" />
                 <text class="text">营收细则</text>
             </view>
-            <view class="action-item" @click="handleSalesReport">
+            <view class="action-item" @click="handleToManage(`editPersonalInfo/index`)">
                 <uni-icons type="compose" size="28" color="#FF5500" />
                 <text class="text">个人信息修改</text>
             </view>
@@ -137,6 +137,9 @@ const handleTouchEnd = (e) => {
     // e.currentTarget.style.transform = 'scale(1)'
 }
 
+const handleToManage = (url) => {
+    uni.navigateTo({ url: `/pages/${url}` })
+}
 const goToProductManage = (id) => {
     uni.navigateTo({ url: `/pages/productManage/ProductManageIndex?id=${id}` })
 }
