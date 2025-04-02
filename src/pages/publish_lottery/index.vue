@@ -115,6 +115,13 @@
             placeholder="请输入数量"
           />
         </view>
+        <view class="form-item">
+          <label>中奖概率</label>
+          <input
+            v-model="currentLottery.probability"
+            placeholder="请输入中奖概率(0-1)"
+          />
+        </view>
 
         <view class="form-item">
           <label>抽奖开始时间</label>
@@ -156,10 +163,9 @@ export default {
         introduction: "",
         productName: "",
         amount: 1,
+        probability: 0.1, // 默认值
         startTime: "",
         endTime: "",
-        probability: 0.1,
-        totalAmount: 1,
         shopid: "",
       },
       isEditing: false,
@@ -237,16 +243,16 @@ export default {
     openAddLotteryDialog() {
       this.isEditing = false;
       this.currentLottery = {
-        id: null,
+        // id: null,
         name: "",
         introduction: "",
         productName: "",
         amount: 1,
         startTime: "",
         endTime: "",
-        probability: 0.1,
-        totalAmount: 1,
-        shopid: this.shopid,
+        // probability: 0.1,
+        // totalAmount: 1,
+        // shopid: this.shopid,
       };
       this.$refs.lotteryPopup.open();
     },
@@ -256,7 +262,8 @@ export default {
       this.editIndex = index;
       this.currentLottery = {
         ...this.lotteryList[index],
-        shopid: this.shopid, // 确保编辑时也有shopid
+        totalAmount: this.lotteryList[index].amount,
+        shopid: this.shopid,
       };
       this.$refs.lotteryPopup.open();
     },
@@ -283,12 +290,21 @@ export default {
         uni.showLoading({ title: "添加中..." });
 
         const lotteryData = {
-          ...this.currentLottery,
-          startTime: this.formatTime(this.currentLottery.startTime),
-          endTime: this.formatTime(this.currentLottery.endTime),
-          createTime: new Date().toISOString().slice(0, 19).replace("T", " "),
+          name: this.currentLottery.name,
+          productName: this.currentLottery.productName,
+          introduction: this.currentLottery.introduction,
+          totalAmount: this.currentLottery.amount,
+          probability: this.currentLottery.probability || 0.1, // 默认值
+          startTime: this.currentLottery.startTime.includes("T")
+            ? this.currentLottery.startTime
+            : this.formatTime(this.currentLottery.startTime),
+          endTime: this.currentLottery.endTime.includes("T")
+            ? this.currentLottery.endTime
+            : this.formatTime(this.currentLottery.endTime),
+          createTime: new Date().toISOString(),
         };
 
+        console.log("抽奖活动数据:", lotteryData);
         const response = await request({
           method: "POST",
           url: "/prize/add",
@@ -421,8 +437,7 @@ export default {
 
       return true;
     },
-
-    // 其他方法保持不变...
+    // 删除抽奖活动
     confirmDeleteLottery(prizeId) {
       uni.showModal({
         title: "提示",
@@ -467,7 +482,7 @@ export default {
       }
     },
 
-    // 其他工具方法保持不变...
+    // 格式化时间范围
     formatTimeRange(timeStr) {
       if (!timeStr) return "未设置";
       const date = this.parseTime(timeStr);
@@ -520,13 +535,18 @@ export default {
 
     validateTimeFormat(timeStr) {
       if (!timeStr) return false;
-      const pattern1 = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
-      const pattern2 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-      return pattern1.test(timeStr) || pattern2.test(timeStr);
+      // 允许格式: yyyy-MM-dd HH:mm 或 yyyy-MM-dd HH:mm:ss
+      const pattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/;
+      return pattern.test(timeStr);
     },
-
     formatTime(timeStr) {
       if (!timeStr) return "";
+
+      // 补全可能缺失的秒数
+      if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$/.test(timeStr)) {
+        timeStr += ":00";
+      }
+
       if (timeStr.includes("T")) {
         const date = new Date(timeStr);
         return `${date.getFullYear()}-${(date.getMonth() + 1)

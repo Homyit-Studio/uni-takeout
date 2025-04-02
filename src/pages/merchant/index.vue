@@ -181,6 +181,7 @@ export default {
 
         if (response.code === 200) {
           uni.showToast({ title: "保存成功", icon: "success" });
+          uni.navigateTo({ url: "/pages/index/index" });
         } else {
           throw new Error(response?.message || "保存失败");
         }

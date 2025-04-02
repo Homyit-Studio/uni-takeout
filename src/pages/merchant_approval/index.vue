@@ -102,6 +102,8 @@ export default {
           data: {},
         });
 
+        console.log("获取商户信息成功:", response);
+
         if (response && response.data) {
           const merchant = response.data.find(
             (item) => item.id == this.merchantId
