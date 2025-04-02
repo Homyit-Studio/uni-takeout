@@ -53,13 +53,13 @@
           <view class="lottery-actions">
             <button
               class="action-button edit-button"
-              @click="openEditLotteryDialog(lottery.id)"
+              @click="openEditLotteryDialog(index)"
             >
               编辑
             </button>
             <button
               class="action-button delete-button"
-              @click="confirmDeleteLottery(lottery.id)"
+              @click="confirmDeleteLottery(lottery.id, lottery.startTime)"
             >
               删除
             </button>
@@ -125,17 +125,23 @@
 
         <view class="form-item">
           <label>抽奖开始时间</label>
-          <input
+          <uni-datetime-picker
+            :type="'datetime'"
             v-model="currentLottery.startTime"
-            placeholder="格式为 xxxx-xx-xx xx:xx:xx"
+            :minDate="minDate"
+            :maxDate="maxDate"
+            :format="format"
           />
         </view>
 
         <view class="form-item">
           <label>抽奖结束时间</label>
-          <input
+          <uni-datetime-picker
+            :type="'datetime'"
             v-model="currentLottery.endTime"
-            placeholder="格式为 xxxx-xx-xx xx:xx:xx"
+            :minDate="minDate"
+            :maxDate="maxDate"
+            :format="format"
           />
         </view>
 
@@ -153,12 +159,19 @@
 <script>
 import { request } from "@/utils/request";
 
+// 新增函数，将日期转换为指定格式
+function formatDateToBackend(date) {
+  const utcDate = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60 * 1000
+  );
+  return utcDate.toISOString().slice(0, 19);
+}
+
 export default {
   data() {
     return {
       lotteryList: [],
       currentLottery: {
-        id: null,
         name: "",
         introduction: "",
         productName: "",
@@ -166,12 +179,14 @@ export default {
         probability: 0.1, // 默认值
         startTime: "",
         endTime: "",
-        shopid: "",
       },
       isEditing: false,
       editIndex: -1,
       isLoading: false,
       shopid: "",
+      minDate: "1970-01-01 00:00:00",
+      maxDate: "2100-12-31 23:59:59",
+      format: "yyyy-MM-dd HH:mm:ss",
     };
   },
   methods: {
@@ -183,13 +198,12 @@ export default {
 
         const response = await request({
           method: "GET",
-          url: "/user/getUserInfo",
+          url: "/shop/mershopinfo",
         });
 
         if (response?.code === 200 && response.data) {
-          console.log("获取用户信息成功:", response.data);
-          this.shopid = response.data.shopid;
-          this.currentLottery.shopid = response.data.shopid; // 设置默认shopid
+          console.log("获取商家信息成功:", response.data);
+          this.shopid = response.data.id;
         } else {
           throw new Error(response?.message || "获取用户信息失败");
         }
@@ -208,17 +222,16 @@ export default {
     // 获取抽奖活动列表
     async getLotteryList() {
       try {
-        // if (!this.shopid) {
-        //   await this.getUserInfo(); // 确保shopid已获取
-        // }
+        if (!this.shopid) {
+          await this.getUserInfo(); // 确保shopid已获取
+        }
 
         this.isLoading = true;
         uni.showLoading({ title: "加载中..." });
 
         const response = await request({
           method: "GET",
-          // url: `/prize/select/${this.shopid}`,
-          url: "/prize/select/1",
+          url: `/prize/select/${this.shopid}`,
         });
 
         console.log("获取抽奖活动列表成功:", response.data);
@@ -243,16 +256,13 @@ export default {
     openAddLotteryDialog() {
       this.isEditing = false;
       this.currentLottery = {
-        // id: null,
         name: "",
         introduction: "",
         productName: "",
         amount: 1,
         startTime: "",
         endTime: "",
-        // probability: 0.1,
-        // totalAmount: 1,
-        // shopid: this.shopid,
+        probability: 0.1,
       };
       this.$refs.lotteryPopup.open();
     },
@@ -263,7 +273,6 @@ export default {
       this.currentLottery = {
         ...this.lotteryList[index],
         totalAmount: this.lotteryList[index].amount,
-        shopid: this.shopid,
       };
       this.$refs.lotteryPopup.open();
     },
@@ -289,22 +298,28 @@ export default {
         this.isLoading = true;
         uni.showLoading({ title: "添加中..." });
 
+        // 修改为使用自定义函数格式化时间
+        const startTime = formatDateToBackend(
+          new Date(this.currentLottery.startTime)
+        );
+        const endTime = formatDateToBackend(
+          new Date(this.currentLottery.endTime)
+        );
+
         const lotteryData = {
+          shopid: this.shopid,
           name: this.currentLottery.name,
           productName: this.currentLottery.productName,
           introduction: this.currentLottery.introduction,
           totalAmount: this.currentLottery.amount,
           probability: this.currentLottery.probability || 0.1, // 默认值
-          startTime: this.currentLottery.startTime.includes("T")
-            ? this.currentLottery.startTime
-            : this.formatTime(this.currentLottery.startTime),
-          endTime: this.currentLottery.endTime.includes("T")
-            ? this.currentLottery.endTime
-            : this.formatTime(this.currentLottery.endTime),
-          createTime: new Date().toISOString(),
+          startTime: startTime,
+          endTime: endTime,
+          createTime: formatDateToBackend(new Date()),
         };
 
         console.log("抽奖活动数据:", lotteryData);
+
         const response = await request({
           method: "POST",
           url: "/prize/add",
@@ -341,10 +356,25 @@ export default {
         this.isLoading = true;
         uni.showLoading({ title: "更新中..." });
 
+        // 修改为使用自定义函数格式化时间
+        const startTime = formatDateToBackend(
+          new Date(this.currentLottery.startTime)
+        );
+        const endTime = formatDateToBackend(
+          new Date(this.currentLottery.endTime)
+        );
+
         const lotteryData = {
-          ...this.currentLottery,
-          startTime: this.formatTime(this.currentLottery.startTime),
-          endTime: this.formatTime(this.currentLottery.endTime),
+          prizeId: this.lotteryList[this.editIndex].id,
+          shopid: this.shopid,
+          name: this.currentLottery.name,
+          productName: this.currentLottery.productName,
+          introduction: this.currentLottery.introduction,
+          totalAmount: this.currentLottery.amount,
+          probability: this.currentLottery.probability || 0.1, // 默认值
+          startTime: startTime,
+          endTime: endTime,
+          createTime: formatDateToBackend(new Date()),
         };
 
         const response = await request({
@@ -409,23 +439,23 @@ export default {
 
     // 验证时间
     validateTime() {
-      if (!this.validateTimeFormat(this.currentLottery.startTime)) {
+      if (!this.currentLottery.startTime) {
         uni.showToast({
-          title: "开始时间格式不正确",
+          title: "请选择开始时间",
           icon: "none",
         });
         return false;
       }
-      if (!this.validateTimeFormat(this.currentLottery.endTime)) {
+      if (!this.currentLottery.endTime) {
         uni.showToast({
-          title: "结束时间格式不正确",
+          title: "请选择结束时间",
           icon: "none",
         });
         return false;
       }
 
-      const startTime = this.parseTime(this.currentLottery.startTime);
-      const endTime = this.parseTime(this.currentLottery.endTime);
+      const startTime = new Date(this.currentLottery.startTime);
+      const endTime = new Date(this.currentLottery.endTime);
 
       if (endTime <= startTime) {
         uni.showToast({
@@ -438,19 +468,19 @@ export default {
       return true;
     },
     // 删除抽奖活动
-    confirmDeleteLottery(prizeId) {
+    confirmDeleteLottery(prizeId, startTime) {
       uni.showModal({
         title: "提示",
         content: "确定删除该抽奖活动吗？",
         success: (res) => {
           if (res.confirm) {
-            this.deleteLotteryList(prizeId);
+            this.deleteLotteryList(prizeId, startTime);
           }
         },
       });
     },
 
-    async deleteLotteryList(prizeId) {
+    async deleteLotteryList(prizeId, startTime) {
       try {
         this.isLoading = true;
         uni.showLoading({ title: "删除中..." });
@@ -458,9 +488,13 @@ export default {
         const response = await request({
           method: "POST",
           url: "/prize/delete",
-          data: { prizeId },
+          data: {
+            prizeId: prizeId,
+            startTime: startTime,
+          },
         });
 
+        console.log("删除抽奖活动:", response);
         if (response?.code === 200) {
           uni.showToast({
             title: "删除成功",
@@ -468,12 +502,12 @@ export default {
           });
           this.getLotteryList();
         } else {
-          throw new Error(response?.message || "删除失败");
+          throw new Error(response.message || "删除失败");
         }
       } catch (error) {
-        console.error("删除失败:", error);
+        // console.error("删除失败:", error);
         uni.showToast({
-          title: error.message || "删除失败",
+          title: error.data.message || "删除失败",
           icon: "none",
         });
       } finally {
@@ -484,8 +518,13 @@ export default {
 
     // 格式化时间范围
     formatTimeRange(timeStr) {
+      // 1. 检查输入是否为空
       if (!timeStr) return "未设置";
-      const date = this.parseTime(timeStr);
+
+      // 2. 将字符串解析为 Date 对象
+      const date = new Date(timeStr);
+
+      // 3. 格式化为 YYYY-MM-DD HH:MM:SS
       return `${date.getFullYear()}-${(date.getMonth() + 1)
         .toString()
         .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${date
@@ -500,19 +539,11 @@ export default {
     getStatus(lottery) {
       if (!lottery.startTime || !lottery.endTime) return "未设置";
       const now = new Date();
-      const startTime = this.parseTime(lottery.startTime);
-      const endTime = this.parseTime(lottery.endTime);
+      const startTime = new Date(lottery.startTime);
+      const endTime = new Date(lottery.endTime);
       if (now < startTime) return "未开始";
       if (now > endTime) return "已结束";
       return "进行中";
-    },
-
-    parseTime(timeStr) {
-      if (!timeStr) return new Date();
-      if (timeStr.includes("T")) {
-        return new Date(timeStr);
-      }
-      return new Date(timeStr.replace(/-/g, "/"));
     },
 
     getStatusText(lottery) {
@@ -531,38 +562,6 @@ export default {
         default:
           return "action-button default-button";
       }
-    },
-
-    validateTimeFormat(timeStr) {
-      if (!timeStr) return false;
-      // 允许格式: yyyy-MM-dd HH:mm 或 yyyy-MM-dd HH:mm:ss
-      const pattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/;
-      return pattern.test(timeStr);
-    },
-    formatTime(timeStr) {
-      if (!timeStr) return "";
-
-      // 补全可能缺失的秒数
-      if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$/.test(timeStr)) {
-        timeStr += ":00";
-      }
-
-      if (timeStr.includes("T")) {
-        const date = new Date(timeStr);
-        return `${date.getFullYear()}-${(date.getMonth() + 1)
-          .toString()
-          .padStart(2, "0")}-${date
-          .getDate()
-          .toString()
-          .padStart(2, "0")} ${date
-          .getHours()
-          .toString()
-          .padStart(2, "0")}:${date
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")}`;
-      }
-      return timeStr;
     },
   },
   onLoad() {
