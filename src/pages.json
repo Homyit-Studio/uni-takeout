@@ -190,6 +190,18 @@
 			"style": {
 				"navigationBarTitleText": "管理营收明细"
 			}
+		},
+		{
+			"path": "pages/luckys/index",
+			"style": {
+				"navigationBarTitleText": "抽奖列表"
+			}
+		},
+		{
+			"path": "pages/publish_lottery222/index",
+			"style": {
+				"navigationBarTitleText": "管理员管理抽奖"
+			}
 		}
 	],
 	"globalStyle": {

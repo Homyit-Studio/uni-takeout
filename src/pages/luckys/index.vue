@@ -14,9 +14,15 @@
         class="merchant-item"
         @click="navigateToDetail(merchant)"
       >
-        <image :src="merchant.avatar" class="merchant-avatar"></image>
+        <image
+          src="/static/抽奖.png"
+          class="merchant-avatar"
+          mode="'fixed'"
+        ></image>
         <view class="merchant-info">
-          <text class="shop-name">{{ merchant.name }}</text>
+          <text class="shop-name" style="font-weight: bold"
+            >{{ merchant.shopName }} --- {{ merchant.name }}</text
+          >
         </view>
         <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
       </view>
@@ -30,23 +36,7 @@ export default {
   data() {
     return {
       // 商户列表数据
-      merchantList: [
-        // {
-        //   id: 1,
-        //   shopName: "拼小圈",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-        // {
-        //   id: 2,
-        //   shopName: "美食坊",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-        // {
-        //   id: 3,
-        //   shopName: "饮品店",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-      ],
+      merchantList: [],
     };
   },
   onLoad() {
@@ -54,31 +44,37 @@ export default {
     this.fetchLuckyList();
   },
   methods: {
-    // 获取商户列表数据
+    // 获取抽奖列表数据
     async fetchLuckyList() {
       try {
         this.isLoading = true;
-        // 模拟请求数据
         const response = await request({
-          url: "/shop/getshops",
           method: "GET",
+          url: "/prize/getall",
         });
-        console.log("商户列表数据:", response);
-        this.merchantList = response.data;
+
+        console.log("获取抽奖列表成功:", response);
+
+        if (response && response.data) {
+          this.merchantList = response.data;
+        }
       } catch (error) {
-        console.error("获取商户列表失败:", error);
+        console.error("获取抽奖列表失败:", error);
+        uni.showToast({
+          title: "获取抽奖列表失败",
+          icon: "none",
+        });
       } finally {
         this.isLoading = false;
       }
     },
     // 跳转到商户详情页面
     navigateToDetail(merchant) {
+      // 存储到全局临时变量
+      getApp().globalData.tempMerchant = merchant;
+
       uni.navigateTo({
-        url: `/pages/publish_lottery222/index?id=${
-          merchant.id
-        }&name=${encodeURIComponent(merchant.name)}&avatar=${encodeURIComponent(
-          merchant.avatar
-        )}`,
+        url: "/pages/launch_lucky/index",
       });
     },
   },

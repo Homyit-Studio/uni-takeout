@@ -192,37 +192,6 @@ export default {
     };
   },
   methods: {
-    // 获取用户信息
-    async getUserInfo() {
-      try {
-        this.isLoading = true;
-        uni.showLoading({ title: "加载中..." });
-
-        const response = await request({
-          method: "GET",
-          url: "/shop/mershopinfo",
-        });
-
-        if (response?.code === 200 && response.data) {
-          console.log("获取商家信息成功:", response.data);
-          this.shopid = response.data.id;
-          this.shopName = response.data.name;
-          this.shopAvatar = response.data.avatar;
-        } else {
-          throw new Error(response?.message || "获取商家信息失败");
-        }
-      } catch (error) {
-        console.error("获取用户信息失败:", error);
-        uni.showToast({
-          title: error.message || "获取信息失败",
-          icon: "none",
-        });
-      } finally {
-        this.isLoading = false;
-        uni.hideLoading();
-      }
-    },
-
     // 获取抽奖活动列表
     async getLotteryList() {
       try {
@@ -570,10 +539,14 @@ export default {
       }
     },
   },
-  onLoad() {
-    this.getUserInfo().then(() => {
-      this.getLotteryList();
-    });
+  onLoad(options) {
+    // 从页面参数中获取商家信息
+    if (options.id && options.name && options.avatar) {
+      this.shopid = options.id;
+      this.shopName = options.name;
+      this.shopAvatar = options.avatar;
+      this.getLotteryList(); // 直接获取抽奖列表
+    }
   },
 };
 </script>

@@ -19,14 +19,14 @@
     </view>
 
     <!-- 抽奖前界面 -->
-    <view v-if="!isDrawed" class="draw-before">
+    <view v-if="!isDrawed && !drawResult" class="draw-before">
       <!-- 抽奖提示部分 -->
       <view class="win-tip">
         <text class="win-text">快来参与抽奖吧</text>
       </view>
 
       <!-- 抽奖按钮部分 -->
-      <view class="draw-button" @click="startDraw">
+      <view class="draw-button" @click="getLucky">
         <text class="button-text">立即抽奖</text>
       </view>
     </view>
@@ -35,56 +35,132 @@
     <view v-else class="draw-after">
       <!-- 中奖提示部分 -->
       <view class="win-tip">
-        <text class="win-text">恭喜! 你已中奖</text>
+        <text
+          class="win-text"
+          :class="{ 'win-color': isWinner, 'lose-color': !isWinner }"
+        >
+          {{ isWinner ? "恭喜! 你已中奖" : "很遗憾，未中奖" }}
+        </text>
       </view>
 
       <!-- 奖品信息部分 -->
-      <view class="prize-info">
+      <view v-if="isWinner" class="prize-info">
         <view class="prize-content">
           <text class="prize-title">奖品:</text>
           <text class="prize-detail">{{ prizeInfo }}</text>
         </view>
+      </view>
+
+      <!-- 未中奖提示 -->
+      <view v-else class="no-prize-info">
+        <text>{{ errorMessage }}</text>
+      </view>
+
+      <!-- 查看结果按钮 -->
+      <view class="result-button" @click="viewResult">
+        <text class="button-text">查看中奖结果</text>
       </view>
     </view>
   </view>
 </template>
 
 <script>
-import { request } from '@/utils/request'
+import { request } from "@/utils/request";
 
 export default {
   data() {
     return {
-      // 模拟从后端获取的数据
-      sponsorAvatar: "", // 头像地址
-      sponsorName: "", // 店名
-      drawRules: "", // 抽奖说明
-      prizeInfo: "", // 奖品信息
-      isDrawed: false, // 是否已抽奖
+      userid: "",
+      prizeId: "",
+      sponsorAvatar: "",
+      sponsorName: "",
+      drawRules: "",
+      prizeInfo: "",
+      isDrawed: false,
+      isWinner: false, // 是否中奖
+      drawResult: false, // 是否已抽奖
+      errorMessage: "", // 错误信息
+      canDraw: true, // 是否可以抽奖
     };
   },
   onLoad() {
-    // 模拟从后端获取数据的过程，这里直接赋值拟定数据
-    this.sponsorAvatar = "/static/merchant_pic.jpg";
-    this.sponsorName = "美味烧烤店";
-    this.drawRules =
-      "1、本次抽奖奖品为5份免单猪肉串,20份半价猪肉串;\n2、兑奖方式:群内小程序下单，下单后加群主微信报销;\n3、奖品有效期一天,需当天使用,逾期无效喔";
-    this.prizeInfo = "半价猪肉串七串";
+    const merchant = getApp().globalData.tempMerchant;
+    console.log(merchant);
+
+    this.sponsorAvatar = merchant.shopAvatar;
+    this.sponsorName = merchant.name;
+    this.drawRules = merchant.introduction;
+    this.prizeInfo = merchant.productName;
+    this.prizeId = merchant.id;
+
+    this.getUserInfo();
   },
   methods: {
-    // 抽奖逻辑
-    startDraw() {
-      uni.showLoading({
-        title: "抽奖中...",
-        mask: true,
-      });
-      setTimeout(() => {
-        uni.hideLoading();
-        // 模拟抽奖结果
-        this.isDrawed = true; // 设置为已抽奖
-        this.prizeInfo = "半价猪肉串七串"; // 模拟中奖奖品
-      }, 2000);
+    async getUserInfo() {
+      try {
+        const response = await request({
+          method: "GET",
+          url: "/user/getUserInfo",
+        });
+
+        if (response?.code === 200 && response.data) {
+          this.userid = response.data.id;
+        }
+      } catch (error) {
+        console.error("获取用户信息失败:", error);
+      }
     },
+
+    async getLucky() {
+      if (!this.canDraw) return;
+
+      try {
+        this.canDraw = false;
+        uni.showLoading({
+          title: "抽奖中...",
+          mask: true,
+        });
+
+        const response = await request({
+          url: "/prize/join",
+          method: "POST",
+          data: {
+            userid: this.userid,
+            prizeId: this.prizeId,
+          },
+        });
+
+        if (response?.code === 200) {
+          this.drawResult = true;
+          this.isDrawed = true;
+
+          if (response.data && response.data.isWin) {
+            // 中奖情况
+            this.isWinner = true;
+            this.prizeInfo = response.data.prizeName || this.prizeInfo;
+          } else {
+            // 未中奖情况
+            this.isWinner = false;
+            this.errorMessage = response.message || "很遗憾，您没有中奖";
+          }
+        } else {
+          throw new Error(response?.message || "抽奖失败");
+        }
+      } catch (error) {
+        console.error("抽奖失败:", error);
+        this.drawResult = true;
+        this.isDrawed = true;
+        this.isWinner = false;
+        this.errorMessage = error.data?.message || "抽奖过程中出现错误";
+
+        uni.showToast({
+          title: this.errorMessage,
+          icon: "none",
+        });
+      } finally {
+        uni.hideLoading();
+      }
+    }
   },
 };
 </script>
@@ -180,11 +256,20 @@ export default {
   text-align: center;
 }
 
+.win-color {
+  color: #d81e06;
+}
+
+.lose-color {
+  color: #666;
+}
+
 .prize-info {
   background-color: #d81e06;
   padding: 20px;
   border-radius: 16px;
   color: #ffffff;
+  margin: 20px 0;
 }
 
 .prize-content {
@@ -202,5 +287,23 @@ export default {
 .prize-detail {
   font-size: 20px;
   font-weight: bold;
+}
+
+.no-prize-info {
+  background-color: #f5f5f5;
+  padding: 20px;
+  border-radius: 16px;
+  color: #666;
+  margin: 20px 0;
+  font-size: 16px;
+}
+
+.result-button {
+  background-color: #4a90e2;
+  padding: 15px 80px;
+  border-radius: 20px;
+  display: inline-block;
+  cursor: pointer;
+  margin-top: 20px;
 }
 </style>
