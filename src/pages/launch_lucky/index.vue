@@ -10,6 +10,15 @@
       </view>
     </view>
 
+    <!-- 抽奖时间显示 -->
+    <view class="draw-time">
+      <text class="time-text"
+        >活动时间: {{ formatTime(startTime) }} 至
+        {{ formatTime(endTime) }}</text
+      >
+      <text v-if="!isActive" class="time-tip">(当前活动已结束)</text>
+    </view>
+
     <!-- 抽奖说明部分 -->
     <view class="draw-description">
       <text class="description-title">抽奖说明</text>
@@ -19,7 +28,7 @@
     </view>
 
     <!-- 抽奖前界面 -->
-    <view v-if="!isDrawed && !drawResult" class="draw-before">
+    <view v-if="!isDrawed && !drawResult && isActive" class="draw-before">
       <!-- 抽奖提示部分 -->
       <view class="win-tip">
         <text class="win-text">快来参与抽奖吧</text>
@@ -32,7 +41,7 @@
     </view>
 
     <!-- 抽奖后界面 -->
-    <view v-else class="draw-after">
+    <view v-else-if="isDrawed || drawResult" class="draw-after">
       <!-- 中奖提示部分 -->
       <view class="win-tip">
         <text
@@ -55,11 +64,11 @@
       <view v-else class="no-prize-info">
         <text>{{ errorMessage }}</text>
       </view>
+    </view>
 
-      <!-- 查看结果按钮 -->
-      <view class="result-button" @click="viewResult">
-        <text class="button-text">查看中奖结果</text>
-      </view>
+    <!-- 活动已结束提示 -->
+    <view v-else class="draw-ended">
+      <text class="ended-text">当前抽奖活动已结束</text>
     </view>
   </view>
 </template>
@@ -71,17 +80,31 @@ export default {
   data() {
     return {
       userid: "",
+      shopId: "",
+      userName: "",
+      userAvatar: "",
       prizeId: "",
       sponsorAvatar: "",
       sponsorName: "",
       drawRules: "",
       prizeInfo: "",
+      startTime: "", // 活动开始时间
+      endTime: "", // 活动结束时间
       isDrawed: false,
       isWinner: false, // 是否中奖
       drawResult: false, // 是否已抽奖
       errorMessage: "", // 错误信息
       canDraw: true, // 是否可以抽奖
     };
+  },
+  computed: {
+    // 判断活动是否正在进行中
+    isActive() {
+      const now = new Date();
+      const start = new Date(this.startTime);
+      const end = new Date(this.endTime);
+      return now >= start && now <= end;
+    },
   },
   onLoad() {
     const merchant = getApp().globalData.tempMerchant;
@@ -92,10 +115,48 @@ export default {
     this.drawRules = merchant.introduction;
     this.prizeInfo = merchant.productName;
     this.prizeId = merchant.id;
+    this.startTime = merchant.startTime; // 设置开始时间
+    this.endTime = merchant.endTime; // 设置结束时间
+    this.shopId = merchant.shopid; // 设置商户ID
 
     this.getUserInfo();
+    this.checkUserDrawStatus();
   },
   methods: {
+    // 判断用户是否已经参与过这个抽奖
+    async checkUserDrawStatus() {
+      try {
+        const response = await request({
+          method: "POST",
+          url: "/prize/isjoin",
+          data: {
+            userId: this.userid,
+            prizeId: this.prizeId,
+            shopId: this.shopId,
+          },
+        });
+
+        console.log("检查用户抽奖状态:", response);
+
+        if (response?.code === 200) {
+          if (response.data === "您还没有参与过该活动") {
+            // 用户未参与过，保持初始状态
+            this.drawResult = false;
+            this.isDrawed = false;
+          } else {
+            // 用户已参与过
+            this.drawResult = true;
+            this.isDrawed = true;
+            // 根据实际接口返回设置中奖状态
+            this.isWinner = response.data.isWin || false;
+            this.prizeInfo = response.data.prizeName || this.prizeInfo;
+          }
+        }
+      } catch (error) {
+        console.error("检查用户抽奖状态失败:", error);
+      }
+    },
+    // 获取用户信息
     async getUserInfo() {
       try {
         const response = await request({
@@ -105,6 +166,8 @@ export default {
 
         if (response?.code === 200 && response.data) {
           this.userid = response.data.id;
+          this.userName = response.data.nickname;
+          this.userAvatar = response.data.avatar;
         }
       } catch (error) {
         console.error("获取用户信息失败:", error);
@@ -112,7 +175,7 @@ export default {
     },
 
     async getLucky() {
-      if (!this.canDraw) return;
+      if (!this.canDraw || !this.isActive) return;
 
       try {
         this.canDraw = false;
@@ -125,26 +188,32 @@ export default {
           url: "/prize/join",
           method: "POST",
           data: {
-            userid: this.userid,
+            userId: this.userid,
             prizeId: this.prizeId,
+            userName: this.userName,
+            userAvatar: this.userAvatar,
           },
         });
 
-        if (response?.code === 200) {
+        console.log("抽奖结果:", response);
+
+        if (response.code === 200) {
           this.drawResult = true;
           this.isDrawed = true;
 
-          if (response.data && response.data.isWin) {
-            // 中奖情况
+          // 明确区分中奖和未中奖状态
+          if (response.data.isWin) {
             this.isWinner = true;
             this.prizeInfo = response.data.prizeName || this.prizeInfo;
           } else {
-            // 未中奖情况
             this.isWinner = false;
             this.errorMessage = response.message || "很遗憾，您没有中奖";
           }
         } else {
-          throw new Error(response?.message || "抽奖失败");
+          this.drawResult = true;
+          this.isDrawed = true;
+          this.isWinner = false;
+          this.errorMessage = response.message || "抽奖失败，请稍后再试";
         }
       } catch (error) {
         console.error("抽奖失败:", error);
@@ -160,7 +229,19 @@ export default {
       } finally {
         uni.hideLoading();
       }
-    }
+    },
+
+    // 格式化时间显示
+    formatTime(timeString) {
+      if (!timeString) return "";
+      const date = new Date(timeString);
+      return `${date.getFullYear()}-${(date.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${date
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    },
   },
 };
 </script>
@@ -202,6 +283,27 @@ export default {
   font-size: 20px;
   font-weight: bold;
   color: #333;
+}
+
+/* 抽奖时间部分 */
+.draw-time {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.time-text {
+  font-size: 16px;
+  color: #333;
+  font-weight: bold;
+}
+
+.time-tip {
+  font-size: 14px;
+  color: #d81e06;
+  margin-left: 10px;
 }
 
 /* 抽奖说明部分 */
@@ -305,5 +407,17 @@ export default {
   display: inline-block;
   cursor: pointer;
   margin-top: 20px;
+}
+
+/* 活动已结束提示 */
+.draw-ended {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.ended-text {
+  font-size: 24px;
+  color: #d81e06;
+  font-weight: bold;
 }
 </style>

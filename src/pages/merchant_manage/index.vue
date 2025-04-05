@@ -40,6 +40,14 @@
         <uni-icons type="gift-filled" size="30" color="#4caf50"></uni-icons>
         <text class="nav-text">进行抽奖</text>
       </view>
+      <view class="nav-item" @click="navigateTo('myLucky')">
+        <uni-icons type="gift-filled" size="30" color="#1caf50"></uni-icons>
+        <text class="nav-text">我的中奖记录</text>
+      </view>
+      <view class="nav-item" @click="navigateTo('userLucky')">
+        <uni-icons type="gift-filled" size="30" color="#1caf50"></uni-icons>
+        <text class="nav-text">商铺查询中奖记录</text>
+      </view>
       <view class="nav-item" @click="navigateTo('personalInfo')">
         <uni-icons type="gift" size="30" color="#1cbf10"></uni-icons>
         <text class="nav-text">个人信息修改</text>
@@ -313,11 +321,17 @@ export default {
         case "launchLuckying":
           url = "/pages/launch_lucky/index";
           break;
+        case "userLucky":
+          url = "/pages/userLucky/index";
+          break;
         case "personalInfo":
           url = "/pages/editPersonalInfo/index";
           break;
         case "LuckyLists":
           url = "/pages/luckys/index";
+          break;
+        case "myLucky":
+          url = "/pages/myLucky/index";
           break;
       }
       uni.navigateTo({

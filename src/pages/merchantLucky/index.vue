@@ -3,30 +3,23 @@
     <!-- 商户列表 -->
     <view class="merchant-list">
       <!-- 无数据提示 -->
-      <view v-if="activeMerchants.length === 0" class="empty-tip">
-        <text>暂无进行中的抽奖活动</text>
+      <view v-if="merchantList.length === 0" class="empty-tip">
+        <text>暂无商户数据</text>
       </view>
 
       <!-- 商户列表项 -->
       <view
-        v-for="(merchant, index) in activeMerchants"
+        v-for="(merchant, index) in merchantList"
         :key="index"
         class="merchant-item"
         @click="navigateToDetail(merchant)"
       >
         <image
-          src="/static/抽奖.png"
+          :src="merchant.avatar || '/static/default-avatar.png'"
           class="merchant-avatar"
-          mode="'fixed'"
         ></image>
         <view class="merchant-info">
-          <text class="shop-name" style="font-weight: bold"
-            >{{ merchant.shopName }} --- {{ merchant.name }}</text
-          >
-          <!-- <text class="time-range"
-            >活动时间: {{ formatTime(merchant.startTime) }} 至
-            {{ formatTime(merchant.endTime) }}</text
-          > -->
+          <text class="shop-name">{{ merchant.name }}</text>
         </view>
         <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
       </view>
@@ -36,47 +29,35 @@
 
 <script>
 import { request } from "@/utils/request";
+
 export default {
   data() {
     return {
-      // 商户列表数据
       merchantList: [],
+      isLoading: false,
     };
   },
-  computed: {
-    // 只显示活动时间范围内的商户
-    activeMerchants() {
-      const now = new Date();
-      return this.merchantList.filter((merchant) => {
-        const startTime = new Date(merchant.startTime);
-        const endTime = new Date(merchant.endTime);
-        return now >= startTime && now <= endTime;
-      });
-    },
-  },
   onLoad() {
-    // 获取商户列表数据
-    this.fetchLuckyList();
+    this.fetchMerchantList();
   },
   methods: {
-    // 获取抽奖列表数据
-    async fetchLuckyList() {
+    // 获取商户列表
+    async fetchMerchantList() {
       try {
         this.isLoading = true;
         const response = await request({
           method: "GET",
-          url: "/prize/getall",
+          url: "/shop/getshops",
         });
 
-        console.log("获取抽奖列表成功:", response);
-
+        console.log("获取商户列表成功:", response);
         if (response && response.data) {
           this.merchantList = response.data;
         }
       } catch (error) {
-        console.error("获取抽奖列表失败:", error);
+        console.error("获取商户列表失败:", error);
         uni.showToast({
-          title: "获取抽奖列表失败",
+          title: "获取商户列表失败",
           icon: "none",
         });
       } finally {
@@ -85,36 +66,22 @@ export default {
     },
     // 跳转到商户详情页面
     navigateToDetail(merchant) {
-      // 存储到全局临时变量
-      getApp().globalData.tempMerchant = merchant;
-
       uni.navigateTo({
-        url: "/pages/launch_lucky/index",
+        url: `/pages/userLucky222/index?shopId=${merchant.id}`,
       });
-    },
-    // 格式化时间显示
-    formatTime(timeString) {
-      if (!timeString) return "";
-      const date = new Date(timeString);
-      return `${date.getFullYear()}-${(date.getMonth() + 1)
-        .toString()
-        .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${date
-        .getHours()
-        .toString()
-        .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
     },
   },
 };
 </script>
 
 <style scoped>
+/* 原有样式保持不变 */
 .merchant-list-container {
   padding: 20px;
   background-color: #f5f5f5;
   min-height: 100vh;
 }
 
-/* 商户列表 */
 .merchant-list {
   background-color: #fff;
   border-radius: 8px;
@@ -122,7 +89,6 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 商户列表项 */
 .merchant-item {
   display: flex;
   align-items: center;
@@ -156,12 +122,11 @@ export default {
   font-weight: 500;
 }
 
-.time-range {
-  font-size: 12px;
-  color: #666;
+.status {
+  font-size: 14px;
+  font-weight: bold;
 }
 
-/* 无数据提示 */
 .empty-tip {
   display: flex;
   justify-content: center;
