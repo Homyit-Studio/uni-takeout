@@ -134,61 +134,116 @@ export default {
         return;
       }
 
+      uni.showLoading({ title: "提交中...", mask: true });
+
       try {
-        // 准备表单数据
+        // 1. 先上传图片文件
+        const uploadResults = await Promise.allSettled([
+          this.uploadFile(this.shopPhotoFile),
+          this.uploadFile(this.businessLicenseImageFile),
+        ]);
+
+        // 检查上传结果
+        const [shopPhotoResult, licensePhotoResult] = uploadResults;
+
+        if (shopPhotoResult.status === "rejected") {
+          throw new Error(
+            `店铺照片上传失败: ${shopPhotoResult.reason.message}`
+          );
+        }
+        if (licensePhotoResult.status === "rejected") {
+          throw new Error(
+            `营业执照上传失败: ${licensePhotoResult.reason.message}`
+          );
+        }
+
+        // 2. 准备表单数据
         const formData = {
           shopName: this.shopName,
           shopPhone: this.shopPhone,
           shopAddress: this.shopAddress,
           shopIntroduction: this.shopIntroduction,
           businessLicenseCode: this.businessLicenseCode,
+          shopPhoto: shopPhotoResult.value,
+          businessLicenseImage: licensePhotoResult.value,
         };
 
-        // 上传店铺照片和营业执照照片
-        const shopPhotoRes = {
-          name: "shopPhoto",
-          uri: this.shopPhoto,
-          file: this.shopPhotoFile,
-        };
-
-        const licensePhotoRes = {
-          name: "businessLicenseImage",
-          uri: this.businessLicenseImage,
-          file: this.businessLicenseImageFile,
-        };
-
-        const files = [];
-        if (shopPhotoRes.uri) {
-          files.push(shopPhotoRes);
-        }
-        if (licensePhotoRes.uri) {
-          files.push(licensePhotoRes);
-        }
-
-        console.log("提交数据:", formData, files);
-        const response = await uni.uploadFile({
+        // 3. 提交商户入驻申请
+        const response = await request({
           url: "/merchant/putapplication",
-          files: files,
-          formData: formData,
+          method: "POST",
+          data: formData,
         });
 
-        console.log("提交响应:", response);
-        console.log("提交数据:", formData, files);
+        uni.hideLoading();
+
+        console.log("提交结果:", response);
 
         if (response.code === 200) {
           uni.showToast({ title: "保存成功", icon: "success" });
+          uni.navigateTo({ url: "/pages/index/index" });
         } else {
           throw new Error(response?.message || "保存失败");
         }
       } catch (error) {
+        uni.hideLoading();
         console.error("保存失败:", error);
         uni.showToast({
-          title: error.message || "保存失败",
+          title: error.message || "保存失败，请重试",
           icon: "none",
+          duration: 3000,
         });
       }
     },
-    // 表单验证
+    // 上传图片（把图片文件变成在线路径）
+    async uploadFile(file) {
+      if (!file) return "";
+
+      try {
+        const filePath = file.path || file.uri || file;
+        const uploadTask = await uni.uploadFile({
+          url: "/upload/photo",
+          filePath: filePath,
+          name: "file",
+          header: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        // 更健壮的响应处理
+        console.log("上传响应:", uploadTask);
+
+        // 处理不同平台的响应结构
+        const responseData = uploadTask[1]
+          ? uploadTask[1].data
+          : uploadTask.data;
+        if (!responseData) {
+          throw new Error("上传接口返回数据为空");
+        }
+
+        // 尝试解析JSON
+        let response;
+        try {
+          response =
+            typeof responseData === "string"
+              ? JSON.parse(responseData)
+              : responseData;
+        } catch (e) {
+          console.error("解析响应数据失败:", e);
+          throw new Error("服务器返回数据格式错误");
+        }
+
+        if (response.code === 200) {
+          return response.data;
+        } else {
+          throw new Error(response.message || "文件上传失败");
+        }
+      } catch (error) {
+        console.error("文件上传失败:", error);
+        throw new Error(`文件上传失败: ${error.message}`);
+      }
+    },
+
     validateForm() {
       const requiredFields = [
         { field: this.shopName, message: "请输入店铺名称" },
@@ -200,8 +255,9 @@ export default {
         { field: this.businessLicenseImage, message: "请上传营业执照照片" },
       ];
 
+      // 基础非空检查
       for (const item of requiredFields) {
-        if (!item.field) {
+        if (!item.field || item.field.trim() === "") {
           uni.showToast({
             title: item.message,
             icon: "none",
@@ -209,7 +265,6 @@ export default {
           return false;
         }
       }
-
       return true;
     },
   },

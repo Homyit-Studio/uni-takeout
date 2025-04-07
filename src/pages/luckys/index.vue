@@ -3,20 +3,30 @@
     <!-- 商户列表 -->
     <view class="merchant-list">
       <!-- 无数据提示 -->
-      <view v-if="merchantList.length === 0" class="empty-tip">
-        <text>暂无商户数据</text>
+      <view v-if="activeMerchants.length === 0" class="empty-tip">
+        <text>暂无进行中的抽奖活动</text>
       </view>
 
       <!-- 商户列表项 -->
       <view
-        v-for="(merchant, index) in merchantList"
+        v-for="(merchant, index) in activeMerchants"
         :key="index"
         class="merchant-item"
         @click="navigateToDetail(merchant)"
       >
-        <image :src="merchant.avatar" class="merchant-avatar"></image>
+        <image
+          src="/static/抽奖.png"
+          class="merchant-avatar"
+          mode="'fixed'"
+        ></image>
         <view class="merchant-info">
-          <text class="shop-name">{{ merchant.name }}</text>
+          <text class="shop-name" style="font-weight: bold"
+            >{{ merchant.shopName }} --- {{ merchant.name }}</text
+          >
+          <!-- <text class="time-range"
+            >活动时间: {{ formatTime(merchant.startTime) }} 至
+            {{ formatTime(merchant.endTime) }}</text
+          > -->
         </view>
         <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
       </view>
@@ -30,56 +40,68 @@ export default {
   data() {
     return {
       // 商户列表数据
-      merchantList: [
-        // {
-        //   id: 1,
-        //   shopName: "拼小圈",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-        // {
-        //   id: 2,
-        //   shopName: "美食坊",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-        // {
-        //   id: 3,
-        //   shopName: "饮品店",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-      ],
+      merchantList: [],
     };
+  },
+  computed: {
+    // 只显示活动时间范围内的商户
+    activeMerchants() {
+      const now = new Date();
+      return this.merchantList.filter((merchant) => {
+        const startTime = new Date(merchant.startTime);
+        const endTime = new Date(merchant.endTime);
+        return now >= startTime && now <= endTime;
+      });
+    },
   },
   onLoad() {
     // 获取商户列表数据
     this.fetchLuckyList();
   },
   methods: {
-    // 获取商户列表数据
+    // 获取抽奖列表数据
     async fetchLuckyList() {
       try {
         this.isLoading = true;
-        // 模拟请求数据
         const response = await request({
-          url: "/shop/getshops",
           method: "GET",
+          url: "/prize/getall",
         });
-        console.log("商户列表数据:", response);
-        this.merchantList = response.data;
+
+        console.log("获取抽奖列表成功:", response);
+
+        if (response && response.data) {
+          this.merchantList = response.data;
+        }
       } catch (error) {
-        console.error("获取商户列表失败:", error);
+        console.error("获取抽奖列表失败:", error);
+        uni.showToast({
+          title: "获取抽奖列表失败",
+          icon: "none",
+        });
       } finally {
         this.isLoading = false;
       }
     },
     // 跳转到商户详情页面
     navigateToDetail(merchant) {
+      // 存储到全局临时变量
+      getApp().globalData.tempMerchant = merchant;
+
       uni.navigateTo({
-        url: `/pages/publish_lottery222/index?id=${
-          merchant.id
-        }&name=${encodeURIComponent(merchant.name)}&avatar=${encodeURIComponent(
-          merchant.avatar
-        )}`,
+        url: "/pages/launch_lucky/index",
       });
+    },
+    // 格式化时间显示
+    formatTime(timeString) {
+      if (!timeString) return "";
+      const date = new Date(timeString);
+      return `${date.getFullYear()}-${(date.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${date
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
     },
   },
 };
@@ -132,6 +154,11 @@ export default {
   font-size: 16px;
   color: #333;
   font-weight: 500;
+}
+
+.time-range {
+  font-size: 12px;
+  color: #666;
 }
 
 /* 无数据提示 */

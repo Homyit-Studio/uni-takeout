@@ -207,6 +207,42 @@
 			"style": {
 				"navigationBarTitleText": "管理营收明细"
 			}
+		},
+		{
+			"path": "pages/luckys/index",
+			"style": {
+				"navigationBarTitleText": "抽奖列表"
+			}
+		},
+		{
+			"path": "pages/publish_lottery222/index",
+			"style": {
+				"navigationBarTitleText": "管理员管理抽奖"
+			}
+		},
+		{
+			"path": "pages/myLucky/index",
+			"style": {
+				"navigationBarTitleText": "我的中奖记录"
+			}
+		},
+		{
+			"path": "pages/userLucky/index",
+			"style": {
+				"navigationBarTitleText": "抽奖历史"
+			}
+		},
+		{
+			"path": "pages/merchantLucky/index",
+			"style": {
+				"navigationBarTitleText": "抽奖商户列表"
+			}
+		},
+		{
+			"path": "pages/userLucky222/index",
+			"style": {
+				"navigationBarTitleText": "中奖历史"
+			}
 		}
 	],
 	"globalStyle": {

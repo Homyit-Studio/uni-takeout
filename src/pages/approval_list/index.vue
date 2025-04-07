@@ -40,7 +40,7 @@ export default {
       isLoading: false,
     };
   },
-  created() {
+  onLoad() {
     this.fetchMerchantList();
   },
   methods: {
@@ -54,6 +54,7 @@ export default {
           data: {},
         });
 
+        console.log("获取商户列表成功:", response);
         if (response && response.data) {
           this.merchantList = response.data;
         }
