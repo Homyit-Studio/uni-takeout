@@ -5,7 +5,7 @@
   <view v-else-if="userRole == 'admin'">
     <AdminIndex />
   </view>
-  <view v-else>
+  <view v-else-if="userRole == 'user'">
     <UserIndex :scroll-top="scrollTop" />
   </view>
 </template>

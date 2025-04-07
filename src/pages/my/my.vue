@@ -12,7 +12,7 @@
                             <uni-icons type="bottom" color="#fff" size="20" />
                         </view>
                     </view>
-                    <view class="user-stats" @click="goToTabbarPage('/pages/order/order')">
+                    <!-- <view class="user-stats" @click="goToTabbarPage('/pages/order/order')">
                         <view class="stat-item">
                             <text class="stat-value">{{ orderStats.unpaid }}</text>
                             <text class="stat-label">待付款</text>
@@ -21,11 +21,11 @@
                             <text class="stat-value">{{ orderStats.undelivered }}</text>
                             <text class="stat-label">待收货</text>
                         </view>
-                        <!-- <view class="stat-item" @click="goToPage('/pages/wallet/index')">
+                         <view class="stat-item" @click="goToPage('/pages/wallet/index')">
                             <text class="stat-value">¥{{ walletBalance }}</text>
                             <text class="stat-label">我的余额</text>
-                        </view> -->
-                    </view>
+                        </view>
+                    </view> -->
                 </view>
                 <uni-icons @click="goToUserProfile" type="right" size="20" color="rgba(255,255,255,0.8)"
                     style="margin-top: 60rpx;"></uni-icons>

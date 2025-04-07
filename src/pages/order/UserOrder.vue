@@ -21,35 +21,31 @@
         <scroll-view class="order-list" scroll-y @scrolltolower="loadMoreOrders" :enhanced="true"
             :show-scrollbar="false">
             <block v-if="orders.length > 0">
-                <view class="order-card" v-for="(order, index) in orders" :key="index"
-                    @click="viewOrderDetail(order.id)">
+                <view class="order-card" v-for="(order, index) in orders" :key="index" @click="viewOrderDetail(order)">
                     <view class="card-header">
                         <view class="store-info">
-                            <image class="store-icon" src="/static/logo.png" />
-                            <text class="store-name">{{ order.shopName || '未命名商家' }}</text>
+                            <image class="store-icon" :src="order.shopAvatar || '/static/logo.png'" />
+                            <text class="store-name">{{ order.shopName }}</text>
                         </view>
                         <text class="order-status">{{ order.status }}</text>
                     </view>
 
                     <view class="card-body">
-                        <image class="goods-thumb" src="/static/goods.png" mode="aspectFill" />
+                        <!-- 展示订单中的第一个商品图片 -->
+                        <image class="goods-thumb"
+                            :src="order.orderDetailList && order.orderDetailList[0]?.image || '/static/goods.png'"
+                            mode="aspectFill" />
                         <view class="goods-info">
-                            <text class="goods-title">{{ order.remark || '订单备注' }}</text>
+                            <text class="goods-title">{{ order.remark || '无备注' }}</text>
                             <view class="goods-meta">
-                                <text class="goods-count">1件</text>
-                                <text class="goods-price">¥{{ order.amount.toFixed(2) }}</text>
+                                <text class="goods-count">共{{ order.orderDetailList?.length || 0 }}件商品</text>
+                                <text class="goods-price">¥{{ order.amount }}</text>
                             </view>
                         </view>
                     </view>
 
                     <view class="card-footer">
                         <text class="order-time">{{ formatDate(order.orderTime) }}</text>
-                        <!-- <view class="action-buttons">
-                            <button v-if="order.status === '待支付'" class="btn cancel"
-                                @click.stop="cancelOrder(order.id)">取消订单</button>
-                            <button v-if="order.status === '已支付'" class="btn confirm"
-                                @click.stop="completeOrder(order.id)">确认收货</button>
-                        </view> -->
                     </view>
                 </view>
             </block>
@@ -71,12 +67,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { onPullDownRefresh } from '@dcloudio/uni-app'
+import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
 import { request } from '@/utils/request'
 
 // 响应式状态
 const statusBarHeight = ref(0)
-const tabs = ref(['全部', '待支付', '已支付', '已退款'])
+const tabs = ref(['全部', "拼团中", '已退款'])
 const currentTab = ref(0)
 const orders = ref([])
 const page = ref(1)
@@ -94,6 +90,9 @@ const formatDate = (dateString) => {
 // 生命周期
 onMounted(() => {
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
+})
+onShow(() => {
+    console.log('页面显示')
     loadOrders()
 })
 
@@ -117,12 +116,20 @@ const loadOrders = async () => {
         if (res.code === 200 && res.data) {
             let filteredOrders = res.data
 
+            // 首先过滤掉待支付和已取消的订单
+            filteredOrders = filteredOrders.filter(order =>
+                order.status !== '待支付' && order.status !== '已取消'
+            )
+
             // 根据当前选项卡过滤订单
             if (currentTab.value > 0) {
-                const statusMap = ['全部', '待支付', '已支付', '已退款']
+                const statusMap = ['全部', '拼团中', '已退款']
                 const currentStatus = statusMap[currentTab.value]
-                filteredOrders = res.data.filter(order => order.status === currentStatus)
+                filteredOrders = filteredOrders.filter(order => order.status === currentStatus)
             }
+
+            // 按 id 降序排序
+            filteredOrders.sort((a, b) => b.id - a.id)
 
             if (page.value === 1) {
                 orders.value = filteredOrders
@@ -157,43 +164,35 @@ const refreshOrders = () => {
     loadOrders()
 }
 
-const viewOrderDetail = (orderId) => {
-    uni.navigateTo({
-        url: `/pages/orderDetail/OrderDetailIndex?id=${orderId}`
-    })
+const viewOrderDetail = async (order) => {
+    if (order) {
+        try {
+            // 获取商家电话
+            const shopInfo = await request({
+                url: '/shop/mershopinfo',
+                method: 'GET',
+            })
+            // 合并订单信息和商家电话
+            const orderInfo = {
+                ...order,
+                shopPhone: shopInfo.data?.phone || ''
+            }
+            // 存储到本地
+            uni.setStorageSync('orderDetail', orderInfo)
+            uni.navigateTo({
+                url: `/pages/orderDetail/OrderDetailIndex?id=${order.id}`
+            })
+        } catch (error) {
+            console.error('获取商家信息失败:', error)
+            // 即使获取商家电话失败也允许查看订单详情
+            uni.setStorageSync('orderDetail', order)
+            uni.navigateTo({
+                url: `/pages/orderDetail/OrderDetailIndex?id=${order.id}`
+            })
+        }
+    }
 }
 
-const cancelOrder = (orderId) => {
-    uni.showModal({
-        title: '提示',
-        content: '确定要取消该订单吗？',
-        success: (res) => {
-            if (res.confirm) {
-                uni.showToast({
-                    title: '订单已取消',
-                    icon: 'success'
-                })
-                refreshOrders()
-            }
-        }
-    })
-}
-
-const completeOrder = (orderId) => {
-    uni.showModal({
-        title: '提示',
-        content: '确认已收到商品？',
-        success: (res) => {
-            if (res.confirm) {
-                uni.showToast({
-                    title: '已确认收货',
-                    icon: 'success'
-                })
-                refreshOrders()
-            }
-        }
-    })
-}
 
 // 添加页面级下拉刷新
 onPullDownRefresh(() => {
@@ -319,13 +318,13 @@ $border-color: #eee;
     width: 100%;
     max-width: 100vw;
     box-sizing: border-box;
-    padding: 0 32rpx 32rpx;
+    padding: 0 20rpx 0rpx;
     margin-top: 24rpx;
 }
 
 .order-card {
     background: #fff;
-    border-radius: 24rpx;
+    // border-radius: 24rpx;
     margin-bottom: 24rpx;
     box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
     overflow: hidden;
@@ -418,30 +417,6 @@ $border-color: #eee;
         .order-time {
             font-size: 24rpx;
             color: $text-secondary;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 16rpx;
-
-            .btn {
-                height: 56rpx;
-                padding: 0 24rpx;
-                border-radius: 28rpx;
-                font-size: 24rpx;
-                line-height: 56rpx;
-                transition: all 0.2s;
-
-                &.cancel {
-                    background: #f5f5f5;
-                    color: $text-secondary;
-                }
-
-                &.confirm {
-                    background: linear-gradient(45deg, #4CAF50, #66BB6A);
-                    color: #fff;
-                }
-            }
         }
     }
 }

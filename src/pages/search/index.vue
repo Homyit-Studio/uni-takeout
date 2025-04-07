@@ -25,11 +25,12 @@
     <view class="search-results" v-else>
       <view class="result-count">共找到{{ filteredGoods.length }}件商品</view>
       <view class="goods-list">
-        <view class="goods-item" v-for="item in filteredGoods" :key="item.id">
+        <view class="goods-item" v-for="item in filteredGoods" :key="item.id" @click="goToStoreDetail(item.shopid)">
           <image class="goods-image" :src="item.image" mode="aspectFill"></image>
           <view class="goods-info">
             <text class="goods-title">{{ item.name }}</text>
             <text class="goods-intro">{{ item.introduction }}</text>
+            <text class="goods-category">分类: {{ item.category }}</text>
             <text class="goods-price">¥{{ item.price }}</text>
           </view>
         </view>
@@ -117,6 +118,13 @@ const filteredGoods = computed(() => {
     item.name.toLowerCase().includes(searchText.value.toLowerCase())
   )
 })
+
+// 添加跳转到商家详情的方法
+const goToStoreDetail = (storeId) => {
+  uni.navigateTo({
+    url: `/pages/merchantDetail/index?id=${storeId}`
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -201,22 +209,28 @@ const filteredGoods = computed(() => {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-      }
 
-      .goods-title {
-        font-size: 28rpx;
-        color: #333;
-      }
+        .goods-title {
+          font-size: 28rpx;
+          color: #333;
+        }
 
-      .goods-price {
-        font-size: 32rpx;
-        color: #ff5500;
-        font-weight: bold;
-      }
+        .goods-price {
+          font-size: 32rpx;
+          color: #ff5500;
+          font-weight: bold;
+        }
 
-      .goods-intro {
-        font-size: 24rpx;
-        color: #666;
+        .goods-intro {
+          font-size: 24rpx;
+          color: #666;
+        }
+
+        .goods-category {
+          font-size: 24rpx;
+          color: #999;
+          margin: 8rpx 0;
+        }
       }
     }
   }

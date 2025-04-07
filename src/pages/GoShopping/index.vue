@@ -1,12 +1,13 @@
 <template>
   <view class="container">
-    <!-- 配送方式选择 -->
-    <view class="delivery-type">
-      <view class="type-item" :class="{ active: deliveryType === 1 }" @click="deliveryType = 1">
-        外卖配送
-      </view>
-      <view class="type-item" :class="{ active: deliveryType === 2 }" @click="deliveryType = 2">
-        到店自取
+    <!-- 商户信息 -->
+    <view class="shop-info">
+      <image :src="orderData.shopInfo?.shopAvatar" class="shop-avatar"></image>
+      <view class="shop-detail">
+        <text class="shop-name">{{ orderData.shopInfo?.shopName }}</text>
+        <text class="shop-desc">地址：{{ orderData.shopInfo?.address }}</text>
+        <text class="shop-desc">电话：{{ orderData.shopInfo?.phone }}</text>
+        <text class="shop-desc">营业时间：{{ orderData.shopInfo?.openTime }} - {{ orderData.shopInfo?.closeTime }}</text>
       </view>
     </view>
 
@@ -23,16 +24,6 @@
         请选择收货地址
       </view>
       <uni-icons type="right" size="20"></uni-icons>
-    </view>
-
-    <!-- 自提信息（仅自取时显示） -->
-    <view class="pickup-info" v-if="deliveryType === 2">
-      <view class="title">自提点信息</view>
-      <view class="content">
-        <text>店铺地址：{{ orderData.shopInfo.address }}</text>
-        <text>营业时间：{{ orderData.shopInfo.openTime }}-{{ orderData.shopInfo.closeTime }}</text>
-        <text>联系电话：{{ orderData.shopInfo.phone }}</text>
-      </view>
     </view>
 
     <!-- 商品列表 -->
@@ -74,28 +65,22 @@
 
       <view class="option-item">
         <text>打包费</text>
-        <text>￥{{ packAmount }}</text>
+        <text>￥{{ orderData.packageAmount }}</text>
       </view>
     </view>
 
     <!-- 修改后的底部结算栏 -->
     <view class="footer">
       <view class="total">
-        合计：<text class="price">￥{{
-          orderData.totalPrice +
-          (deliveryType === 1 ? orderData.deliveryFee : 0) +
-          packAmount
-        }}</text>
+        合计：<text class="price">￥{{ totalAmount }}</text>
       </view>
-      <view class="submit-btn" @click="onSubmitOrder">
-        {{ deliveryType === 1 ? '确认支付' : '立即下单' }}
-      </view>
+      <view class="submit-btn" @click="handleSubmitOrder">确认支付</view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { request } from '../../utils/request'
 
@@ -104,15 +89,21 @@ const orderData = ref({
   cartList: [],
   totalPrice: 0,
   deliveryFee: 0,
+  packageAmount: 0,
   shopInfo: null
 })
 
-const deliveryType = ref(1)
+const totalAmount = computed(() => {
+  const totalPrice = Number(orderData.value.totalPrice) || 0;
+  const deliveryFee = Number(orderData.value.deliveryFee) || 0;
+  const packageAmountValue = Number(orderData.value.packageAmount) || 0;
+
+  return (totalPrice + deliveryFee + packageAmountValue).toFixed(2);
+});
 
 // 新增备注、餐具数量和打包费
 const remark = ref('')
 const tablewareNumber = ref(1)
-const packAmount = ref(1)
 
 // 在 setup 中添加
 onShow(() => {
@@ -149,57 +140,116 @@ const increaseTableware = () => {
   tablewareNumber.value++
 }
 
-// 修改后的提交订单逻辑
-async function onSubmitOrder() {
-  if (deliveryType.value === 1 && !address.value) {
+// 订阅消息模板ID
+const tmplIds = [
+  'EJWhBg2eJmXwQE6amJiVQAJXO8wITCD99gXCPprAfSU',
+  'jt25wODP4KcrCfvS24jmKUKC-3R6yADqwAtSlGIeXH0',
+  'Tocn2NGYW7XVwX5Tia1LIOeBtaKtD6d99zfxHnHOG0s'
+]
+
+// 处理订阅消息
+const requestSubscription = () => {
+  return new Promise((resolve) => {
+    uni.requestSubscribeMessage({
+      tmplIds,
+      success(res) {
+        console.log('订阅消息结果', res)
+        resolve(true)
+      },
+      fail(err) {
+        console.error('订阅消息失败', err)
+        resolve(false)
+      }
+    })
+  })
+}
+
+// 修改提交订单处理函数
+async function handleSubmitOrder() {
+  if (!address.value) {
     uni.showToast({ title: '请选择收货地址', icon: 'none' })
     return
   }
 
+  // 先请求订阅消息授权
+  await requestSubscription()
+
+  // 继续原有的提交订单流程
   try {
     const params = {
       addressId: address.value?.id,
       remark: remark.value,
       tablewareNumber: tablewareNumber.value,
-      packAmount: packAmount.value,
-      amount: orderData.value.totalPrice +
-        (deliveryType.value === 1 ? orderData.value.deliveryFee : 0) +
-        packAmount.value,
+      packAmount: orderData.value.packageAmount,
+      amount: totalAmount.value,
       shopId: orderData.value.shopInfo.shopId,
       shopName: orderData.value.shopInfo.shopName,
       shopAvatar: orderData.value.shopInfo.shopAvatar,
-      deliveryType: deliveryType.value
+      userId: orderData.value.userId,
+      groupId: orderData.value.groupId,
+      type: orderData.value.type
     }
 
-    uni.showLoading({ title: '提交中...' })
+    uni.showLoading({ title: '提交中...' });
 
-    const res = await request({
+    // 提交订单请求
+    const orderRes = await request({
       url: '/order/submit',
       method: 'POST',
       data: params
-    })
-    uni.hideLoading()
-    console.log(res)
-    uni.showToast({
-      title: '下单成功',
-      icon: 'success',
-      success: () => {
-        uni.removeStorageSync('orderData')
-        // setTimeout(() => {
-        //   uni.switchTab({ url: '/pages/index/index' })
-        // }, 1500)
+    });
+    console.log(orderRes)
+
+    // 获取订单号
+    const orderNumber = orderRes.data.orderNumber;
+    if (!orderNumber) {
+      throw new Error('未获取到订单号');
+    }
+
+    // 调用支付接口
+    uni.showLoading({ title: '获取支付信息中...' });
+    const paymentRes = await request({
+      url: '/order/payment',
+      method: 'POST',
+      data: { orderNumber }
+    });
+
+    // 获取支付参数
+    const paymentParams = paymentRes.data;
+    console.log(paymentParams)
+    if (!paymentParams) {
+      throw new Error('未获取到支付参数');
+    }
+
+    const appId = 'wx0391cb325faccbaa'
+    // 调起微信支付
+    uni.requestPayment({
+      appId: appId,
+      timeStamp: paymentParams.timeStamp,
+      nonceStr: paymentParams.nonceStr,
+      package: paymentParams.packageStr,
+      signType: paymentParams.signType,
+      paySign: paymentParams.paySign,
+      complete: (res) => {
+        uni.hideLoading();
+        if (res.errMsg === 'requestPayment:fail') {
+          uni.showToast({ title: '支付失败', icon: 'none' });
+        }
+      },
+      success: (res) => {
+        uni.showToast({ title: '支付成功', icon: 'success' });
+        // 支付成功后的逻辑，如跳转到订单详情页
+        uni.navigateBack({ delta: 1 });
+      },
+      fail: (err) => {
+        uni.showToast({ title: '支付失败', icon: 'none' });
+        console.error('支付失败', err);
       }
-    })
-    // uni.showToast({
-    //   title: res.msg || '下单失败',
-    //   icon: 'none'
-    // })
+    });
   } catch (error) {
-    uni.hideLoading()
-    uni.showToast({
-      title: '下单失败',
-      icon: 'none'
-    })
+    uni.hideLoading();
+    uni.showToast({ title: '操作失败', icon: 'none' });
+    console.error('操作失败', error);
   }
 }
 </script>
@@ -335,47 +385,38 @@ async function onSubmitOrder() {
   }
 }
 
-.delivery-type {
-  display: flex;
-  background: #fff;
-  padding: 20rpx 0;
-  margin-bottom: 20rpx;
-
-  .type-item {
-    flex: 1;
-    text-align: center;
-    padding: 20rpx;
-    margin: 0 20rpx;
-    border-radius: 8rpx;
-    border: 1rpx solid #eee;
-    transition: all 0.3s;
-
-    &.active {
-      border-color: #e93323;
-      color: #e93323;
-      background: #ffeceb;
-    }
-  }
-}
-
-.pickup-info {
+.shop-info {
   background: #fff;
   padding: 30rpx;
   margin-bottom: 20rpx;
+  display: flex;
+  align-items: flex-start;
 
-  .title {
-    font-weight: bold;
-    margin-bottom: 20rpx;
+  .shop-avatar {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 50%;
+    margin-right: 20rpx;
   }
 
-  .content {
+  .shop-detail {
     display: flex;
     flex-direction: column;
-    color: #666;
 
-    text {
+    .shop-name {
+      font-size: 32rpx;
+      font-weight: bold;
       margin-bottom: 10rpx;
-      font-size: 28rpx;
+    }
+
+    .shop-desc {
+      font-size: 26rpx;
+      color: #666;
+      margin-bottom: 6rpx;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
     }
   }
 }

@@ -15,10 +15,10 @@
     <!-- 顶部区域背景 -->
     <view class="top_area area_height" :style="{
       paddingTop: statusBarHeight + 44 + 'px',
-      'background-image': `url(${shopInfo.photo})`
+      'background-image': `url(${shopInfo?.photo})`
     }" data-type="1">
       <view class="shop-header">
-        <image class="shop-avatar" :src="shopInfo.avatar" mode="aspectFill" />
+        <image class="shop-avatar" :src="shopInfo?.avatar" mode="aspectFill" />
         <view class="shop-details">
           <text class="shop-name">{{ shopInfo.name }}</text>
           <view class="status-tag" :style="{ color: isStoreOpen(shopInfo) ? '#07C160' : '#FF5500' }">
@@ -48,30 +48,56 @@
         <view class="group-entry">
           <view class="entry-header">
             <text class="title">🔥 火热拼团中</text>
-            <text class="subtitle">三人成团立享7折</text>
+            <text class="subtitle">{{ shopGroups.length }}个进行中</text>
           </view>
-          <image class="group-banner" mode="aspectFill"
-            src="https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg" />
-          <view class="action-box">
-            <text class="action-text">点击进入拼团</text>
+
+          <swiper v-if="shopGroups.length > 0" class="group-swiper" :autoplay="true" :circular="true" :interval="5000">
+            <swiper-item v-for="(group, index) in shopGroups" :key="index" @click="goToGroup(group)">
+              <view class="group-card" :class="{ 'disabled': isGroupExpired(group) }">
+                <view class="group-info">
+                  <view class="group-header">
+                    <view class="users-scroll">
+                      <view class="users-list">
+                        <text :class="['user-item', {
+                          'item-enter': userEntering[group.id],
+                          'item-leave': !userEntering[group.id]
+                        }]">
+                          {{ currentGroupUsers[group.id] || '暂无用户参与' }}正在拼团...
+                        </text>
+                      </view>
+                    </view>
+                    <view class="countdown-box">
+                      <uni-icons type="clock" size="14" color="#FF5500"></uni-icons>
+                      <text class="countdown-text">{{ formatCountdown(group.countdown) }}</text>
+                    </view>
+                  </view>
+
+                  <view class="group-progress">
+                    <text>已拼{{ formatPrice(getGroupAmount(group)) }}元</text>
+                    <text>目标{{ group.minDeliveryFee }}元</text>
+                  </view>
+                </view>
+              </view>
+            </swiper-item>
+          </swiper>
+          <view v-else class="group-swiper">
+            <view class="group-card">
+              <view class="group-info">
+                <view class="group-header">
+                  <text class="no-group-text" style="color: #999;">暂无拼团信息</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="action-box" @click="createNewGroup">
+            <text class="action-text">创建拼团</text>
             <uni-icons type="forward" size="16" color="#666" />
           </view>
         </view>
       </view>
-
-      <view class="purchase-container">
-        <scroll-view scroll-x class="purchase-scroll" :scroll-left="scrollLeft">
-          <view class="scroll-content">
-            <view class="purchase-item" v-for="(item, index) in purchaseList" :key="index">
-              <image class="user-avatar" :src="item.avatar" mode="aspectFill" />
-              <text class="purchase-text">{{ item.name }}刚刚下单了{{ item.product }}</text>
-              <view class="badge">进行中</view>
-            </view>
-          </view>
-        </scroll-view>
-      </view>
-
     </view>
+
     <view class="section-title">常售餐饮</view>
     <!-- 菜品区域 -->
     <view id="item-2" class="cate_content">
@@ -89,7 +115,7 @@
           </view>
           <view class="content">
             <view class="product_item" v-for="(cell, cIndex) in item.list" :key="cIndex">
-              <image :src="cell.img" mode="aspectFill" class="product_img"></image>
+              <image :src="cell?.img" mode="aspectFill" class="product_img"></image>
               <view class="product_info">
                 <view class="name">{{ cell.name }}</view>
                 <view class="introduction">{{ cell.introduction }}</view>
@@ -112,7 +138,7 @@
       <view class="inner">
         <view class="cart-left" @click="onShowCart()">
           <view class="icon-box">
-            <uni-icons type="cart" color="red" size="32" />
+            <uni-icons type="cart" color="#ff5500" size="32" />
             <view class="badge" v-if="cartCount > 0">{{ cartCount }}</view>
           </view>
           <view class="price-box">
@@ -135,7 +161,7 @@
           <scroll-view scroll-y class="cart-content">
             <view v-if="cartList.length > 0">
               <view class="cart_item" v-for="(item, index) in cartList" :key="index">
-                <image :src="item.img" mode="aspectFill" class="cart-img"></image>
+                <image :src="item?.img" mode="aspectFill" class="cart-img"></image>
                 <view class="cart-info">
                   <text class="name">{{ item.name }}</text>
                   <view class="price-wrap">
@@ -160,7 +186,7 @@
 
 <script setup>
 import { ref, reactive, nextTick, onMounted, computed, onUnmounted } from 'vue'
-import { onPageScroll, onLoad } from '@dcloudio/uni-app'
+import { onPageScroll, onLoad, onShow } from '@dcloudio/uni-app'
 import { request } from '../../utils/request'
 
 const shopDetail = ref({}) // 用于存储店铺详情
@@ -183,7 +209,15 @@ const isTabClick = ref(false)
 
 const tabThreshold = 50 // 滚动阈值
 
-const shopInfo = ref({})
+const shopInfo = ref({
+  photo: '',
+  avatar: '',
+  name: '',
+  address: '',
+  openTime: '',
+  closeTime: '',
+  phone: ''
+})
 
 // 其他响应式数据...
 const anchorPositions = ref([]); // 存储tab区域的top位置
@@ -196,21 +230,168 @@ const tabList = reactive([
 
 const productList = ref([])
 
-const purchaseList = ref([
-  { avatar: '/static/logo.png', name: '张先生', product: '七味盐黄金豆腐' },
-  { avatar: '/static/logo.png', name: '李小姐', product: '龙井凤尾虾仁' },
-  { avatar: '/static/logo.png', name: '王女士', product: '绿茶饼' }
-])
+const purchaseList = ref([])
 
 const popup = ref(null)
 const cartCount = ref(0)
 const totalPrice = ref(0)
 const deliveryFee = ref(0)
+const packageAmount = ref(0)
 const minDeliveryPrice = ref(0)
 const scrollTop = ref(0)
 const scrollLeft = ref(0)
 let scrollTimer = null
 let scrollInterval = null
+
+// 添加拼团相关数据
+const groupInfo = ref(null)
+const isGroupOrder = ref(false)
+
+// 获取拼团信息
+const fetchGroupInfo = async (shopId) => {
+  try {
+    const res = await request({
+      url: `/group/getshop/${shopId}`,
+      method: 'POST',
+    })
+    if (res.code === 200) {
+      groupInfo.value = res.data
+      isGroupOrder.value = true
+    }
+  } catch (error) {
+    console.error("获取拼团信息失败", error)
+  }
+}
+
+// 添加新的响应式数据
+const shopGroups = ref([])
+const currentGroupUsers = ref({})
+const userEntering = ref({})
+const userTimers = ref({})
+const countdownTimers = ref({})
+
+// 添加名称隐藏方法
+const hideUserName = (name) => {
+  if (!name) return '匿名用户'
+  if (name.length <= 2) {
+    return '*' + name.substring(1)
+  }
+  return name.substring(0, 1) + '*'.repeat(name.length - 1)
+}
+
+// 获取店铺拼团信息
+const fetchShopGroups = async () => {
+  try {
+    const res = await request({
+      url: `/group/getshop/${shopInfo.value.id}`,
+      method: 'GET'
+    })
+    if (res.code === 200) {
+      console.log('获取店铺拼团信息:', res.data)
+      shopGroups.value = res.data.map(group => {
+        const endTime = new Date(group.endTime).getTime()
+        const now = new Date().getTime()
+        const countdown = Math.max(0, Math.floor((endTime - now) / 1000))
+
+        // 为每个拼团创建倒计时
+        if (countdown > 0) {
+          if (countdownTimers.value[group.id]) {
+            clearInterval(countdownTimers.value[group.id])
+          }
+          countdownTimers.value[group.id] = setInterval(() => {
+            updateCountdown(group.id)
+          }, 1000)
+        }
+
+        return {
+          ...group,
+          countdown
+        }
+      }).filter(group => !isGroupExpired(group))
+
+      // 初始化每个拼团的用户名轮播
+      shopGroups.value.forEach(group => {
+        if (group.orderList && group.orderList.length > 0) {
+          initializeGroupUserRotation(group)
+        }
+      })
+    }
+  } catch (error) {
+    console.error("获取店铺拼团信息失败", error)
+  }
+}
+
+// 初始化拼团用户名轮播
+const initializeGroupUserRotation = (group) => {
+  currentGroupUsers.value[group.id] = hideUserName(group.orderList[0].name)
+  userEntering.value[group.id] = true
+
+  userTimers.value[group.id] = setInterval(() => {
+    rotateGroupUsers(group)
+  }, 3000)
+}
+
+// 轮播拼团用户名
+const rotateGroupUsers = (group) => {
+  const users = group.orderList
+  const currentIndex = users.findIndex(user =>
+    hideUserName(user.name) === currentGroupUsers.value[group.id]
+  )
+
+  userEntering.value[group.id] = false
+
+  setTimeout(() => {
+    const nextIndex = (currentIndex + 1) % users.length
+    currentGroupUsers.value[group.id] = hideUserName(users[nextIndex].name)
+    userEntering.value[group.id] = true
+  }, 300)
+}
+
+// 获取拼团总金额
+const getGroupAmount = (group) => {
+  return group.orderList?.reduce((sum, order) => sum + (order.amount || 0), 0) || 0
+}
+
+// 检查拼团是否过期
+const isGroupExpired = (group) => {
+  const endTime = new Date(group.endTime).getTime()
+  const now = new Date().getTime()
+  return now >= endTime
+}
+
+// 跳转到拼团详情
+const goToGroup = (group) => {
+  if (isGroupExpired(group)) {
+    uni.showToast({
+      title: '该拼团已结束',
+      icon: 'none'
+    })
+    return
+  }
+  uni.navigateTo({
+    url: `/pages/productDetail/ProductDetailIndex?id=${group.id}&shopId=${shopInfo.value.id}&type=参团`
+  })
+}
+
+// 创建新拼团
+const createNewGroup = () => {
+  uni.navigateTo({
+    url: `/pages/productDetail/ProductDetailIndex?shopId=${shopInfo.value.id}&type=开团`
+  })
+}
+
+// 在组件卸载时清理定时器
+onUnmounted(() => {
+  Object.values(userTimers.value).forEach(timer => {
+    clearInterval(timer)
+  })
+  userTimers.value = {}
+
+  Object.values(countdownTimers.value).forEach(timer => {
+    clearInterval(timer)
+  })
+  countdownTimers.value = {}
+})
 
 // 计算属性
 const cartList = computed(() => {
@@ -256,11 +437,22 @@ const fetchCartData = async () => {
   }
 }
 
+onShow(async () => {
+  await fetchCartData()
+})
+
 onLoad(async (options) => {
   console.log('接收到的参数:', options)
   await fetchShopDetail(options.id)
   await fetchShopInfo(options.id)
   await fetchCartData() // 获取购物车数据
+
+  // 如果有groupId参数，说明是从拼团进入
+  if (options.groupId) {
+    await fetchGroupInfo(options.groupId)
+  }
+
+  await fetchShopGroups()
 })
 
 // 生命周期
@@ -301,6 +493,7 @@ const fetchShopInfo = async (id) => {
       }
     })
     console.log('获取店铺详情:', res)
+    packageAmount.value = res.data.packageAmount
     shopInfo.value = { ...shopInfo.value, ...res.data }
     minDeliveryPrice.value = res.data.minDeliveryFee
   } catch (error) {
@@ -463,7 +656,7 @@ const onChangeCate = async (item, index) => {
   const targetElement = topList.value[index]
   if (targetElement) {
     uni.pageScrollTo({
-      scrollTop: targetElement.top - stickyTop.value - 30,
+      scrollTop: targetElement.top - stickyTop.value,
       duration: 300,
       complete: () => {
         setTimeout(() => {
@@ -475,7 +668,7 @@ const onChangeCate = async (item, index) => {
 }
 const updateMenuActive = (currentScrollTop) => {
   if (isTabClick.value) return
-  currentScrollTop = parseInt(currentScrollTop) + stickyTop.value + 60
+  currentScrollTop = parseInt(currentScrollTop) + stickyTop.value
   for (let i = 0; i < topList.value.length; i++) {
     if (currentScrollTop >= topList.value[i].top && currentScrollTop <= topList.value[i].bottom) {
       if (currentIndex.value !== i) {
@@ -519,7 +712,7 @@ const increaseCount = async (item) => {
     } else {
       // 已有商品，调用更新接口
       await request({
-        url: '/car/updatecat',
+        url: '/car/updatecar',
         method: 'POST',
         data: {
           id: item.cartId,
@@ -558,7 +751,7 @@ const decreaseCount = async (item) => {
     } else {
       // 减少商品数量
       await request({
-        url: '/car/updatecat',
+        url: '/car/updatecar',
         method: 'POST',
         data: {
           id: item.cartId,
@@ -639,10 +832,10 @@ const clearCart = () => {
   })
 }
 
+// 修改提交订单方法
 const onSubmit = () => {
   if (totalPrice.value < minDeliveryPrice.value) return
 
-  // 构建店铺信息
   const shopInfoData = {
     shopId: shopInfo.value.id,
     shopName: shopInfo.value.name,
@@ -653,12 +846,14 @@ const onSubmit = () => {
     phone: shopInfo.value.phone
   }
 
-  // 构建订单数据
   const orderData = {
     cartList: cartList.value,
     totalPrice: totalPrice.value,
     deliveryFee: deliveryFee.value,
-    shopInfo: shopInfoData // 添加店铺信息
+    packageAmount: packageAmount.value,
+    shopInfo: shopInfoData,
+    isGroupOrder: isGroupOrder.value,
+    groupInfo: groupInfo.value
   }
 
   uni.setStorageSync('orderData', orderData)
@@ -714,6 +909,41 @@ const isStoreOpen = (store) => {
     return currentTime >= openTime || currentTime <= closeTime
   }
 }
+
+// 价格格式化方法
+const formatPrice = (price) => {
+  return Number(price).toFixed(2)
+}
+
+// 倒计时格式化方法
+const formatCountdown = (seconds) => {
+  if (!seconds || seconds <= 0) return '已结束'
+  const days = Math.floor(seconds / (24 * 60 * 60))
+  const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60))
+  const minutes = Math.floor((seconds % (60 * 60)) / 60)
+  const remainingSeconds = seconds % 60
+
+  if (days > 0) {
+    return `${days}天${hours}时`
+  }
+  return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+const updateCountdown = (groupId) => {
+  if (shopGroups.value.find(g => g.id === groupId)?.countdown > 0) {
+    shopGroups.value = shopGroups.value.map(group => {
+      if (group.id === groupId) {
+        return {
+          ...group,
+          countdown: group.countdown - 1
+        }
+      }
+      return group
+    })
+  } else {
+    clearInterval(countdownTimers.value[groupId])
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -723,8 +953,8 @@ view {
 
 .page {
   background-color: #fff;
-  padding-bottom: calc(constant(safe-area-inset-bottom) + 100rpx);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 100rpx);
+  padding-bottom: calc(constant(safe-area-inset-bottom) + 200rpx);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 200rpx);
 }
 
 .nav_bar {
@@ -875,7 +1105,7 @@ view {
 
   .group-entry {
     margin: 20rpx 20rpx 0;
-    background: #fff9e6;
+    background: #fff1da;
     border-radius: 16rpx;
     overflow: hidden;
     box-shadow: 0 4rpx 12rpx rgba(255, 153, 0, 0.1);
@@ -894,6 +1124,7 @@ view {
       .subtitle {
         font-size: 26rpx;
         color: #ff9900;
+        margin-left: 20rpx;
       }
     }
 
@@ -917,51 +1148,42 @@ view {
     }
   }
 
-  .purchase-container {
-    margin: 0 20rpx 20rpx;
-    background: #fff9e6;
-    border-radius: 16rpx;
-    overflow: hidden;
+  .group-swiper {
+    height: 250rpx;
 
-    .purchase-scroll {
-      width: 100%;
-      height: 100rpx;
-      white-space: nowrap;
+    .group-card {
+      margin: 0 20rpx;
+      padding: 20rpx;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 16rpx;
 
-      .scroll-content {
-        display: inline-flex;
-        align-items: center;
-        padding: 0 20rpx;
+      // 添加禁用样式
+      &.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+        position: relative;
 
-        .purchase-item {
-          display: inline-flex;
-          align-items: center;
-          border-radius: 50rpx;
-          padding: 12rpx 24rpx;
-          margin-right: 20rpx;
-          box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-          background: rgba(255, 255, 255, 0.9);
+        &::after {
+          content: '拼团已结束';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0, 0, 0, 0.5);
+          color: #fff;
+          padding: 10rpx 20rpx;
+          border-radius: 8rpx;
+          font-size: 24rpx;
+        }
+      }
 
-          .user-avatar {
-            width: 60rpx;
-            height: 60rpx;
-            border-radius: 50%;
-            margin-right: 16rpx;
-          }
+      .group-info {
 
-          .purchase-text {
-            font-size: 26rpx;
-            color: #666;
-            margin-right: 16rpx;
-          }
-
-          .badge {
-            background: #ff5500;
-            color: white;
-            font-size: 20rpx;
-            padding: 4rpx 12rpx;
-            border-radius: 20rpx;
-          }
+        .group-progress {
+          display: flex;
+          justify-content: space-between;
+          font-size: 26rpx;
+          color: #ff5500;
         }
       }
     }
@@ -1273,6 +1495,117 @@ view {
     padding: 40rpx;
     text-align: center;
     color: #999;
+  }
+}
+
+.group-info {
+  margin: 20rpx;
+  padding: 20rpx;
+  background: #fff9e6;
+  border-radius: 16rpx;
+
+  .group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+
+    .title {
+      font-size: 32rpx;
+      font-weight: bold;
+      color: #FF5500;
+    }
+
+    .time {
+      font-size: 26rpx;
+      color: #666;
+    }
+
+    .countdown-box {
+      display: flex;
+      align-items: center;
+      background: #FFF0F3;
+      padding: 4rpx 16rpx;
+      border-radius: 20rpx;
+
+      .countdown-text {
+        color: #FF5500;
+        font-size: 24rpx;
+        margin-left: 8rpx;
+      }
+    }
+  }
+
+  .users-scroll {
+    margin-bottom: 20rpx;
+    width: 300rpx;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: relative;
+
+
+    .users-list {
+      position: relative;
+      height: 40rpx;
+
+      .user-item {
+        position: absolute;
+        width: 100%;
+        font-size: 28rpx;
+        color: #ff5500;
+        transition: all 0.3s ease;
+
+        &.item-enter {
+          transform: translateY(0);
+          opacity: 1;
+        }
+
+        &.item-leave {
+          transform: translateY(-100%);
+          opacity: 0;
+        }
+      }
+    }
+  }
+
+  .group-progress {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20rpx;
+    font-size: 28rpx;
+    color: #FF5500;
+  }
+
+  .members-scroll {
+    width: 100%;
+    white-space: nowrap;
+
+    .members-list {
+      display: inline-flex;
+      padding: 10rpx 0;
+
+      .member-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-right: 30rpx;
+
+        .member-avatar {
+          width: 80rpx;
+          height: 80rpx;
+          border-radius: 50%;
+          border: 2rpx solid #FF5500;
+        }
+
+        .member-name {
+          font-size: 24rpx;
+          color: #666;
+          margin-top: 10rpx;
+        }
+      }
+    }
   }
 }
 </style>

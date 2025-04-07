@@ -37,7 +37,7 @@
                 <uni-icons type="right" size="20" color="rgba(255,255,255,0.8)" class="arrow" />
             </view>
 
-            <view class="panel-item order-manage" @click="goToOrderManage" @touchstart="handleTouchStart"
+            <view class="panel-item order-manage" @click="goToOrderManage(storeInfo.id)" @touchstart="handleTouchStart"
                 @touchend="handleTouchEnd">
                 <view class="icon-wrapper">
                     <uni-icons type="list" size="42" color="#fff" />
@@ -123,7 +123,20 @@ const isStoreOpenNow = (openTime, closeTime) => {
     }
 }
 
+onMounted(() => {
+    // 初始化数据
+    statusBarHeight.value = uni.getWindowInfo().statusBarHeight
+    setTimeout(() => {
+        fetchShopInfo()
+    }, 3000)
+    // 获取本地存储的地址列表
+
+})
+
 onShow(() => {
+    if (uni.getStorageSync('userRole') !== 'merchant') {
+        return
+    }
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     fetchShopInfo()
 })
@@ -144,8 +157,8 @@ const goToProductManage = (id) => {
     uni.navigateTo({ url: `/pages/productManage/ProductManageIndex?id=${id}` })
 }
 
-const goToOrderManage = () => {
-    uni.switchTab({ url: '/pages/order/order' })
+const goToOrderManage = (shopid) => {
+    uni.navigateTo({ url: `/pages/orderAdmin/AdminOrderIndex?shopid=${shopid}` })
 }
 </script>
 

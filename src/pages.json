@@ -125,7 +125,8 @@
 		{
 			"path": "pages/orderDetail/OrderDetailIndex",
 			"style": {
-				"navigationBarTitleText": "订单详情"
+				"navigationBarTitleText": "订单详情",
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -134,6 +135,22 @@
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": true,
 				"navigationBarTitleText": "商品管理"
+			}
+		},
+		{
+			"path": "pages/orderAdmin/AdminOrderIndex",
+			"style": {
+				"navigationBarTitleText": "订单管理",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/orderAdmin/EnterAdminOrderIndex",
+			"style": {
+				"navigationBarTitleText": "商家订单管理",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -223,9 +240,4 @@
 			}
 		]
 	}
-	// "permission": {
-	// 	"scope.userFuzzyLocation": {
-	// 		"desc": "位置信息效果展示"
-	// 	}
-	// }后期补充
 }

@@ -1,180 +1,146 @@
 <template>
-  <view class="ProductDetailIndex">
-    <view class="nav-bar" :style="{ top: statusBarHeight + 'px' }" :class="{ scrolled: isScrolled }">
-      <view class="back-btn" @click="handleBack">
-        <uni-icons :type="backIcon" color="#000" size="24" />
+  <view class="page">
+    <view class="product-header">
+      <image :src="headerImage" mode="aspectFill" class="header-bg" />
+      <view class="nav-bar" :style="{ top: statusBarHeight + 'px' }" :class="{ scrolled: isScrolled }">
+        <view class="back-btn" @click="handleBack">
+          <uni-icons :type="backIcon" color="#fff" size="24" />
+        </view>
       </view>
     </view>
-    <!-- 商品分类选项卡 -->
-    <!-- 商品主图 -->
-    <view class="product-image">
-      <image :src="currentProductData.image" mode="scaleToFill" />
-      <view class="countdown">剩余时间：{{ formatTime }}</view>
-    </view>
 
-    <!-- 商品缩略图滚动 -->
-    <scroll-view class="thumbnail-scroll" scroll-x>
-      <view class="thumbnail-list">
-        <view v-for="(item, index) in products" :key="index" class="thumbnail-item"
-          :class="{ active: currentProduct === index }" @click="switchProduct(index)">
-          <image :src="item.image" mode="aspectFill" class="thumb-image" />
+    <!-- 商品列表区域 -->
+    <scroll-view class="products-container" scroll-x>
+      <view class="products-wrapper">
+        <view v-for="(item, index) in productList" :key="index" class="product-card">
+          <image :src="item.img" mode="aspectFill" class="product-image" @click="changeHeaderImage(item.image)" />
+          <view class="product-info">
+            <text class="product-name">{{ item.name }}</text>
+            <text class="product-desc">{{ item.introduction }}</text>
+            <view class="product-price-action">
+              <text class="price">￥{{ formatPrice(item.price) }}</text>
+              <view class="action-buttons">
+                <text class="btn minus" @click.stop="decreaseCount(item)">-</text>
+                <text class="count">{{ item.count || 0 }}</text>
+                <text class="btn plus" @click.stop="increaseCount(item)">+</text>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
     </scroll-view>
 
-    <!-- 商品信息 -->
-    <view class="product-info">
-      <h2>{{ currentProductData.title }}</h2>
-      <view class="sales-info">已拼{{ currentProductData.sales }}份</view>
-      <view class="price">
-        <span class="current">拼团价 ¥{{ currentProductData.groupPrice }}</span>
-        <span class="original">原价 ¥{{ currentProductData.originalPrice }}</span>
+    <!-- 拼团进度区域 -->
+    <view class="group-progress">
+      <view class="progress-info">
+        <text class="title">拼团进度</text>
+        <text class="amount">已拼{{ formatPrice(groupType === '开团' ? totalPrice : groupDetail.nowAmount) || 0 }}元</text>
       </view>
-      <view class="group-status">
-        已有{{ joinedUsers.length }}人参团，还差{{ currentProductData.groupSize - joinedUsers.length }}人成团
+      <view class="group-users-scroll">
+        <scroll-view scroll-x class="users-scroll">
+          <view class="users-list">
+            <text :class="['user-item', {
+              'item-enter': isUserEntering,
+              'item-leave': !isUserEntering
+            }]">
+              {{ currentUserName || '暂无用户参与' }}正在拼团...
+            </text>
+          </view>
+        </scroll-view>
       </view>
       <view class="progress-bar">
-        <view class="progress" :style="{ width: progressPercentage }"></view>
+        <view class="progress" :style="{ width: progressPercentage + '%' }"></view>
       </view>
+      <text class="target-amount">目标{{ formatPrice(groupDetail.minDeliveryFee || shopInfo.minDeliveryFee) }}元</text>
     </view>
 
-    <!-- 修改后的滚动提示 -->
-    <view class="scrolling-alert">
-      <view class="scroll-container">
-        <transition-group name="fade-slide" tag="view" class="scroll-content">
-          <view v-for="(message, index) in visibleMessages" :key="message" class="scroll-item">
-            {{ message }} 最近{{ recentJoinCount }}人正在拼团...
+    <!-- 底部购物车 -->
+    <view class="foot">
+      <view class="inner">
+        <view class="cart-left" @click="onShowCart()">
+          <view class="icon-box">
+            <uni-icons type="cart" color="#ff5500" size="32" />
+            <view class="badge" v-if="cartCount > 0">{{ cartCount }}</view>
           </view>
-        </transition-group>
-      </view>
-    </view>
-
-    <!-- 参团用户 -->
-    <view class="joined-users">
-      <view class="user-list">
-        <view v-for="user in joinedUsers" :key="user.id" class="user-item">
-          <image :src="user.avatar" mode="scaleToFill" class="user-image" />
-          <view>{{ user.name }}</view>
+          <view class="price-box">
+            <text class="total-price">￥{{ formatPrice(totalPrice) }}</text>
+            <text class="tip">配送费需{{ groupDetail.deliveryFee || 0 }}元</text>
+          </view>
         </view>
-        <view v-for="n in remainingSlots" :key="'empty' + n" class="user-item empty">
-          <view class="empty-avatar"></view>
-          <view>待加入</view>
-        </view>
+        <view class="submit-btn" :class="{ disabled: totalPrice <= 0 }" @click="onSubmit">
+          {{ '去结算' }} </view>
       </view>
-    </view>
-
-    <!-- 操作按钮 -->
-    <view class="action-buttons">
-      <button class="join-button">立即参团 ¥{{ currentProductData.groupPrice }}</button>
-      <button class="share-button">单独购买 ¥{{ currentProductData.originalPrice }}</button>
     </view>
   </view>
+
+  <uni-popup ref="popup" type="bottom" background-color="#fff">
+    <view class="cart_list">
+      <view class="cart-header">
+        <text class="title">购物车</text>
+        <text class="clear" @click="clearCart">清空购物车</text>
+      </view>
+      <!-- 购物车内容 -->
+      <view v-for="item in productList.filter(p => p.count > 0)" :key="item.id" class="cart-item">
+        <image :src="item.img" mode="aspectFill" class="cart-image" />
+        <view class="cart-info">
+          <text class="cart-name">{{ item.name }}</text>
+          <text class="cart-price">￥{{ formatPrice(item.price) }}</text>
+          <view class="cart-action-buttons">
+            <text class="btn minus" @click.stop="decreaseCount(item)">-</text>
+            <text class="count">{{ item.count }}</text>
+            <text class="btn plus" @click.stop="increaseCount(item)">+</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </uni-popup>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { request } from '@/utils/request'
 
-// 商品数据
-const products = ref([
-  {
-    title: '超值3人套餐',
-    originalPrice: 98,
-    groupPrice: 68,
-    groupSize: 5,
-    remainingTime: 3600,
-    image: 'https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 1234
-  },
-  {
-    title: '豪华5人套餐',
-    originalPrice: 158,
-    groupPrice: 108,
-    groupSize: 3,
-    remainingTime: 2700,
-    image: 'https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 567
-  },
-  {
-    title: '超值工作餐',
-    originalPrice: 28,
-    groupPrice: 19.9,
-    groupSize: 10,
-    remainingTime: 1800,
-    image: 'https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 2987
-  },
-  {
-    title: '超值3人套餐',
-    originalPrice: 98,
-    groupPrice: 68,
-    groupSize: 5,
-    remainingTime: 3600,
-    image: 'https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 1234
-  },
-  {
-    title: '豪华5人套餐',
-    originalPrice: 158,
-    groupPrice: 108,
-    groupSize: 3,
-    remainingTime: 2700,
-    image: 'https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 567
-  },
-  {
-    title: '超值工作餐',
-    originalPrice: 28,
-    groupPrice: 19.9,
-    groupSize: 10,
-    remainingTime: 1800,
-    image: 'https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 2987
-  }, {
-    title: '超值3人套餐',
-    originalPrice: 98,
-    groupPrice: 68,
-    groupSize: 5,
-    remainingTime: 3600,
-    image: 'https://qcloud.dpfile.com/pc/eK-lcbiSwCMfuurDzas6sDXooZ-820qyij7E-_2Guvl3SQvBEuZcM3cJ5XDTpMvP5g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 1234
-  },
-  {
-    title: '豪华5人套餐',
-    originalPrice: 158,
-    groupPrice: 108,
-    groupSize: 3,
-    remainingTime: 2700,
-    image: 'https://qcloud.dpfile.com/pc/S1Yt03ZHevIEbvb3fhAy67V74qWD5ZJURHvRhFUOlP2YaCqE8KEE8D3jXlKeA1a95g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 567
-  },
-  {
-    title: '超值工作餐',
-    originalPrice: 28,
-    groupPrice: 19.9,
-    groupSize: 10,
-    remainingTime: 1800,
-    image: 'https://qcloud.dpfile.com/pc/wU3rvxK40IRQSH-ME1GftzbPAzUEH2TKcu_Umu2cXIBUnUZhRs1BQ-3fNG1nS2hQ5g_3Oo7Z9EXqcoVvW9arsw.jpg',
-    sales: 2987
-  }
-])
-
-const currentProduct = ref(0)
-const currentProductData = computed(() => products.value[currentProduct.value])
-// 新增滚动状态
-const isScrolled = ref(false)
-const backIcon = ref("back") // 将 "arrow-left" 改为 "back"
+const groupDetail = ref({})
+const productList = ref([])
+const cartItems = ref([])
+const popup = ref(null)
+const cartCount = ref(0)
+const totalPrice = ref(0)
 const statusBarHeight = ref(0)
+const backIcon = ref("back")
+const isScrolled = ref(false)
+const headerImage = ref('')
+const currentUserName = ref('')
+const isUserEntering = ref(true)
+let userRotationTimer = null
+const cartId = ref(null)
+
+// 新增参数
+const groupType = ref('')  // 拼团类型：'开团' 或 '参团'
+const userId = ref()     // 用户ID
+
+// 在响应式数据声明区域添加shopInfo
+const shopInfo = ref({
+  id: '',
+  name: '',
+  avatar: '',
+  address: '',
+  openTime: '',
+  closeTime: '',
+  phone: ''
+})
+
 onMounted(() => {
   statusBarHeight.value = uni.getWindowInfo().statusBarHeight
   if (getCurrentPages().length == 1) {
     backIcon.value = "home"
   } else {
-    backIcon.value = "left"  // 将 "arrow-left" 改为 "back"
+    backIcon.value = "left"
   }
 })
 
 
-// 返回按钮点击
 const handleBack = () => {
   if (getCurrentPages().length == 1) {
     uni.switchTab({
@@ -184,444 +150,799 @@ const handleBack = () => {
     uni.navigateBack()
   }
 }
-// 切换商品
-function switchProduct(index) {
-  currentProduct.value = index
-  remainingTime.value = currentProductData.value.remainingTime
-  // 重置倒计时
-  clearInterval(timer)
-  startCountdown()
-}
 
-// 倒计时逻辑
-const remainingTime = ref(currentProductData.value.remainingTime)
-let timer = null
+// 计算拼团进度百分比
+const progressPercentage = computed(() => {
+  const targetAmount = groupType.value === '开团' ?
+    shopInfo.value.minDeliveryFee :
+    groupDetail.value.minDeliveryFee
 
-const formatTime = computed(() => {
-  const hours = Math.floor(remainingTime.value / 3600)
-  const minutes = Math.floor((remainingTime.value % 3600) / 60)
-  const seconds = remainingTime.value % 60
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  const currentAmount = groupType.value === '开团' ?
+    totalPrice.value :
+    groupDetail.value.nowAmount
+
+  if (!targetAmount || !currentAmount) return 0
+  return Math.min((currentAmount / targetAmount) * 100, 100)
 })
 
-// 倒计时启动函数
-function startCountdown() {
-  timer = setInterval(() => {
-    if (remainingTime.value > 0) {
-      remainingTime.value--
-    } else {
-      clearInterval(timer)
-    }
-  }, 1000)
+// 在onLoad函数中修改加载逻辑
+onLoad(async (options) => {
+  const { id, shopId, type } = options
+  groupType.value = type || '开团'  // 设置拼团类型
+
+  // 确保 groupDetail 中有 shopId
+  if (groupType.value === '开团') {
+    groupDetail.value = { shopId } // 初始化 groupDetail，确保有 shopId
+  }
+
+  await getUserInfo() // 获取用户ID
+
+  // 修改数据加载顺序
+  if (groupType.value === '开团') {
+    // 如果是开团，先获取店铺信息和商品
+    await Promise.all([
+      fetchShopInfo(shopId),
+      fetchShopProducts(shopId)
+    ])
+    await fetchCartData(shopId) // 对于开团模式，直接使用传入的 shopId
+  } else {
+    // 如果是参团，则并行请求所有需要的数据
+    await Promise.all([
+      fetchGroupDetail(id),
+      fetchShopInfo(shopId),
+      fetchShopProducts(shopId)
+    ])
+    await fetchCartData(shopId)
+  }
+})
+
+const getUserInfo = async () => {
+  try {
+    // 模拟从接口获取用户信息
+    const res = await request({
+      url: '/user/getUserInfo',
+      method: 'GET'
+    })
+    console.log('获取用户信息:', res)
+    uni.setStorageSync('userRole', res.data.role)
+    userId.value = res.data.id
+  } catch (error) {
+    console.error('获取用户信息失败', error)
+    userRole.value = 'user'
+  }
 }
 
+// 获取拼团详情
+const fetchGroupDetail = async (groupId) => {
+  if (!groupId) return // 如果是开团模式，不需要获取拼团详情
+  try {
+    const res = await request({
+      url: `/group/get/${groupId}`,
+      method: 'GET'
+    })
+    console.log('拼团详情:', res)
+    if (res.code === 200) {
+      groupDetail.value = res.data
+      // 检查拼团是否已过期
+      const endTime = new Date(res.data.endTime).getTime()
+      const now = new Date().getTime()
+      if (now > endTime) {
+        // 拼团已过期，返回上一页并提示
+        uni.showToast({
+          title: '该拼团已结束',
+          icon: 'none',
+          complete: () => {
+            setTimeout(() => {
+              uni.navigateBack()
+            }, 1500)
+          }
+        })
+        return
+      }
 
-const joinedUsers = ref([
-  { id: 1, name: '用户A', avatar: '/static/merchant_pic.jpg' },
-  { id: 2, name: '用户B', avatar: '/static/merchant_pic.jpg' },
-  { id: 3, name: '用户C', avatar: '/static/merchant_pic.jpg' }
-])
+      // 计算已拼总价值
+      const totalAmount = res.data.orderList.reduce((sum, order) => sum + order.amount, 0)
+      groupDetail.value.nowAmount = totalAmount
 
-const recentJoinCount = ref(12) // 最近参与人数
-const scrollingMessages = ref([
-  '用户D 刚刚参团成功！',
-  '用户E 发起了一个新拼团！',
-  '用户F 的拼团即将满员！'
-])
-const currentMessageIndex = ref(0)
-// 修改后的数据逻辑
-const visibleMessages = ref([])
+      // 初始化用户名轮播
+      if (res.data.orderList && res.data.orderList.length > 0) {
+        startUserNameRotation(res.data.orderList)
+      }
+    }
+  } catch (error) {
+    console.error('获取拼团详情失败:', error)
+  }
+}
 
-// 消息切换方法
-const startMessageRotation = () => {
+// 添加获取商铺信息的方法
+const fetchShopInfo = async (shopId) => {
+  try {
+    const res = await request({
+      url: '/shop/getshopInfo',
+      method: 'POST',
+      data: {
+        shopid: shopId
+      }
+    })
+    console.log('获取店铺详情:', res)
+    if (res.code === 200) {
+      shopInfo.value = res.data
+    }
+  } catch (error) {
+    console.error("获取店铺信息失败", error)
+  }
+}
+
+// 获取店铺商品
+const fetchShopProducts = async (shopId) => {
+  try {
+    const res = await request({
+      url: '/product/shopproduct',
+      method: 'POST',
+      data: { shopid: shopId }
+    })
+    if (res.code === 200) {
+      const allProducts = []
+      res.data.forEach(category => {
+        category.productList.forEach(product => {
+          allProducts.push({
+            ...product,
+            count: 0,
+            img: product.image,
+            price: product.price,
+            name: product.name,
+            introduction: product.introduction
+          })
+        })
+      })
+      productList.value = allProducts
+      // 设置第一个商品的图片作为头部背景
+      if (allProducts.length > 0) {
+        headerImage.value = allProducts[0].image
+      }
+    }
+  } catch (error) {
+    console.error('获取商品列表失败:', error)
+  }
+}
+
+// 获取购物车数据
+const fetchCartData = async (shopId) => {
+  console.log('获取购物车数据:', shopId)
+  if (!shopId) {
+    console.error('shopId is undefined')
+    return
+  }
+  try {
+    const res = await request({
+      url: '/car/selectcar',
+      method: 'POST',
+      data: { shopid: shopId }
+    })
+
+    if (res.code === 200 && res.data) {
+      // 更新商品列表中的购物车数量
+      productList.value = productList.value.map(product => {
+        const cartItem = res.data.find(item => item.productid === product.id)
+        return {
+          ...product,
+          count: cartItem ? cartItem.number : 0,
+          cartId: cartItem ? cartItem.id : null  // 确保设置 cartId
+        }
+      })
+      // 更新购物车总数和总价
+      updateCart()
+    }
+  } catch (error) {
+    console.error("获取购物车数据失败", error)
+    uni.showToast({
+      title: '获取购物车数据失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 增加商品数量
+const increaseCount = async (item) => {
+  try {
+    // 获取正确的 shopId
+    const currentShopId = groupType.value === '开团' ?
+      shopInfo.value.id :
+      groupDetail.value.shopId
+
+    if (!item.count || item.count === 0) {
+      // 第一次添加商品，调用添加接口
+      const res = await request({
+        url: '/car/addcar',
+        method: 'POST',
+        data: {
+          productid: item.id,
+          number: 1,
+          amount: Number(item.price).toFixed(2),
+          image: item.image,
+          shopid: currentShopId, // 使用正确的 shopId
+          productname: item.name
+        }
+      })
+      if (res.code === 200) {
+        if (!item.count) item.count = 0
+        item.count++
+        item.cartId = res.data.id
+      }
+    } else {
+      // 已有商品，调用更新接口
+      await request({
+        url: '/car/updatecar',
+        method: 'POST',
+        data: {
+          id: item.cartId,
+          number: item.count + 1
+        }
+      })
+      item.count++
+    }
+    // 使用正确的 shopId 更新购物车数据
+    await fetchCartData(currentShopId)
+    updateCart()
+  } catch (error) {
+    console.error("增加商品失败", error)
+    uni.showToast({
+      title: '操作失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 减少商品数量
+const decreaseCount = async (item) => {
+  if (!item.count) return
+  try {
+    if (item.count === 1) {
+      // 最后一个商品，删除购物车项
+      await request({
+        url: '/car/deletecar',
+        method: 'POST',
+        data: {
+          id: item.cartId
+        }
+      })
+      item.count = 0
+      item.cartId = null
+    } else {
+      // 减少商品数量
+      await request({
+        url: '/car/updatecar',
+        method: 'POST',
+        data: {
+          id: item.cartId,
+          number: item.count - 1
+        }
+      })
+      item.count--
+    }
+    // 更新购物车数据
+    await fetchCartData(groupDetail.value.shopId)
+    updateCart()
+  } catch (error) {
+    console.error("减少商品失败", error)
+    uni.showToast({
+      title: '操作失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 清空购物车
+const clearCart = async () => {
+  uni.showModal({
+    title: '提示',
+    content: '确定要清空购物车吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          const deletePromises = []
+          productList.value.forEach(item => {
+            if (item.count > 0 && item.cartId) {
+              deletePromises.push(
+                request({
+                  url: '/car/deletecar',
+                  method: 'POST',
+                  data: {
+                    id: item.cartId
+                  }
+                })
+              )
+            }
+          })
+          await Promise.all(deletePromises)
+
+          productList.value.forEach(item => {
+            item.count = 0
+            item.cartId = null
+          })
+          updateCart()
+          popup.value.close()
+        } catch (error) {
+          console.error("清空购物车失败", error)
+          uni.showToast({
+            title: '清空失败',
+            icon: 'none'
+          })
+        }
+      }
+    }
+  })
+}
+
+// 更新购物车数据
+const updateCart = () => {
+  cartCount.value = productList.value.reduce((sum, item) => sum + (item.count || 0), 0)
+  totalPrice.value = productList.value.reduce((sum, item) => {
+    const itemTotal = (item.count || 0) * Number(item.price)
+    return Number((sum + itemTotal).toFixed(2))
+  }, 0)
+}
+
+// 修改提交订单方法中的shopInfo数据来源
+const onSubmit = () => {
+  if (totalPrice.value <= 0) return
+
+  const shopInfoData = {
+    shopId: shopInfo.value.id,
+    shopName: shopInfo.value.name,
+    shopAvatar: shopInfo.value.avatar,
+    address: shopInfo.value.address,
+    closeTime: shopInfo.value.closeTime,
+    openTime: shopInfo.value.openTime,
+    phone: shopInfo.value.phone
+  }
+
+  const orderData = {
+    cartList: productList.value.filter(item => item.count > 0),
+    totalPrice: totalPrice.value,
+    deliveryFee: groupDetail.value.deliveryFee || 0,
+    packageAmount: shopInfo.value.packageAmount,
+    shopInfo: shopInfoData,
+    type: groupType.value,
+    userId: userId.value,
+    groupId: groupType.value === '参团' ? groupDetail.value.id : null
+  }
+
+  uni.setStorageSync('orderData', orderData)
+  uni.navigateTo({ url: '/pages/GoShopping/index' })
+}
+
+const onShowCart = () => {
+  if (cartCount.value > 0) {
+    popup.value.open()
+  } else {
+    uni.showToast({ title: '购物车是空的', icon: 'none' })
+  }
+}
+
+// 添加切换背景图片方法
+const changeHeaderImage = (image) => {
+  headerImage.value = image
+}
+
+// 添加用户名隐藏方法
+const hideUserName = (name) => {
+  if (!name) return '匿名用户'
+  if (name.length <= 2) {
+    return '*' + name.substring(1)
+  }
+  return name.substring(0, 1) + '*'.repeat(name.length - 1)
+}
+
+// 添加用户名轮播方法
+const startUserNameRotation = (orderList) => {
   let currentIndex = 0
 
-  // 初始显示第一条
-  visibleMessages.value = [scrollingMessages.value[currentIndex]]
+  const rotateNames = () => {
+    isUserEntering.value = false
 
-  setInterval(() => {
-    currentIndex = (currentIndex + 1) % scrollingMessages.value.length
+    setTimeout(() => {
+      currentUserName.value = hideUserName(orderList[currentIndex].name)
+      isUserEntering.value = true
+      currentIndex = (currentIndex + 1) % orderList.length
+    }, 300)
+  }
 
-    // 先添加新消息
-    visibleMessages.value = [scrollingMessages.value[currentIndex]]
+  // 初始化第一个名字
+  currentUserName.value = hideUserName(orderList[0].name)
 
-  }, 3000) // 3秒切换一次
+  // 设置定时轮播
+  userRotationTimer = setInterval(rotateNames, 3000)
 }
 
-onMounted(() => {
-  startMessageRotation()
-})
-
-const remainingSlots = computed(() => {
-  return Math.max(currentProductData.value.groupSize - joinedUsers.value.length, 0)
-})
-
-const progressPercentage = computed(() => {
-  return (joinedUsers.value.length / currentProductData.value.groupSize * 100).toFixed(2) + '%'
-})
-
-onMounted(startCountdown)
+// 组件卸载时清理定时器
 onUnmounted(() => {
-  clearInterval(timer)
+  if (userRotationTimer) {
+    clearInterval(userRotationTimer)
+  }
 })
+
+// 价格格式化方法
+const formatPrice = (price) => {
+  return Number(price).toFixed(2)
+}
 </script>
 
-<style scoped>
-.ProductDetailIndex {
-  width: 100%;
-  padding-bottom: 160rpx;
+<style lang="scss" scoped>
+.page {
   background: #f8f8f8;
+  min-height: 100vh;
+  padding-bottom: 120rpx;
 }
 
-/* 新增顶部导航栏样式 */
+.product-header {
+  position: relative;
+  height: 600rpx;
+  width: 100%;
+
+  .header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    transition: all 0.3s ease; // 添加过渡动画
+  }
+}
+
 .nav-bar {
-  position: absolute;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
-  /* padding-top: env(safe-area-inset-top); */
-  /* 处理刘海屏 */
   padding-left: 30rpx;
   height: 88rpx;
   display: flex;
   align-items: center;
   background: transparent;
   transition: all 0.3s ease;
-  z-index: 999;
+  z-index: 2;
+
+  &.scrolled {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  }
+
+  .back-btn {
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.3);
+    transition: background 0.3s;
+
+    &:active {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  }
 }
 
-.nav-bar.scrolled {
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-.back-btn {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #ffffff82;
-  transition: background 0.3s;
-}
-
-.back-btn:active {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.icon-back {
-  font-size: 40rpx;
-  color: #333;
-}
-
-
-/* 商品图片区域 */
-.product-image {
-  position: relative;
-  height: 480rpx;
-  overflow: hidden;
-  box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.1);
-}
-
-.product-image image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* 新增缩略图样式 */
-.thumbnail-scroll {
-  padding: 50rpx 0;
-  background: #fff;
-  box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.05);
-}
-
-.thumbnail-list {
-  white-space: nowrap;
-  padding: 0 20rpx;
-}
-
-.thumbnail-item {
-  display: inline-block;
-  width: 120rpx;
-  height: 120rpx;
-  margin-right: 20rpx;
-  border-radius: 12rpx;
-  overflow: hidden;
-  position: relative;
-  transition: all 0.3s;
-  border: 4rpx solid transparent;
-}
-
-.thumbnail-item.active {
-  border-color: #ff5500;
-  transform: scale(1.1);
-}
-
-.thumb-image {
-  width: 100%;
-  height: 100%;
-}
-
-/* 调整主图区域间距 */
-.product-image {
-  margin-bottom: 20rpx;
-}
-
-
-
-.countdown {
-  position: absolute;
-  bottom: 20rpx;
-  right: 20rpx;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  padding: 12rpx 24rpx;
-  border-radius: 40rpx;
-  font-size: 24rpx;
-  backdrop-filter: blur(4px);
-}
-
-/* 商品信息 */
-.product-info {
-  padding: 30rpx;
-  background: #fff;
-  border-radius: 20rpx 20rpx 0 0;
-  margin-top: -40rpx;
-  position: relative;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.05);
-}
-
-.product-info h2 {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 20rpx;
-  line-height: 1.4;
-}
-
-.price {
-  display: flex;
-  align-items: baseline;
-  gap: 20rpx;
-  margin: 30rpx 0;
-}
-
-.current {
-  font-size: 44rpx;
-  color: #ff3b30;
-  font-weight: bold;
-}
-
-.original {
-  font-size: 28rpx;
-  color: #999;
-  text-decoration: line-through;
-}
-
-.group-status {
-  color: #666;
-  font-size: 28rpx;
-  margin: 30rpx 0 20rpx;
-}
-
-.progress-bar {
-  height: 16rpx;
-  background: #f5f5f5;
-  border-radius: 8rpx;
-  overflow: hidden;
-  position: relative;
-}
-
-.progress {
-  height: 100%;
-  background: linear-gradient(90deg, #ff9f43, #ff5500);
-  border-radius: 8rpx;
-  transition: width 0.3s ease;
-}
-
-/* 新增商品选项卡样式 */
-.product-tabs {
-  display: flex;
-  padding: 20rpx 30rpx;
-  background: #fff;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-}
-
-.tab-item {
-  flex: 1;
-  text-align: center;
+.products-container {
   padding: 20rpx;
-  font-size: 28rpx;
-  color: #666;
-  position: relative;
-  transition: all 0.3s;
-}
-
-.tab-item.active {
-  color: #ff3b30;
-  font-weight: bold;
-}
-
-.tab-item.active::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 4rpx;
-  background: #ff3b30;
-  border-radius: 2rpx;
-}
-
-/* 修改后的动画样式 */
-.scroll-container {
-  height: 80rpx;
-  overflow: hidden;
-  position: relative;
-}
-
-.scroll-content {
-  position: relative;
-  height: 100%;
-}
-
-/* 入场动画 */
-.fade-slide-enter-active {
-  transition: all 0.5s ease;
-  position: absolute;
-  width: 100%;
-}
-
-.fade-slide-leave-active {
-  transition: all 0.5s ease;
-  position: absolute;
-  width: 100%;
-}
-
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(100%);
-}
-
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-100%);
-}
-
-.fade-slide-enter-to,
-.fade-slide-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* 调整后的滚动提示样式 */
-.scrolling-alert {
-  background: #fff8e6;
-  margin: 30rpx;
-  border-radius: 10rpx;
-  height: 80rpx;
-  position: relative;
-  padding-left: 80rpx;
-}
-
-.scroll-item {
-  height: 80rpx;
-  line-height: 80rpx;
-  font-size: 26rpx;
-  color: #ff9900;
-  white-space: nowrap;
-  padding-right: 30rpx;
-}
-
-/* 新增销售信息样式 */
-.sales-info {
-  color: #999;
-  font-size: 24rpx;
-  margin-bottom: 10rpx;
-}
-
-/* 参团用户 */
-.joined-users {
   background: #fff;
-  margin: 30rpx;
+  box-sizing: border-box;
+  white-space: nowrap;
+
+  .products-wrapper {
+    display: inline-flex;
+    padding: 10rpx;
+
+    .product-card {
+      width: 300rpx;
+      margin-right: 20rpx;
+      background: #fff;
+      border-radius: 16rpx;
+      overflow: hidden;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+
+      .product-image {
+        width: 100%;
+        height: 300rpx;
+        cursor: pointer; // 添加鼠标手型
+        transition: transform 0.2s ease; // 添加hover效果过渡
+
+        &:hover {
+          transform: scale(1.05); // 添加hover放大效果
+        }
+      }
+
+      .product-info {
+        padding: 20rpx;
+
+        .product-name {
+          font-size: 28rpx;
+          font-weight: bold;
+          margin-bottom: 10rpx;
+        }
+
+        .product-desc {
+          font-size: 24rpx;
+          color: #666;
+          margin-bottom: 20rpx;
+        }
+
+        .product-price-action {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .price {
+            color: #ff5500;
+            font-size: 32rpx;
+            font-weight: bold;
+          }
+
+          .action-buttons {
+            display: flex;
+            align-items: center;
+
+            .btn {
+              width: 44rpx;
+              height: 44rpx;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              &.minus {
+                background: #f5f5f5;
+                color: #999;
+              }
+
+              &.plus {
+                background: #ff5500;
+                color: #fff;
+              }
+            }
+
+            .count {
+              margin: 0 20rpx;
+              font-size: 28rpx;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.group-progress {
+  margin: 30rpx 20rpx;
+  background: #fff;
   padding: 30rpx;
-  border-radius: 20rpx;
-  box-shadow: 0 5rpx 15rpx rgba(0, 0, 0, 0.05);
+  border-radius: 16rpx;
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20rpx;
+
+    .title {
+      font-size: 28rpx;
+      color: #333;
+    }
+
+    .amount {
+      color: #ff5500;
+      font-weight: bold;
+    }
+  }
+
+  .progress-bar {
+    height: 16rpx;
+    background: #f5f5f5;
+    border-radius: 8rpx;
+    overflow: hidden;
+    margin-bottom: 10rpx;
+
+    .progress {
+      height: 100%;
+      background: linear-gradient(90deg, #ff9f43, #ff5500);
+      transition: width 0.3s ease;
+    }
+  }
+
+  .target-amount {
+    font-size: 24rpx;
+    color: #999;
+    text-align: right;
+  }
 }
 
-.user-list {
-  display: flex;
-  gap: 40rpx;
-  justify-content: center;
+.group-users-scroll {
+  margin: 20rpx 0;
+  background-color: #fff8e6;
+  border-radius: 8rpx;
+  padding: 10rpx;
+  overflow: hidden;
+
+  .users-scroll {
+    width: 100%;
+    white-space: nowrap;
+
+    .users-list {
+      position: relative;
+      height: 40rpx;
+
+      .user-item {
+        position: absolute;
+        width: 100%;
+        font-size: 24rpx;
+        color: #ff9900;
+        transition: all 0.6s ease-in-out;
+
+        &.item-enter {
+          transform: translateY(0);
+          opacity: 1;
+        }
+
+        &.item-leave {
+          transform: translateY(-100%);
+          opacity: 0;
+        }
+      }
+    }
+  }
 }
 
-.user-item {
-  text-align: center;
-  width: 100rpx;
-}
-
-.user-image {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  border: 2rpx solid #fff;
-  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.1);
-  margin-bottom: 10rpx;
-}
-
-.empty-avatar {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background: #f5f5f5;
-  border: 2rpx dashed #ddd;
-  margin: 0 auto 10rpx;
-}
-
-.empty view {
-  color: #999;
-  font-size: 24rpx;
-}
-
-/* 操作按钮 */
-.action-buttons {
+.foot {
   position: fixed;
   bottom: 0;
   left: 0;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 20rpx 30rpx;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 -8rpx 30rpx rgba(0, 0, 0, 0.08);
-  display: flex;
-  gap: 20rpx;
+  right: 0;
+  padding: 20rpx;
+  background: #fff;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.1);
+
+  .inner {
+    height: 100rpx;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20rpx;
+
+    .cart-left {
+      display: flex;
+      align-items: center;
+
+      .icon-box {
+        position: relative;
+        margin-right: 20rpx;
+
+        .badge {
+          position: absolute;
+          top: -10rpx;
+          right: -10rpx;
+          min-width: 32rpx;
+          height: 32rpx;
+          border-radius: 16rpx;
+          background: #ff5500;
+          color: #fff;
+          font-size: 20rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 6rpx;
+        }
+      }
+
+      .price-box {
+        .total-price {
+          font-size: 36rpx;
+          font-weight: bold;
+          color: #333;
+        }
+
+        .tip {
+          font-size: 22rpx;
+          color: #999;
+          margin-left: 10rpx;
+        }
+      }
+    }
+
+    .submit-btn {
+      width: 200rpx;
+      height: 72rpx;
+      background: #ff5500;
+      color: #fff;
+      border-radius: 36rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28rpx;
+
+      &.disabled {
+        background: #ccc;
+      }
+    }
+  }
 }
 
-button {
-  flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 50rpx;
-  font-size: 32rpx;
-  font-weight: 500;
-  transition: all 0.2s;
-}
+.cart_list {
+  padding: 20rpx;
 
-.join-button {
-  background: linear-gradient(135deg, #ff5a5f, #ff3b30);
-  box-shadow: 0 8rpx 20rpx rgba(255, 90, 95, 0.3);
-}
+  .cart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
 
-.share-button {
-  background: linear-gradient(135deg, #ffaa33, #ff8800);
-  box-shadow: 0 8rpx 20rpx rgba(255, 170, 51, 0.3);
-}
+    .title {
+      font-size: 28rpx;
+      font-weight: bold;
+    }
 
-button:active {
-  transform: scale(0.98);
-  opacity: 0.9;
+    .clear {
+      font-size: 24rpx;
+      color: #ff5500;
+      cursor: pointer;
+    }
+  }
+
+  .cart-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20rpx;
+
+    .cart-image {
+      width: 80rpx;
+      height: 80rpx;
+      border-radius: 8rpx;
+      margin-right: 20rpx;
+    }
+
+    .cart-info {
+      flex: 1;
+
+      .cart-name {
+        font-size: 28rpx;
+        margin-bottom: 10rpx;
+      }
+
+      .cart-price {
+        font-size: 24rpx;
+        color: #ff5500;
+        margin-bottom: 10rpx;
+      }
+
+      .cart-action-buttons {
+        display: flex;
+        align-items: center;
+
+        .btn {
+          width: 44rpx;
+          height: 44rpx;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          &.minus {
+            background: #f5f5f5;
+            color: #999;
+          }
+
+          &.plus {
+            background: #ff5500;
+            color: #fff;
+          }
+        }
+
+        .count {
+          margin: 0 20rpx;
+          font-size: 28rpx;
+        }
+      }
+    }
+  }
 }
 </style>

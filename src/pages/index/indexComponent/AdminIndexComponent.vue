@@ -95,6 +95,14 @@
                         <text class="item-title">用户管理</text>
                         <text class="item-subtitle">暂无</text>
                     </view> -->
+                    <view class="grid-item merchant-list" @click="goToManage(`orderAdmin/EnterAdminOrderIndex`)"
+                        @touchstart="handleTouchStart" @touchend="handleTouchEnd">
+                        <view class="icon-wrapper">
+                            <uni-icons type="shop-filled" size="36" color="#fff" />
+                        </view>
+                        <text class="item-title">商家订单</text>
+                        <text class="item-subtitle">管理所有商家的订单</text>
+                    </view>
 
                     <view class="grid-item user-manage" @click="goToManage(`banner_manage/index`)"
                         @touchstart="handleTouchStart" @touchend="handleTouchEnd">

@@ -1,17 +1,12 @@
 <template>
-    <view v-if="userRole == 'merchant' || userRole == 'admin'">
-        <AdminOrderIndex />
-    </view>
-    <view v-else>
-        <UserOrder />
-    </view>
+    <UserOrder />
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import UserOrder from './UserOrder.vue'
-import AdminOrderIndex from './AdminOrderIndex.vue'
+// import AdminOrderIndex from './AdminOrderIndex.vue'
 
 //权限控制 
 const userRole = ref('user') // 默认用户角色

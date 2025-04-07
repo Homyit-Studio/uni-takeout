@@ -5,18 +5,17 @@ import { request } from './utils/request'
 import { useTokenStore } from './store/token'
 
 const useToken = useTokenStore()
+let loginPromise = null // 用于存储登录请求的 Promise 对象
 
 onLaunch(async () => {
   console.log('App Launch')
-  try {
-    const token = await login()
+  loginPromise = await new Promise((resolve, reject) => {
+    const token = login()
     console.log('登录成功，Token:', token)
-  } catch (error) {
-    console.error('登录失败:', error)
-  }
+  })
 })
 
-onShow(() => {
+onShow(async () => {
   console.log('App Show')
   /**
    * 1. 获取用户角色
@@ -24,6 +23,7 @@ onShow(() => {
    * 3. 如果用户角色发生变化，重新加载页面
    */
   // 设置tabBar
+
   tabBarSet()
   // getOrderInfo()
 })
@@ -47,7 +47,7 @@ const login = async () => {
       url: '/user/wxlogin',
       data: { code }
     })
-
+    console.log('登录请求成功', res)
     // console.log(res)
     useToken.setToken(res.data)
     return res.data // 返回登录结果
@@ -97,6 +97,7 @@ function tabBarSet() {
       // visible: false
     })
   } else if (data === 'merchant') {
+    // uni.hideTabBar()
     uni.setTabBarItem({
       index: 1,
       text: '订单管理',
