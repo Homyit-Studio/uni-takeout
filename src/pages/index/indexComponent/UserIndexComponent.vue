@@ -117,14 +117,11 @@
             <uni-icons type="sound" size="20" color="#ff9900"
                 style="position: absolute; left: 20rpx; top: 55%; transform: translateY(-50%);"></uni-icons>
             <view class="scroll-container">
-                <view class="scroll-content">
-                    <text :class="['scroll-item', {
-                        'item-enter': isEntering,
-                        'item-leave': !isEntering
-                    }]">
-                        {{ currentMessage }} 最近{{ recentJoinCount }}人正在拼团...
-                    </text>
-                </view>
+                <swiper class="message-swiper" vertical autoplay circular interval="3000" duration="500">
+                    <swiper-item v-for="(message, index) in scrollingMessages" :key="index">
+                        <text class="scroll-item">{{ message }} 最近{{ recentJoinCount }}人正在拼团...</text>
+                    </swiper-item>
+                </swiper>
             </view>
         </view>
 
@@ -158,16 +155,12 @@
                             <view class="group-info">
                                 <text class="current-amount">已拼{{ formatPrice(getTotalAmount(product)) }}元</text>
                                 <view class="group-users-scroll">
-                                    <scroll-view scroll-x class="users-scroll">
-                                        <view class="users-list">
-                                            <text :class="['user-item', {
-                                                'item-enter': userEntering[product.id],
-                                                'item-leave': !userEntering[product.id]
-                                            }]">
-                                                {{ currentUserNames[product.id] || '暂无用户参与' }}正在拼团...
-                                            </text>
-                                        </view>
-                                    </scroll-view>
+                                    <swiper class="users-swiper" vertical autoplay circular interval="3000"
+                                        duration="500">
+                                        <swiper-item v-for="(user, index) in product.orderList" :key="index">
+                                            <text class="user-item">{{ hideUserName(user.name) }}正在拼团...</text>
+                                        </swiper-item>
+                                    </swiper>
                                 </view>
                                 <text class="member-count">{{ product.orderList?.length || 0 }}人正在拼团</text>
                             </view>
@@ -205,7 +198,7 @@
                             <view class="store-desc-wrapper">
                                 <text class="store-desc">{{ store.shopIntroduction || '暂无介绍' }}</text>
                                 <text class="delivery-fee">起送 ¥{{ store.minDeliveryFee }} | 打包费 ¥{{ store.packageAmount
-                                    }}</text>
+                                }}</text>
                             </view>
                             <view class="store-address">
                                 <uni-icons type="location-filled" color="#999" size="24" />
@@ -225,7 +218,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted, getCurrentInstance } from 'vue'
 import { onPageScroll, onReachBottom, onShow } from '@dcloudio/uni-app'
 import { request } from '../../../utils/request'
 /*
@@ -265,40 +258,16 @@ const defaultAddress = ref(null)
 const recentJoinCount = ref(12) // 最近参与人数
 const scrollingMessages = ref([])
 
-const currentMessage = ref(scrollingMessages.value[0])
-const currentIndex = ref(0)
-const isEntering = ref(true)
-const visibleMessages = ref([
-    scrollingMessages.value[0],
-    scrollingMessages.value[1]
-])
-
 // 响应式状态
 const hotStores = ref([])
 const page = ref(1)
 const pageSize = ref(10)
 const hasMore = ref(true)
 
-// 添加搜索栏位置相关的响应式状态
-// const searchBarTop = ref(0)
-
-// 离导航栏的高度
-// const navContentHeight = 80; // 单位rpx
-// const navContentHeightPx = ref(uni.upx2px(navContentHeight));
-// const totalNavHeight = computed(() => statusBarHeight.value + navContentHeightPx.value);
-
 // 添加热门商品数据
 const hotProducts = ref([])
 // 添加倒计时相关的响应式数据
 const countdownTimers = ref({})
-
-// 添加用户名切换相关的响应式数据
-const currentUserNames = ref({})
-const userEntering = ref({})
-const userIndexes = ref({})
-
-// 新增用户名轮播计时器存储
-const userNameTimers = ref({})
 
 // 检查拼团是否过期
 const isGroupExpired = (product) => {
@@ -464,52 +433,10 @@ const getAllGroup = async () => {
             recentJoinCount.value = groupsWithProducts.reduce((count, group) =>
                 count + (group.orderList?.length || 0), 0
             )
-
-            // 初始化每个商品的用户名切换
-            hotProducts.value.forEach(product => {
-                if (product.orderList && product.orderList.length > 0) {
-                    currentUserNames.value[product.id] = hideUserName(product.orderList[0].name)
-                    userEntering.value[product.id] = true
-                    userIndexes.value[product.id] = 0
-
-                    // 开始用户名切换
-                    startUserNameRotation(product.id)
-                }
-            })
         }
     } catch (error) {
         console.error("获取拼团数据失败", error)
-        uni.showToast({
-            title: '获取拼团数据失败',
-            icon: 'none'
-        })
     }
-}
-
-// 用户名切换方法
-const startUserNameRotation = (productId) => {
-    const product = hotProducts.value.find(p => p.id === productId)
-    if (!product || !product.orderList || product.orderList.length <= 1) return
-
-    // 清理已存在的计时器
-    if (userNameTimers.value[productId]) {
-        clearInterval(userNameTimers.value[productId])
-    }
-
-    // 创建新的计时器并保存引用
-    userNameTimers.value[productId] = setInterval(() => {
-        // 开始离开动画
-        userEntering.value[productId] = false
-
-        setTimeout(() => {
-            // 更新用户索引
-            userIndexes.value[productId] = (userIndexes.value[productId] + 1) % product.orderList.length
-            // 使用hideUserName处理用户名
-            currentUserNames.value[productId] = hideUserName(product.orderList[userIndexes.value[productId]].name)
-            // 开始进入动画
-            userEntering.value[productId] = true
-        }, 500)
-    }, 3000)
 }
 
 const getShopGroup = async (shopId) => {
@@ -524,9 +451,6 @@ const getShopGroup = async (shopId) => {
         return []
     }
 }
-
-
-
 // 组件卸载时清理定时器
 onUnmounted(() => {
     // 清理倒计时计时器
@@ -534,23 +458,12 @@ onUnmounted(() => {
         clearInterval(timer)
     })
     countdownTimers.value = {}
-
-    // 清理用户名轮播计时器
-    Object.values(userNameTimers.value).forEach(timer => {
-        clearInterval(timer)
-    })
-    userNameTimers.value = {}
 })
 // 计算标签栏样式
 const tabsStyle = computed(() => ({
     top: `${statusBarHeight.value + navBarHeight.value}px`
 }))
 
-
-// watch(() => props.scrollTop, (newVal) => {
-//     const progress = Math.min(newVal / 50, 1)
-//     scrollProgress.value = progress
-// })
 
 onPageScroll((e) => {
     // 计算滚动进度（0-1之间）
@@ -560,31 +473,18 @@ onPageScroll((e) => {
 
 })
 
-onMounted(() => {
-    // 初始化数据
-    setTimeout(() => {
-        allStore()
-        getAllGroup()
-        getBannerImages() // 新增获取轮播图数据
-    }, 3000)
-    // 获取本地存储的地址列表
-    const savedAddress = uni.getStorageSync('defaultAddress') || []
-    if (savedAddress) {
-        defaultAddress.value = savedAddress.address
-    }
-})
-
 onShow(async () => {
     /*
     * 延时获取热门店铺数据
     * 非常重要
     **/
+    console.log("页面显示")
     if (uni.getStorageSync('userRole') !== 'user') {
         return
     }
     await allStore()
     await getAllGroup()
-    startMessageRotation()
+    await getBannerImages()
     // 获取状态栏高度
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
     statusfirstPaddingTop.value = uni.getWindowInfo().statusBarHeight
@@ -603,32 +503,16 @@ onShow(async () => {
         }
     }).exec()
 
-    // 获取搜索栏的初始位置
-    // query.select('.search-bar-anchor').boundingClientRect(rect => {
-    //     if (rect) {
-    //         searchBarTop.value = rect.top
-    //     }
-    // }).exec()
-})
-
-onShow(async () => {
     // 获取本地存储的地址列表
     const savedAddress = uni.getStorageSync('defaultAddress') || []
     if (savedAddress) {
-        // 查找默认地址
-        // const defaultAddr = savedAddresses.find(addr => addr.isDefault) || savedAddresses[0]
-        // 拼接地址信息
-        // defaultAddress.value = `${defaultAddr.province}${defaultAddr.city}${defaultAddr.area}${defaultAddr.detail}`
         defaultAddress.value = savedAddress.address
     }
-    // loadHotStores()
 })
 
-// 使用onReachBottom替代scrolltolower
 onReachBottom(() => {
     if (!hasMore.value) return
     page.value++
-    // loadHotStores()
 })
 
 const isNavSticky = ref(false)
@@ -640,27 +524,7 @@ onPageScroll(({ scrollTop }) => {
 })
 // 动态滚动
 
-// 优化消息轮播函数
-const startMessageRotation = () => {
-    // 清除可能存在的旧计时器
-    let messageTimer = null
-    if (messageTimer) {
-        clearInterval(messageTimer)
-    }
-
-    messageTimer = setInterval(() => {
-        // 开始离开动画
-        isEntering.value = false
-
-        // 等待离开动画完成后更新消息
-        setTimeout(() => {
-            currentIndex.value = (currentIndex.value + 1) % scrollingMessages.value.length
-            currentMessage.value = scrollingMessages.value[currentIndex.value]
-            // 开始进入动画
-            isEntering.value = true
-        }, 800) // 增加动画过渡时间
-    }, 3000) // 增加消息停留时间到5秒
-}// 切换标签
+// 切换标签
 const switchTab = (index) => {
     currentTab.value = index
     allStore()
@@ -730,7 +594,6 @@ const goToLaunchLucky = () => {
 const goToStoreDetail = (storeId) => {
     uni.navigateTo({
         url: `/pages/merchantDetail/index?id=${storeId}`
-        // url: `/pages/merchant_detail/index`
     })
 }
 
@@ -748,12 +611,6 @@ const goToProduct = (productId, shopId, type) => {
 
 const handleDeliverySelect = (type) => {
     console.log('选择类型:', type)
-    // 这里可以添加跳转逻辑或状态变更逻辑
-    // if (type === 'delivery') {
-    //     uni.navigateTo()
-    // } else {
-    //     uni.navigateTo()
-    // }
 }
 // 价格格式化方法
 const formatPrice = (price) => {
@@ -1038,55 +895,61 @@ $secondary-color: #FFA99F;
     }
 }
 
+/* 修改滚动提示样式 */
 .scrolling-alert {
-    // display: flex;
-    // justify-content: center;
-    // align-items: center;
     height: 60rpx;
-    overflow: hidden;
     position: relative;
     background: #fff8e6;
     margin: 20rpx 20rpx;
     border-radius: 10rpx;
-    padding-left: 100rpx; // 为图标留出空间
+    padding-left: 100rpx;
+    overflow: hidden;
 
     .scroll-container {
         height: 100%;
-        position: relative;
 
-        .scroll-content {
+        .message-swiper {
             height: 100%;
-            position: relative;
-            overflow: hidden;
 
             .scroll-item {
-                position: absolute;
-                width: 100%;
+                display: block;
                 height: 60rpx;
                 line-height: 60rpx;
                 font-size: 26rpx;
                 color: #ff9900;
-                left: 0;
-                // 修改动画过渡时间和缓动函数
-                transition: all 0.8s ease-in-out;
+                white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                white-space: nowrap;
-
-                &.item-enter {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-
-                &.item-leave {
-                    transform: translateY(-100%);
-                    opacity: 0;
-                }
             }
         }
     }
 }
 
+/* 修改用户滚动样式 */
+.group-users-scroll {
+    width: 160rpx;
+    height: 40rpx;
+    background-color: #fff8e6;
+    overflow: hidden;
+
+    .users-swiper {
+        width: 100%;
+        height: 100%;
+
+        .user-item {
+            display: block;
+            width: 100%;
+            height: 100%;
+            line-height: 40rpx;
+            font-size: 24rpx;
+            color: #ff9900;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10rpx;
+        }
+    }
+}
 
 .banner-swiper {
     height: 300rpx;
@@ -1335,7 +1198,7 @@ $secondary-color: #FFA99F;
                                 width: 100%;
                                 font-size: 24rpx;
                                 color: #ff9900;
-                                transition: all 0.6s ease-in-out;
+                                transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
