@@ -198,7 +198,7 @@
                             <view class="store-desc-wrapper">
                                 <text class="store-desc">{{ store.shopIntroduction || '暂无介绍' }}</text>
                                 <text class="delivery-fee">起送 ¥{{ store.minDeliveryFee }} | 打包费 ¥{{ store.packageAmount
-                                }}</text>
+                                    }}</text>
                             </view>
                             <view class="store-address">
                                 <uni-icons type="location-filled" color="#999" size="24" />
@@ -587,7 +587,7 @@ const goToSearch = () => {
 }
 const goToLaunchLucky = () => {
     uni.navigateTo({
-        url: '/pages/launch_lucky/index'
+        url: '/pages/luckys/index'
     })
 }
 // 跳转到商家详情
@@ -675,7 +675,7 @@ $secondary-color: #FFA99F;
 
         .nav-left {
             flex: 2;
-            height: 80rpx; // 明确容器高度
+            height: 100rpx; // 明确容器高度
             display: flex;
             align-items: center; // 垂直居中
             position: relative; // 建立定位上下文
@@ -724,7 +724,7 @@ $secondary-color: #FFA99F;
         // width: calc(100% - 80rpx);
         align-items: center;
         justify-content: space-between;
-        margin: 0 40rpx;
+        margin: 0 30rpx;
         border-radius: 10rpx;
         background: #fff;
 

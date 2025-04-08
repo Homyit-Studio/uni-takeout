@@ -189,6 +189,134 @@
                                     </view>
                                 </view>
                             </view>
+                            <view
+                                class="group-list UserIndexComponent--group-list data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                <view
+                                    class="group-card UserIndexComponent--group-card data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                    <view
+                                        class="store-header UserIndexComponent--store-header data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                        <image
+                                            class="store-avatar UserIndexComponent--store-avatar data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-image"
+                                            mode="aspectFill"></image>
+                                        <text
+                                            class="store-name UserIndexComponent--store-name data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-transparent sk-text-14-2857-323 sk-text">1</text>
+                                        <view
+                                            class="countdown-tag UserIndexComponent--countdown-tag data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                            <view is="node-modules/@dcloudio/uni-ui/lib/uni-icons/uni-icons"
+                                                class="data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                <text class="uni-icons icons--uni-icons uniui-clock icons--uniui-clock"
+                                                    style="color: #FF5500; font-size: 14px;"></text>
+                                            </view>
+                                            <text
+                                                class="countdown-text UserIndexComponent--countdown-text data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-transparent sk-text-14-2857-777 sk-text">37天0时</text>
+                                        </view>
+                                    </view>
+                                    <view class="data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a"
+                                        style="overflow:hidden">
+                                        <scroll-view scroll-x="true"
+                                            class="product-scroll UserIndexComponent--product-scroll data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                            <view
+                                                class="product-images UserIndexComponent--product-images data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                <image
+                                                    class="product-image UserIndexComponent--product-image data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-image"
+                                                    mode="aspectFill"></image>
+                                                <image
+                                                    class="product-image UserIndexComponent--product-image data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-image"
+                                                    mode="aspectFill"></image>
+                                                <image
+                                                    class="product-image UserIndexComponent--product-image data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-image"
+                                                    mode="aspectFill"></image>
+                                            </view>
+                                        </scroll-view>
+                                    </view>
+                                    <view
+                                        class="product-footer UserIndexComponent--product-footer data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                        <view
+                                            class="group-info UserIndexComponent--group-info data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                            <text
+                                                class="current-amount UserIndexComponent--current-amount data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-transparent sk-text-14-2857-501 sk-text">已拼9.09元</text>
+                                            <view
+                                                class="group-users-scroll UserIndexComponent--group-users-scroll data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                <scroll-view scroll-x="true"
+                                                    class="users-scroll UserIndexComponent--users-scroll data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                    <view
+                                                        class="users-list UserIndexComponent--users-list data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                        <text
+                                                            class="data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a user-item UserIndexComponent--user-item item-enter UserIndexComponent--item-enter sk-transparent sk-text-14-2857-290 sk-text">z**正在拼团...
+                                                        </text>
+                                                    </view>
+                                                </scroll-view>
+                                            </view>
+                                            <text
+                                                class="member-count UserIndexComponent--member-count data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-transparent sk-text-14-2857-402 sk-text">7人正在拼团</text>
+                                        </view>
+                                    </view>
+                                </view>
+                            </view>
+                            <view
+                                class="group-list UserIndexComponent--group-list data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                <view
+                                    class="group-card UserIndexComponent--group-card data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                    <view
+                                        class="store-header UserIndexComponent--store-header data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                        <image
+                                            class="store-avatar UserIndexComponent--store-avatar data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-image"
+                                            mode="aspectFill"></image>
+                                        <text
+                                            class="store-name UserIndexComponent--store-name data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-transparent sk-text-14-2857-323 sk-text">1</text>
+                                        <view
+                                            class="countdown-tag UserIndexComponent--countdown-tag data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                            <view is="node-modules/@dcloudio/uni-ui/lib/uni-icons/uni-icons"
+                                                class="data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                <text class="uni-icons icons--uni-icons uniui-clock icons--uniui-clock"
+                                                    style="color: #FF5500; font-size: 14px;"></text>
+                                            </view>
+                                            <text
+                                                class="countdown-text UserIndexComponent--countdown-text data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-transparent sk-text-14-2857-777 sk-text">37天0时</text>
+                                        </view>
+                                    </view>
+                                    <view class="data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a"
+                                        style="overflow:hidden">
+                                        <scroll-view scroll-x="true"
+                                            class="product-scroll UserIndexComponent--product-scroll data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                            <view
+                                                class="product-images UserIndexComponent--product-images data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                <image
+                                                    class="product-image UserIndexComponent--product-image data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-image"
+                                                    mode="aspectFill"></image>
+                                                <image
+                                                    class="product-image UserIndexComponent--product-image data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-image"
+                                                    mode="aspectFill"></image>
+                                                <image
+                                                    class="product-image UserIndexComponent--product-image data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-image"
+                                                    mode="aspectFill"></image>
+                                            </view>
+                                        </scroll-view>
+                                    </view>
+                                    <view
+                                        class="product-footer UserIndexComponent--product-footer data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                        <view
+                                            class="group-info UserIndexComponent--group-info data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                            <text
+                                                class="current-amount UserIndexComponent--current-amount data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-transparent sk-text-14-2857-501 sk-text">已拼9.09元</text>
+                                            <view
+                                                class="group-users-scroll UserIndexComponent--group-users-scroll data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                <scroll-view scroll-x="true"
+                                                    class="users-scroll UserIndexComponent--users-scroll data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                    <view
+                                                        class="users-list UserIndexComponent--users-list data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">
+                                                        <text
+                                                            class="data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a user-item UserIndexComponent--user-item item-enter UserIndexComponent--item-enter sk-transparent sk-text-14-2857-290 sk-text">z**正在拼团...
+                                                        </text>
+                                                    </view>
+                                                </scroll-view>
+                                            </view>
+                                            <text
+                                                class="member-count UserIndexComponent--member-count data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a sk-transparent sk-text-14-2857-402 sk-text">7人正在拼团</text>
+                                        </view>
+                                    </view>
+                                </view>
+                            </view>
                         </view>
                         <view
                             class="loading-status UserIndexComponent--loading-status data-v-1ef7db5a UserIndexComponent--data-v-1ef7db5a">

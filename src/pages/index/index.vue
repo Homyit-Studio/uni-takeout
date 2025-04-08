@@ -30,6 +30,7 @@ onPageScroll((e) => {
 })
 
 onLoad(async () => {
+  await uni.hideTabBar()
   showSkeleton.value = true
   await navigateToLoading()
   showSkeleton.value = false
@@ -37,6 +38,15 @@ onLoad(async () => {
 
 onShow(async () => {
   try {
+    // 首先检查本地存储中是否有用户角色信息
+    const localUserData = uni.getStorageSync('userData')
+    if (localUserData && localUserData.role) {
+      userRole.value = localUserData.role
+      await setTabBarByRole(localUserData.role)
+      showSkeleton.value = false
+      return
+    }
+
     // 检查是否是从loading页面返回
     const pages = getCurrentPages()
     const currentPage = pages[pages.length - 1]
@@ -45,7 +55,7 @@ onShow(async () => {
     if (prevPage && prevPage.route === 'pages/loading/LoadingIndex') {
       // 从loading页面返回，获取用户数据
       const userData = uni.getStorageSync('userData')
-      if (userData && userData.role) {
+      if (showSkeleton.value && userData && userData.role) {
         userRole.value = userData.role
         await setTabBarByRole(userData.role)
       }
@@ -74,8 +84,44 @@ const navigateToLoading = () => {
 const setTabBarByRole = async (role) => {
   if (role === 'admin') {
     await uni.hideTabBar()
+    uni.setTabBarItem({
+      index: 2,
+      text: '',
+      iconPath: '',
+      selectedIconPath: ''
+    })
+    uni.setTabBarItem({
+      index: 1,
+      text: '',
+      iconPath: '',
+      selectedIconPath: ''
+    })
+    uni.setTabBarItem({
+      index: 0,
+      text: '',
+      iconPath: '',
+      selectedIconPath: ''
+    })
   } else if (role === 'merchant') {
     await uni.hideTabBar()
+    uni.setTabBarItem({
+      index: 2,
+      text: '',
+      iconPath: '',
+      selectedIconPath: ''
+    })
+    uni.setTabBarItem({
+      index: 1,
+      text: '',
+      iconPath: '',
+      selectedIconPath: ''
+    })
+    uni.setTabBarItem({
+      index: 0,
+      text: '',
+      iconPath: '',
+      selectedIconPath: ''
+    })
   } else {
     await uni.showTabBar()
     uni.setTabBarItem({

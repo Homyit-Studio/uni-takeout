@@ -255,6 +255,12 @@
 			}
 		},
 		{
+			"path": "pages/merchantConfig/MerchantConfigIndex",
+			"style": {
+				"navigationBarTitleText": "支付配置"
+			}
+		},
+		{
 			"path": "pages/userLucky222/index",
 			"style": {
 				"navigationBarTitleText": "中奖历史"
