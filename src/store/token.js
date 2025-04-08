@@ -2,8 +2,7 @@
 export const useTokenStore = () => {
     const setToken = (token) => {
         uni.setStorageSync('token_key', token);
-    };
-
+    }
     const getToken = () => {
         return uni.getStorageSync('token_key');
     };
