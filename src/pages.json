@@ -138,6 +138,14 @@
 			}
 		},
 		{
+			"path": "pages/productManage/EnterProductManageIndex",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true,
+				"navigationBarTitleText": "商店商品管理"
+			}
+		},
+		{
 			"path": "pages/orderAdmin/AdminOrderIndex",
 			"style": {
 				"navigationBarTitleText": "订单管理",

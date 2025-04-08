@@ -205,7 +205,7 @@
                             <view class="store-desc-wrapper">
                                 <text class="store-desc">{{ store.shopIntroduction || '暂无介绍' }}</text>
                                 <text class="delivery-fee">起送 ¥{{ store.minDeliveryFee }} | 打包费 ¥{{ store.packageAmount
-                                }}</text>
+                                    }}</text>
                             </view>
                             <view class="store-address">
                                 <uni-icons type="location-filled" color="#999" size="24" />
@@ -241,11 +241,7 @@ const props = defineProps({
 
 
 // 轮播图数据
-const bannerList = ref([
-    // { image: '/static/banner1.png' },
-    { image: '/static/banner2.png' },
-    { image: '/static/banner3.png' }
-])
+const bannerList = ref([])
 
 
 // 标签页配置
@@ -569,6 +565,7 @@ onMounted(() => {
     setTimeout(() => {
         allStore()
         getAllGroup()
+        getBannerImages() // 新增获取轮播图数据
     }, 3000)
     // 获取本地存储的地址列表
     const savedAddress = uni.getStorageSync('defaultAddress') || []
@@ -775,6 +772,23 @@ onMounted(async () => {
 const getUserRole = async () => {
     // 这里添加获取用户角色的API调用
     return 'user' // 默认返回用户角色
+}
+
+// 新增获取轮播图数据的方法
+const getBannerImages = async () => {
+    try {
+        const res = await request({
+            url: '/image/select',
+            method: 'GET'
+        })
+        if (res.data) {
+            bannerList.value = res.data.map(item => ({
+                image: item.url
+            }))
+        }
+    } catch (error) {
+        console.error("获取轮播图数据失败", error)
+    }
 }
 
 </script>

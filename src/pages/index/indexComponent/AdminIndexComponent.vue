@@ -68,13 +68,13 @@
                 </view>
 
                 <view class="function-grid">
-                    <view class="grid-item merchant-list" @click="goToManage(`shopProduncts_manage/index`)"
+                    <view class="grid-item merchant-list" @click="goToManage(`productManage/EnterProductManageIndex`)"
                         @touchstart="handleTouchStart" @touchend="handleTouchEnd">
                         <view class="icon-wrapper">
                             <uni-icons type="shop-filled" size="36" color="#fff" />
                         </view>
                         <text class="item-title">商家列表</text>
-                        <text class="item-subtitle">管理所有入驻商家</text>
+                        <text class="item-subtitle">管理所有入驻商家商品</text>
                     </view>
 
                     <view class="grid-item merchant-audit" @click="goToManage(`approval_list/index`)"
