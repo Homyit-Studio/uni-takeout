@@ -16,10 +16,14 @@
           <text class="prize-name"
             >奖品：{{ item.prizeName || "未知奖品" }}</text
           >
-          <text class="shop-name"
-            >店铺：{{ getShopName(item.shopId) || "未知商户" }}</text
+          <text class="prize-name"
+            ><span style="font-weight: bold"></span>店铺：{{
+              getShopName(item.shopId) || "未知商户"
+            }}</text
           >
-          <text class="win-time">{{ formatTime(item.createTime) }}</text>
+          <text class="prize-name"
+            >中奖时间：{{ formatTime(item.createTime) || "未知时间" }}</text
+          >
         </view>
       </view>
     </view>
@@ -104,6 +108,7 @@ export default {
 
         if (response?.data) {
           this.luckyList = response.data;
+          console.log("获取中奖记录成功:", this.luckyList);
         }
       } catch (error) {
         console.error("获取中奖记录失败:", error);
@@ -207,7 +212,7 @@ export default {
 
 .prize-name {
   font-size: 16px;
-  font-weight: bold;
+  /* font-weight: bold; */
   color: #333;
   margin-bottom: 4px;
 }

@@ -193,7 +193,7 @@
 		{
 			"path": "pages/myApprovalList/index",
 			"style": {
-				"navigationBarTitleText": "我的入驻审核"
+				"navigationBarTitleText": "我的入驻审核（暂时不加）"
 			}
 		},
 		{
@@ -242,6 +242,18 @@
 			"path": "pages/userLucky222/index",
 			"style": {
 				"navigationBarTitleText": "中奖历史"
+			}
+		},
+		{
+			"path": "pages/editMerchantInfo/index",
+			"style": {
+				"navigationBarTitleText": "编辑商户信息"
+			}
+		},
+		{
+			"path": "pages/changeMerchantInfo/index",
+			"style": {
+				"navigationBarTitleText": "编辑商户信息"
 			}
 		}
 	],

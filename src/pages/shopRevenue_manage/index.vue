@@ -1,125 +1,130 @@
 <template>
-    <view class="merchant-list-container">
-        <!-- 商户列表 -->
-        <view class="merchant-list">
-            <!-- 无数据提示 -->
-            <view v-if="merchantList.length === 0" class="empty-tip">
-                <text>暂无商户数据</text>
-            </view>
+  <view class="merchant-list-container">
+    <!-- 商户列表 -->
+    <view class="merchant-list">
+      <!-- 无数据提示 -->
+      <view v-if="merchantList.length === 0" class="empty-tip">
+        <text>暂无商户数据</text>
+      </view>
 
-            <!-- 商户列表项 -->
-            <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item" @click="navigateToDetail(merchant)">
-                <image :src="merchant.avatar" class="merchant-avatar"></image>
-                <view class="merchant-info">
-                    <text class="shop-name">{{ merchant.name }}</text>
-                </view>
-                <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
-            </view>
+      <!-- 商户列表项 -->
+      <view
+        v-for="(merchant, index) in merchantList"
+        :key="index"
+        class="merchant-item"
+        @click="navigateToDetail(merchant)"
+      >
+        <image :src="merchant.avatar" class="merchant-avatar"></image>
+        <view class="merchant-info">
+          <text class="shop-name">{{ merchant.name }}</text>
         </view>
+        <uni-icons type="arrowright" size="20" color="#999"></uni-icons>
+      </view>
     </view>
+  </view>
 </template>
 
 <script>
-import { request } from '@/utils/request'
+import { request } from "@/utils/request";
 
 export default {
-    data() {
-        return {
-            // 商户列表数据
-            merchantList: [],
-        };
-    },
-    methods: {
+  data() {
+    return {
+      // 商户列表数据
+      merchantList: [],
+    };
+  },
+  methods: {
     // 获取商户列表
     async fetchMerchantList() {
       try {
         const response = await request({
-          method: 'POST',
-          url: '/admin/selectallshop',
+          method: "POST",
+          url: "/admin/selectallshop",
         });
-        console.log(response)
+        console.log(response);
         if (response && response.data) {
-            this.merchantList = response.data;
-            console.log(this.merchantList)
+          this.merchantList = response.data;
+          console.log(this.merchantList);
         }
       } catch (error) {
-        console.error('获取本地信息失败:', error);
+        console.error("获取本地信息失败:", error);
         uni.showToast({
-          title: '获取本地信息失败',
-          icon: 'none'
+          title: "获取本地信息失败",
+          icon: "none",
         });
         this.loading = false;
       }
     },
-        // 跳转到商户详情页面
-        navigateToDetail(merchant) {
-            uni.navigateTo({
-                url: `/pages/revenue_detail/index?id=${merchant.id}`, // 跳转到商户详情页面，传递商户ID
-            });
-        },
+    // 跳转到商户详情页面
+    navigateToDetail(merchant) {
+      uni.navigateTo({
+        url: `/pages/revenue_detail/index?id=${merchant.id}`, // 跳转到商户详情页面，传递商户ID
+      });
     },
-    onLoad() {
-        this.fetchMerchantList();
-    }
+  },
+  onLoad() {
+    this.fetchMerchantList();
+  },
 };
 </script>
 
 <style scoped>
 .merchant-list-container {
-    padding: 20px;
-    background-color: #f5f5f5;
-    min-height: 100vh;
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
 }
 
 /* 商户列表 */
 .merchant-list {
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 商户列表项 */
 .merchant-item {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
 }
 
 .merchant-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .merchant-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid #eee;
-    margin-right: 15px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #eee;
+  margin-right: 15px;
 }
 
 .merchant-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .shop-name {
-    font-size: 16px;
-    color: #333;
-    font-weight: 500;
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
 }
 
 /* 无数据提示 */
 .empty-tip {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    color: #999;
-    font-size: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
 }
 </style>

@@ -4,11 +4,11 @@
     <view class="header">
       <view class="statistic">
         <text class="label">总收入</text>
-        <text class="amount income">+￥{{ totalIncome }}</text>
+        <text class="amount income">+￥{{ formatAmount(totalIncome) }}</text>
       </view>
       <view class="statistic">
         <text class="label">总支出</text>
-        <text class="amount expense">-￥{{ totalExpense }}</text>
+        <text class="amount expense">-￥{{ formatAmount(totalExpense) }}</text>
       </view>
     </view>
 
@@ -40,11 +40,15 @@
         <view class="month-statistic">
           <view class="statistic">
             <text class="label">当月收入</text>
-            <text class="amount income">+￥{{ group.monthIncome }}</text>
+            <text class="amount income"
+              >+￥{{ formatAmount(group.monthIncome) }}</text
+            >
           </view>
           <view class="statistic">
             <text class="label">当月支出</text>
-            <text class="amount expense">-￥{{ group.monthExpense }}</text>
+            <text class="amount expense"
+              >-￥{{ formatAmount(group.monthExpense) }}</text
+            >
           </view>
         </view>
 
@@ -82,6 +86,14 @@ export default {
     };
   },
   methods: {
+    // 格式化金额，确保两位小数
+    formatAmount(amount) {
+      // 确保是数字类型
+      const num = Number(amount);
+      // 格式化为两位小数，不足补0
+      return num.toFixed(2);
+    },
+
     // 格式化日期
     formatDate(timestamp) {
       const date = new Date(timestamp);
@@ -95,12 +107,10 @@ export default {
       try {
         const response = await request({
           method: "GET",
-          url: "/user/getUserInfo",
+          url: "/shop/mershopinfo",
         });
-        // console.log(response)
         if (response && response.data) {
           this.localid = response.data.id;
-          // console.log(this.localid)
           await this.fetchMerchantList();
         }
       } catch (error) {
@@ -124,7 +134,7 @@ export default {
           },
         });
 
-        // console.log(response)
+        console.log(response);
         if (response?.code === 200) {
           this.processBillData(response.data);
         } else {
@@ -149,8 +159,6 @@ export default {
           (order) => order.status === "已支付" || order.status === "已退款"
         );
 
-        // console.log('过滤后的订单数据:', filteredData);
-
         // 将订单数据转换为账单格式
         this.billList = filteredData.map((order) => ({
           id: order.id,
@@ -163,8 +171,6 @@ export default {
           status: order.status,
         }));
 
-        // console.log('处理后的账单数据:', this.billList);
-
         this.calculateTotals();
         this.groupBillByMonth();
       } catch (error) {
@@ -172,6 +178,7 @@ export default {
         throw error;
       }
     },
+
     // 计算总收入和总支出
     calculateTotals() {
       this.totalIncome = this.billList

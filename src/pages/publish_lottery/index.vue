@@ -1,12 +1,5 @@
 <template>
   <view class="container">
-    <!-- 添加抽奖按钮 -->
-    <view class="add-button">
-      <button class="primary-button" @click="openAddLotteryDialog">
-        + 添加抽奖
-      </button>
-    </view>
-
     <!-- 抽奖列表 -->
     <view class="lottery-list">
       <view v-if="lotteryList.length === 0" class="empty-tip">
@@ -153,6 +146,12 @@
         </view>
       </view>
     </uni-popup>
+
+    <view class="add-button">
+      <button class="primary-button" @click="openAddLotteryDialog">
+        + 添加抽奖
+      </button>
+    </view>
   </view>
 </template>
 
@@ -425,6 +424,9 @@ export default {
       if (!this.validatePrizeCount()) {
         return false;
       }
+      if (!this.validatePrizeProbability()) {
+        return false;
+      }
       if (!this.validateTime()) {
         return false;
       }
@@ -438,6 +440,20 @@ export default {
           title: "奖品数量必须大于0",
           icon: "none",
         });
+        return false;
+      }
+      return true;
+    },
+    // 验证中奖概率
+    validatePrizeProbability() {
+      const prob = parseFloat(this.currentLottery.probability);
+      if (isNaN(prob)) {
+        uni.showToast({ title: "请输入有效的数字", icon: "none" });
+        return false;
+      }
+      if (prob <= 0 || prob > 1) {
+        // 通常概率不能为0
+        uni.showToast({ title: "中奖概率必须大于0且小于等于1", icon: "none" });
         return false;
       }
       return true;
@@ -584,15 +600,12 @@ export default {
 }
 
 .add-button {
-  position: fixed;
-  bottom: 40rpx;
-  left: 0;
-  right: 0;
+  margin: 40rpx 0;
   text-align: center;
 }
 
 .primary-button {
-  background-color: #ff9a9e;
+  background-color: #f76c71;
   color: #fff;
   width: 80%;
   border-radius: 40rpx;
@@ -601,14 +614,14 @@ export default {
   box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 
-  &:hover {
-    background-color: #ff8a92;
-    box-shadow: 0 6rpx 12rpx rgba(0, 0, 0, 0.2);
+  &:active {
+    background-color: #e55c60;
+    transform: scale(0.98);
   }
 }
 
 .lottery-list {
-  margin-bottom: 100rpx;
+  padding-bottom: 120rpx; /* 为底部按钮留出空间 */
 }
 
 .lottery-item {
@@ -741,6 +754,7 @@ export default {
   border-radius: 20rpx;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
   position: relative;
+  z-index: 2000;
 }
 
 .popup-header {

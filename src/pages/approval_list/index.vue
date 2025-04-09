@@ -40,7 +40,7 @@ export default {
       isLoading: false,
     };
   },
-  onLoad() {
+  onShow() {
     this.fetchMerchantList();
   },
   methods: {

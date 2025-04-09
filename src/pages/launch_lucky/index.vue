@@ -43,7 +43,7 @@
     <!-- 抽奖后界面 -->
     <view v-else-if="isDrawed || drawResult" class="draw-after">
       <!-- 中奖提示部分 -->
-      <view class="win-tip">
+      <view class="win-tip" v-if="!drawResult">
         <text
           class="win-text"
           :class="{ 'win-color': isWinner, 'lose-color': !isWinner }"
@@ -106,9 +106,9 @@ export default {
       return now >= start && now <= end;
     },
   },
-  onLoad() {
+  async onLoad() {
     const merchant = getApp().globalData.tempMerchant;
-    console.log(merchant);
+    console.log("商家信息", merchant);
 
     this.sponsorAvatar = merchant.shopAvatar;
     this.sponsorName = merchant.name;
@@ -119,8 +119,8 @@ export default {
     this.endTime = merchant.endTime; // 设置结束时间
     this.shopId = merchant.shopid; // 设置商户ID
 
-    this.getUserInfo();
-    this.checkUserDrawStatus();
+    await this.getUserInfo();
+    await this.checkUserDrawStatus();
   },
   methods: {
     // 判断用户是否已经参与过这个抽奖
@@ -132,28 +132,27 @@ export default {
           data: {
             userId: this.userid,
             prizeId: this.prizeId,
-            shopId: this.shopId,
+            shopid: this.shopId,
           },
         });
 
+        console.log(userid, prizeId, shopId);
         console.log("检查用户抽奖状态:", response);
 
-        if (response?.code === 200) {
-          if (response.data === "您还没有参与过该活动") {
-            // 用户未参与过，保持初始状态
-            this.drawResult = false;
-            this.isDrawed = false;
-          } else {
-            // 用户已参与过
-            this.drawResult = true;
-            this.isDrawed = true;
-            // 根据实际接口返回设置中奖状态
-            this.isWinner = response.data.isWin || false;
-            this.prizeInfo = response.data.prizeName || this.prizeInfo;
-          }
+        if (response.data.code === 200) {
+          // 用户未参与过，保持初始状态
+          this.drawResult = false;
+          this.isDrawed = false;
         }
       } catch (error) {
-        console.error("检查用户抽奖状态失败:", error);
+        // 用户已参与过
+        this.drawResult = true;
+        this.isDrawed = true;
+        this.isWinner = false; // 确保 isWinner 为 false
+        this.prizeInfo = "";
+        // 设置已参与提示信息
+        this.errorMessage = "您已参与过该抽奖，不能重复参与";
+        this.$forceUpdate(); // 强制更新视图
       }
     },
     // 获取用户信息
@@ -163,7 +162,7 @@ export default {
           method: "GET",
           url: "/user/getUserInfo",
         });
-
+        console.log("获取用户信息:", response);
         if (response?.code === 200 && response.data) {
           this.userid = response.data.id;
           this.userName = response.data.nickname;
@@ -201,14 +200,8 @@ export default {
           this.drawResult = true;
           this.isDrawed = true;
 
-          // 明确区分中奖和未中奖状态
-          if (response.data.isWin) {
-            this.isWinner = true;
-            this.prizeInfo = response.data.prizeName || this.prizeInfo;
-          } else {
-            this.isWinner = false;
-            this.errorMessage = response.message || "很遗憾，您没有中奖";
-          }
+          this.isWinner = true;
+          this.prizeInfo = response.data.prizeName || this.prizeInfo;
         } else {
           this.drawResult = true;
           this.isDrawed = true;

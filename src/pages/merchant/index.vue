@@ -180,16 +180,16 @@ export default {
         console.log("提交结果:", response);
 
         if (response.code === 200) {
-          uni.showToast({ title: "保存成功", icon: "success" });
+          uni.showToast({ title: "申请提交成功", icon: "success" });
           uni.navigateTo({ url: "/pages/index/index" });
         } else {
-          throw new Error(response?.message || "保存失败");
+          throw new Error(response?.message || "申请提交失败");
         }
       } catch (error) {
         uni.hideLoading();
-        console.error("保存失败:", error);
+        console.error("申请提交失败:", error);
         uni.showToast({
-          title: error.message || "保存失败，请重试",
+          title: error.message || "申请提交失败，请重试",
           icon: "none",
           duration: 3000,
         });
@@ -357,7 +357,7 @@ image {
 }
 
 .submit-btn {
-  background-color: #ff9a9e;
+  background-color: #f76c71;
   color: #fff;
   border-radius: 8px;
   padding: 12px;

@@ -4,11 +4,11 @@
     <view class="header">
       <view class="statistic">
         <text class="label">总收入</text>
-        <text class="amount income">+￥{{ totalIncome }}</text>
+        <text class="amount income">+￥{{ formatAmount(totalIncome) }}</text>
       </view>
       <view class="statistic">
         <text class="label">总支出</text>
-        <text class="amount expense">-￥{{ totalExpense }}</text>
+        <text class="amount expense">-￥{{ formatAmount(totalExpense) }}</text>
       </view>
     </view>
 
@@ -40,14 +40,17 @@
         <view class="month-statistic">
           <view class="statistic">
             <text class="label">当月收入</text>
-            <text class="amount income">+￥{{ group.monthIncome }}</text>
+            <text class="amount income"
+              >+￥{{ formatAmount(group.monthIncome) }}</text
+            >
           </view>
           <view class="statistic">
             <text class="label">当月支出</text>
-            <text class="amount expense">-￥{{ group.monthExpense }}</text>
+            <text class="amount expense"
+              >-￥{{ formatAmount(group.monthExpense) }}</text
+            >
           </view>
         </view>
-
         <!-- 当月账单列表 -->
         <view
           v-for="(item, subIndex) in group.items"
@@ -83,6 +86,14 @@ export default {
     };
   },
   methods: {
+    // 格式化金额，确保两位小数
+    formatAmount(amount) {
+      // 确保是数字类型
+      const num = Number(amount);
+      // 格式化为两位小数，不足补0
+      return num.toFixed(2);
+    },
+
     // 格式化日期
     formatDate(timestamp) {
       const date = new Date(timestamp);
@@ -101,6 +112,7 @@ export default {
           },
         });
 
+        console.log(response);
         if (response?.code === 200) {
           this.processBillData(response.data);
         } else {

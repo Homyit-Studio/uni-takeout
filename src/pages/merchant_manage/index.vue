@@ -52,6 +52,10 @@
         <uni-icons type="gift" size="30" color="#1cbf10"></uni-icons>
         <text class="nav-text">个人信息修改</text>
       </view>
+      <view class="nav-item" @click="navigateTo('merchantInfo')">
+        <uni-icons type="gift" size="30" color="#1cbf10"></uni-icons>
+        <text class="nav-text">商户信息修改</text>
+      </view>
     </view>
 
     <!-- 营业时间展示 -->
@@ -332,6 +336,9 @@ export default {
           break;
         case "myLucky":
           url = "/pages/myLucky/index";
+          break;
+        case "merchantInfo":
+          url = "/pages/editMerchantInfo/index";
           break;
       }
       uni.navigateTo({
