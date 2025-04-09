@@ -391,6 +391,10 @@ onUnmounted(() => {
     clearInterval(timer)
   })
   countdownTimers.value = {}
+
+  if (debounceTimer.value) {
+    clearTimeout(debounceTimer.value)
+  }
 })
 
 // 计算属性
@@ -689,8 +693,30 @@ const onShowCart = () => {
   }
 }
 
+// 添加防抖相关的状态
+const isProcessing = ref(false)
+const debounceTimer = ref(null)
+const DEBOUNCE_DELAY = 500 // 设置防抖延迟时间为500ms
+
 // 修改 increaseCount 方法
 const increaseCount = async (item) => {
+  // 如果正在处理中，显示提示并返回
+  if (isProcessing.value) {
+    uni.showToast({
+      title: '操作太快了，请稍候',
+      icon: 'none'
+    })
+    return
+  }
+
+  // 设置处理状态为true
+  isProcessing.value = true
+
+  // 清除之前的定时器
+  if (debounceTimer.value) {
+    clearTimeout(debounceTimer.value)
+  }
+
   try {
     if (!item.count || item.count === 0) {
       // 第一次添加商品，调用添加接口
@@ -730,12 +756,35 @@ const increaseCount = async (item) => {
       title: '操作失败',
       icon: 'none'
     })
+  } finally {
+    // 设置定时器，在指定时间后重置处理状态
+    debounceTimer.value = setTimeout(() => {
+      isProcessing.value = false
+    }, DEBOUNCE_DELAY)
   }
 }
 
-// 修改 decreaseCount 方法
+// 修改 decreaseCount 方法 
 const decreaseCount = async (item) => {
   if (!item.count) return
+
+  // 如果正在处理中，显示提示并返回
+  if (isProcessing.value) {
+    uni.showToast({
+      title: '操作太快了，请稍候',
+      icon: 'none'
+    })
+    return
+  }
+
+  // 设置处理状态为true
+  isProcessing.value = true
+
+  // 清除之前的定时器
+  if (debounceTimer.value) {
+    clearTimeout(debounceTimer.value)
+  }
+
   try {
     if (item.count === 1) {
       // 最后一个商品，需要删除
@@ -769,6 +818,11 @@ const decreaseCount = async (item) => {
       title: '操作失败',
       icon: 'none'
     })
+  } finally {
+    // 设置定时器，在指定时间后重置处理状态
+    debounceTimer.value = setTimeout(() => {
+      isProcessing.value = false
+    }, DEBOUNCE_DELAY)
   }
 }
 

@@ -69,12 +69,12 @@
       </view>
     </view>
 
-    <!-- 修改后的底部结算栏 -->
+    <!-- 修改底部结算栏 -->
     <view class="footer">
       <view class="total">
         合计：<text class="price">￥{{ totalAmount }}</text>
       </view>
-      <view class="submit-btn" @click="handleSubmitOrder">确认支付</view>
+      <view class="submit-btn" :class="{ disabled: isSubmitting }" @click="handleSubmitOrder">确认支付</view>
     </view>
   </view>
 </template>
@@ -104,6 +104,7 @@ const totalAmount = computed(() => {
 // 新增备注、餐具数量和打包费
 const remark = ref('')
 const tablewareNumber = ref(1)
+const isSubmitting = ref(false)
 
 // 在 setup 中添加
 onShow(() => {
@@ -166,10 +167,17 @@ const requestSubscription = () => {
 
 // 修改提交订单处理函数
 async function handleSubmitOrder() {
+  if (isSubmitting.value) return
   if (!address.value) {
-    uni.showToast({ title: '请选择收货地址', icon: 'none' })
+    uni.showToast({
+      title: '请选择收货地址',
+      icon: 'none',
+      duration: 2000
+    })
     return
   }
+
+  isSubmitting.value = true
 
   // 先请求订阅消息授权
   await requestSubscription()
@@ -232,24 +240,33 @@ async function handleSubmitOrder() {
       paySign: paymentParams.paySign,
       complete: (res) => {
         uni.hideLoading();
-        if (res.errMsg === 'requestPayment:fail') {
-          uni.showToast({ title: '支付失败', icon: 'none' });
+        isSubmitting.value = false;
+        if (res.errMsg === 'requestPayment:fail cancel') {
+          uni.navigateBack();
         }
       },
       success: (res) => {
         uni.showToast({ title: '支付成功', icon: 'success' });
-        // 支付成功后的逻辑，如跳转到订单详情页
-        uni.navigateBack({ delta: 1 });
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 1500);
       },
       fail: (err) => {
         uni.showToast({ title: '支付失败', icon: 'none' });
         console.error('支付失败', err);
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 1500);
       }
     });
   } catch (error) {
     uni.hideLoading();
-    uni.showToast({ title: '操作失败', icon: 'none' });
+    uni.showToast({ title: '暂时无法支付', icon: 'none' });
     console.error('操作失败', error);
+    isSubmitting.value = false;
+    setTimeout(() => {
+      uni.navigateBack();
+    }, 1500);
   }
 }
 </script>
@@ -382,6 +399,11 @@ async function handleSubmitOrder() {
     align-items: center;
     justify-content: center;
     font-size: 28rpx;
+
+    &.disabled {
+      background: #999;
+      pointer-events: none;
+    }
   }
 }
 
