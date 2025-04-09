@@ -62,14 +62,14 @@
                 <uni-icons type="list" size="28" color="#FF5500" />
                 <text class="text">营收细则</text>
             </view>
-            <view class="action-item" @click="handleToManage(`editPersonalInfo/index`)">
+            <view class="action-item" @click="handleToManage(`editMerchantInfo/index`)">
                 <uni-icons type="compose" size="28" color="#FF5500" />
-                <text class="text">个人信息修改</text>
+                <text class="text">商家信息修改</text>
             </view>
-            <view class="action-item" @click="handleToManage(`luckys/index`)">
+            <!-- <view class="action-item" @click="handleToManage(`luckys/index`)">
                 <uni-icons type="gift-filled" size="28" color="#FF5500" />
                 <text class="text">抽奖列表</text>
-            </view>
+            </view> -->
             <view class="action-item" @click="handleToManage(`launch_lucky/index`)">
                 <uni-icons type="gift-filled" size="28" color="#FF5500" />
                 <text class="text">进行抽奖</text>
