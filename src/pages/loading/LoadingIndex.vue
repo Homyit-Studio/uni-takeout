@@ -62,7 +62,7 @@ const getShopInfo = async () => {
 const initWebSocket = (shopId) => {
     return new Promise((resolve) => {
         const ws = new WebSocket({
-            url: `wss://1.15.115.21:9000/ws/${shopId}`,
+            url: `wss://sell.homyit2023.online:9000/ws/${shopId}`,
             heartMsg: 'ping',
             onOpen: () => {
                 console.log('WebSocket连接成功')
