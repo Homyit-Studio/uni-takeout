@@ -111,8 +111,12 @@
         <view class="form-item">
           <label>中奖概率</label>
           <input
-            v-model="currentLottery.probability"
+            v-model.number="currentLottery.probability"
+            type="number"
             placeholder="请输入中奖概率(0-1)"
+            min="0"
+            max="1"
+            step="0.01"
           />
         </view>
 
@@ -286,6 +290,7 @@ export default {
 
     // 保存抽奖活动
     saveLottery() {
+      if (!this.validateForm()) return;
       if (this.isEditing) {
         this.updateLottery();
       } else {
@@ -451,14 +456,12 @@ export default {
         uni.showToast({ title: "请输入有效的数字", icon: "none" });
         return false;
       }
-      if (prob <= 0 || prob > 1) {
-        // 通常概率不能为0
-        uni.showToast({ title: "中奖概率必须大于0且小于等于1", icon: "none" });
+      if (prob < 0 || prob > 1) {
+        uni.showToast({ title: "中奖概率必须在0-1之间", icon: "none" });
         return false;
       }
       return true;
     },
-
     // 验证时间
     validateTime() {
       if (!this.currentLottery.startTime) {
