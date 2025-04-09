@@ -1,12 +1,12 @@
 <template>
     <view class="container">
         <!-- 用户信息卡片 -->
-        <view class="user-card" :style="{ paddingTop: statusBarHeight + 'px' }">
+        <view class="user-card" :style="{ paddingTop: statusBarHeight + 20 + 'px' }">
             <view class="card-content">
                 <image class="avatar" :src="userInfo.avatar" mode="aspectFill" @click="goToUserProfile"></image>
                 <view class="user-meta">
                     <view class="name-line">
-                        <text class="username">{{ userInfo.nickname || '点击头像登录' }}</text>
+                        <text class="username">{{ userInfo.nickname }}</text>
                         <view class="role-tag" :class="roleClass" @click.stop="showRoleSwitcher">
                             {{ roleText }}
                             <uni-icons type="bottom" color="#fff" size="20" />
@@ -28,7 +28,7 @@
                     </view> -->
                 </view>
                 <uni-icons @click="goToUserProfile" type="right" size="20" color="rgba(255,255,255,0.8)"
-                    style="margin-top: 60rpx;"></uni-icons>
+                    style="margin-top: 10rpx;"></uni-icons>
             </view>
         </view>
 
@@ -199,7 +199,6 @@ onShow(() => {
 })
 
 // 获取个人信息
-// 方法
 const showRoleSwitcher = () => {
     // 首先检查本地存储的角色权限
     const roles = ['user']
@@ -308,31 +307,33 @@ const mockFetchUserInfo = () => {
 // 修改获取用户信息方法
 const getUserInfo = async () => {
     try {
-        // 模拟从接口获取用户信息
         const res = await request({
             url: '/user/getUserInfo',
             method: 'GET'
         })
-        console.log(res.data)
-        userInfo.value = res.data
-        // 测试数据处
-        userInfo.value.isStore = true
-        userInfo.value.isAdmin = true
 
-        // 设置用户角色（优先使用本地存储的角色）
+        // 设置基本用户信息
+        userInfo.value = {
+            id: res.data.id,
+            nickname: res.data.nickname,
+            avatar: res.data.avatar,
+            isStore: res.data.isStore,
+            isAdmin: res.data.isAdmin,
+            createTime: res.data.createTime
+        }
+
+        // 设置用户角色
         const storedRole = uni.getStorageSync('userRole')
         if (storedRole) {
             userRole.value = storedRole
         } else {
-            // 如果本地没有存储角色，则根据用户权限设置
-            if (res.isAdmin) {
+            if (res.data.isAdmin) {
                 userRole.value = 'admin'
-            } else if (res.isStore) {
+            } else if (res.data.isStore) {
                 userRole.value = 'merchant'
             } else {
                 userRole.value = 'user'
             }
-            // 将新设置的角色保存到本地
             uni.setStorageSync('userRole', userRole.value)
         }
     } catch (error) {
@@ -470,8 +471,8 @@ $secondary-color: #FFA99F;
     }
 
     .avatar {
-        width: 120rpx;
-        height: 120rpx;
+        width: 160rpx;
+        height: 160rpx;
         border-radius: 50%;
         border: 4rpx solid rgba(255, 255, 255, 0.3);
     }

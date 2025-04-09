@@ -68,13 +68,13 @@
                 </view>
 
                 <view class="function-grid">
-                    <view class="grid-item merchant-list" @click="goToManage(`shopProduncts_manage/index`)"
+                    <view class="grid-item merchant-list" @click="goToManage(`productManage/EnterProductManageIndex`)"
                         @touchstart="handleTouchStart" @touchend="handleTouchEnd">
                         <view class="icon-wrapper">
                             <uni-icons type="shop-filled" size="36" color="#fff" />
                         </view>
                         <text class="item-title">商家列表</text>
-                        <text class="item-subtitle">管理所有入驻商家</text>
+                        <text class="item-subtitle">管理所有入驻商家商品</text>
                     </view>
 
                     <view class="grid-item merchant-audit" @click="goToManage(`approval_list/index`)"
@@ -120,6 +120,14 @@
                         </view>
                         <text class="item-title">抽奖管理</text>
                         <text class="item-subtitle">管理商家抽奖</text>
+                    </view>
+                    <view class="grid-item user-manage" @click="goToManage(`merchantLucky/index`)"
+                        @touchstart="handleTouchStart" @touchend="handleTouchEnd">
+                        <view class="icon-wrapper">
+                            <uni-icons type="vip" size="36" color="#fff" />
+                        </view>
+                        <text class="item-title">中奖记录</text>
+                        <text class="item-subtitle">用户中奖记录</text>
                     </view>
                     <view class="grid-item user-manage" @click="goToManage(`shopRevenue_manage/index`)"
                         @touchstart="handleTouchStart" @touchend="handleTouchEnd">

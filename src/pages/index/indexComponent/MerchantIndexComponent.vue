@@ -62,6 +62,26 @@
                 <uni-icons type="compose" size="28" color="#FF5500" />
                 <text class="text">个人信息修改</text>
             </view>
+            <view class="action-item" @click="handleToManage(`luckys/index`)">
+                <uni-icons type="gift-filled" size="28" color="#FF5500" />
+                <text class="text">抽奖列表</text>
+            </view>
+            <view class="action-item" @click="handleToManage(`launch_lucky/index`)">
+                <uni-icons type="gift-filled" size="28" color="#FF5500" />
+                <text class="text">进行抽奖</text>
+            </view>
+            <view class="action-item" @click="handleToManage(`myLucky/index`)">
+                <uni-icons type="gift-filled" size="28" color="#FF5500" />
+                <text class="text">我的中奖记录</text>
+            </view>
+            <view class="action-item" @click="handleToManage(`userLucky/index`)">
+                <uni-icons type="gift-filled" size="28" color="#FF5500" />
+                <text class="text">商铺查询中奖</text>
+            </view>
+            <view class="action-item" @click="goToMerchantConfig(storeInfo.id)">
+                <uni-icons type="wallet" size="28" color="#FF5500" />
+                <text class="text">支付配置</text>
+            </view>
             <view class="action-item">
                 <uni-icons type="gear-filled" size="28" color="#FF5500" />
                 <button open-type="openSetting" bindopensetting="callback"
@@ -96,7 +116,6 @@ const fetchShopInfo = async () => {
         console.log('获取商家信息:', res)
         storeInfo.value = res.data
         isStoreOpen.value = isStoreOpenNow(res.data.openTime, res.data.closeTime)
-
     } catch (error) {
         console.error('获取商家信息失败', error)
     }
@@ -126,9 +145,7 @@ const isStoreOpenNow = (openTime, closeTime) => {
 onMounted(() => {
     // 初始化数据
     statusBarHeight.value = uni.getWindowInfo().statusBarHeight
-    setTimeout(() => {
-        fetchShopInfo()
-    }, 3000)
+    fetchShopInfo()
     // 获取本地存储的地址列表
 
 })
@@ -160,6 +177,12 @@ const goToProductManage = (id) => {
 const goToOrderManage = (shopid) => {
     uni.navigateTo({ url: `/pages/orderAdmin/AdminOrderIndex?shopid=${shopid}` })
 }
+
+const goToMerchantConfig = (id) => {
+    uni.navigateTo({
+        url: `/pages/merchantConfig/MerchantConfigIndex?id=${id}`
+    })
+}
 </script>
 
 <style scoped lang="scss">
@@ -168,6 +191,7 @@ $secondary-gradient: linear-gradient(135deg, #fd8750 0%, #eb7843 100%);
 
 .merchant-container {
     min-height: 100vh;
+    padding-bottom: 100rpx;
     background: #f8f9fb;
 }
 
@@ -340,15 +364,15 @@ $secondary-gradient: linear-gradient(135deg, #fd8750 0%, #eb7843 100%);
 .quick-actions {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10rpx;
-    padding: 30rpx 10rpx;
+    gap: 15rpx;
+    padding: 20rpx 10rpx 20rpx 10rpx;
     background: #fff;
     margin: 30rpx;
     border-radius: 24rpx;
     box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.05);
 
     .action-item {
-        padding: 30rpx;
+        padding: 20rpx 15rpx;
         text-align: center;
         background: #f8f9fb;
         border-radius: 16rpx;
@@ -361,9 +385,12 @@ $secondary-gradient: linear-gradient(135deg, #fd8750 0%, #eb7843 100%);
 
         .text {
             display: block;
-            margin-top: 15rpx;
-            font-size: 26rpx;
+            margin-top: 10rpx;
+            font-size: 24rpx;
             color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     }
 }

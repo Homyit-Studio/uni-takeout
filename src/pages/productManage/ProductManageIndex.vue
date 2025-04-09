@@ -15,10 +15,10 @@
     <!-- 顶部区域背景 -->
     <view class="top_area area_height" :style="{
       paddingTop: statusBarHeight + 44 + 'px',
-      'background-image': `url(${shopInfo.photo})`
+      'background-image': `url(${shopInfo?.photo})`
     }" data-type="1">
       <view class="shop-header">
-        <image class="shop-avatar" :src="shopInfo.avatar" mode="aspectFill" />
+        <image class="shop-avatar" :src="shopInfo?.avatar" mode="aspectFill" />
         <view class="shop-details">
           <text class="shop-name">{{ shopInfo.name }}</text>
           <view class="status-tag" :style="{ color: isStoreOpen(shopInfo) ? '#07C160' : '#FF5500' }">
@@ -44,22 +44,18 @@
 
     <!-- 商品管理 -->
     <template v-if="tabIndex === 0">
+      <view class="section-title">常售餐饮</view>
       <view class="cate_content">
-        <!-- 分类导航 -->
         <scroll-view scroll-y="true" :scroll-top="leftScrollTop" class="left"
           :style="{ 'height': scrollHeight + 'px', 'top': stickyTop + 40 + 'px' }">
-          <view v-for="(item, index) in categoryList" :key="item.id" class="menu_item"
-            :class="{ 'menu_item_active': currentCategoryId === item.id }">
-            <view class="menu_name" @click="selectCategory(item)">
-              {{ item.name }}
-            </view>
+          <view class="menu_name" :id="'menu_name' + index" :class="{ 'menu_name_active': currentIndex == index }"
+            v-for="(item, index) in categoryList" :key="index" @click="onChangeCate(item, index)">
+            <text class="name">{{ item.name }}</text>
             <view class="menu_actions">
-              <!-- <uni-icons type="compose" size="24" color="#999" @click="showEditCategoryDialog(item)"></uni-icons> -->
-              <uni-icons type="trash" size="24" color="#FF5500" @click="showDeleteConfirm(item)"></uni-icons>
+              <uni-icons type="trash" size="24" color="#FF5500" @click.stop="showDeleteConfirm(item)"></uni-icons>
             </view>
           </view>
-
-          <!-- 添加分类 -->
+          <!-- 添加分类按钮 -->
           <view class="add-category" @click="showAddCategoryDialog">
             <view class="add-box">
               <uni-icons type="plusempty" size="24" color="#ccc" />
@@ -68,18 +64,17 @@
           </view>
         </scroll-view>
 
-        <!-- 商品列表 -->
         <view class="right">
-          <view class="item" v-for="category in categoryList" :key="category.id">
-            <view class="title sticky_title" :style="{ 'top': stickyTop + 35 + 'px' }">
+          <view class="item" v-for="(category, index) in categoryList" :key="index" :id="'right-item-' + index">
+            <view class="title sticky_title" :style="{ 'top': stickyTop + 37 + 'px' }">
               {{ category.name }}
             </view>
             <view class="content">
               <view class="product_item" v-for="product in category.products" :key="product.id">
                 <image :src="product.image" mode="aspectFill" class="product_img"></image>
                 <view class="product_info">
-                  <view style="display: flex;justify-content: space-between;"> <text class="name">{{ product.name
-                      }}</text>
+                  <view class="name-status">
+                    <text class="name">{{ product.name }}</text>
                     <text class="status" :style="{ color: product.status === 1 ? '#07C160' : '#FF5500' }">
                       {{ product.status === 1 ? '上架中' : '已下架' }}
                     </text>
@@ -90,15 +85,11 @@
                     <view class="action-buttons">
                       <text class="btn edit" @click="editProduct(category, product)">修改</text>
                       <text class="btn delete" @click="deleteProduct(category, product)">删除</text>
-                      <!-- <text class="btn toggle-status" @click.stop="toggleProductStatus(product)"
-                        :style="{ backgroundColor: product.status === '1' ? '#FF5500' : '#07C160' }">
-                        {{ product.status === '1' ? '下架' : '上架' }}
-                      </text> -->
                     </view>
                   </view>
                 </view>
               </view>
-              <!-- 添加商品 -->
+              <!-- 添加商品按钮 -->
               <view class="add-product" @click="showAddProductDialog(category)">
                 <view class="add-box">
                   <uni-icons type="plusempty" size="32" color="#ccc" />
@@ -177,7 +168,15 @@ const categoryList = ref([]) // 分类列表
 const selectedCategory = ref(null) // 当前选中的分类
 const actionPopup = ref(null) // 操作菜单弹窗
 
-const shopInfo = ref({})
+const shopInfo = ref({
+  photo: '',
+  avatar: '',
+  name: '',
+  address: '',
+  openTime: '',
+  closeTime: '',
+  phone: ''
+})
 const productList = ref([])
 const groupList = ref([])
 const currentCategoryId = ref(null) // 当前选中的分类ID
@@ -223,9 +222,9 @@ const topList = ref([])
 // 在onLoad中获取分类数据
 onLoad(async (options) => {
   console.log('接收到的参数:', options)
-  const shopId = await fetchShopInfo()
-  await fetchCategories(shopId) // 获取分类
-  await fetchProductDetail(shopId)
+  await fetchShopInfo(options.id)
+  await fetchCategories(options.id) // 获取分类
+  await fetchProductDetail(options.id)
   backIcon.value = getCurrentPages().length === 1 ? "home" : "back"
 })
 
@@ -279,6 +278,62 @@ const selectCategory = (category) => {
   // 这里可以加载该分类下的商品
 }
 
+// 修改分类切换逻辑
+const onChangeCate = async (item, index) => {
+  if (currentIndex.value == index) return
+
+  isClick.value = true
+  currentIndex.value = index
+  leftScrollTop.value = rightItemHeight.value * index
+
+  await nextTick()
+
+  const targetElement = topList.value[index]
+  if (targetElement) {
+    uni.pageScrollTo({
+      scrollTop: targetElement.top - stickyTop.value,
+      duration: 300,
+      complete: () => {
+        setTimeout(() => {
+          isClick.value = false
+        }, 350)
+      },
+    })
+  }
+}
+
+// 更新菜单激活状态
+const updateMenuActive = (currentScrollTop) => {
+  if (isClick.value) return;
+  currentScrollTop = parseInt(currentScrollTop);
+
+  // 获取所有商品类别的位置
+  const positions = topList.value.map((item, index) => ({
+    index,
+    top: item.top - stickyTop.value,
+    bottom: item.bottom - stickyTop.value
+  }));
+
+  // 找到当前滚动位置对应的类别
+  for (let i = 0; i < positions.length; i++) {
+    if (currentScrollTop >= positions[i].top && currentScrollTop < positions[i].bottom) {
+      if (currentIndex.value !== i) {
+        currentIndex.value = i;
+        // 更新左侧滚动位置
+        leftScrollTop.value = i * rightItemHeight.value;
+      }
+      break;
+    }
+  }
+}
+
+// 页面滚动处理
+onPageScroll(({ scrollTop: currentScrollTop }) => {
+  scrollTop.value = currentScrollTop
+  updateOpacity(currentScrollTop)
+  updateMenuActive(currentScrollTop)
+})
+
 // 显示编辑分类对话框
 const showEditCategoryDialog = (category) => {
   uni.showModal({
@@ -306,7 +361,6 @@ const showDeleteConfirm = (category) => {
   })
 }
 
-// 更新分类
 // 更新分类
 const updateCategory = async (id, newName) => {
   try {
@@ -397,15 +451,17 @@ const deleteCategory = async (id) => {
   }
 }
 
-const fetchShopInfo = async () => {
+const fetchShopInfo = async (id) => {
   try {
     const res = await request({
-      url: '/shop/mershopinfo',
-      method: 'GET',
+      url: '/shop/getshopInfo',
+      method: 'POST',
+      data: {
+        "shopid": id
+      }
     })
     console.log('获取店铺状态详情:', res.data)
     shopInfo.value = res.data
-    return res.data.id
   } catch (error) {
     console.error("获取店铺信息失败", error)
     uni.showToast({ title: '获取店铺信息失败', icon: 'none' })
@@ -640,22 +696,6 @@ const deleteProduct = async (category, product) => {
   })
 }
 
-// 页面滚动处理
-onPageScroll(({ scrollTop: currentScrollTop }) => {
-  scrollTop = currentScrollTop
-  updateOpacity(currentScrollTop)
-
-  if (!isClick.value) {
-    for (let i = 0; i < topList.value.length; i++) {
-      if (currentScrollTop >= topList.value[i].top && currentScrollTop <= topList.value[i].bottom) {
-        currentIndex.value = i
-        leftScrollTop.value = rightItemHeight.value * i
-        break
-      }
-    }
-  }
-})
-
 const updateOpacity = (scrollTop) => {
   const opacity = Math.min(scrollTop / 100, 1)
   backgroundColor.value = `rgba(255,255,255,${opacity})`
@@ -756,13 +796,13 @@ const isStoreOpen = (store) => {
   box-sizing: border-box;
 
   .shop-header {
-    border-radius: 20rpx;
+    // border-radius: 0 20rpx;
     box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     width: 90%;
     backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(0, 0, 0, 0.3);
     padding: 40rpx;
 
     .shop-avatar {
@@ -858,96 +898,84 @@ const isStoreOpen = (store) => {
   }
 }
 
+.section-title {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: left;
+  background-color: #fff;
+  font-size: 32rpx;
+  color: #333;
+  padding-left: 20rpx;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+}
+
 .cate_content {
   display: flex;
   flex-direction: row;
-  background-color: #fff;
 
   .left {
     position: sticky;
     top: 100rpx;
     width: 200rpx;
     background: #fff;
-    border-right: 1rpx solid #eee;
 
     .menu_name {
       height: 100rpx;
-      line-height: 100rpx;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20rpx;
       color: #8d8d8d;
-      font-size: 24rpx;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      transition: background-color 0.2s ease;
+      font-size: 28rpx;
+      position: relative;
 
       &.menu_name_active {
         background: #f5f5f5;
         color: #333;
-        border-left: 4px solid #ff5500;
-      }
-    }
-
-    .add-category {
-      height: 100rpx;
-      padding: 10rpx 20rpx;
-
-      .add-box {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        border: 2rpx dashed #ccc;
-        border-radius: 8rpx;
-        color: #ccc;
-        transition: border-color 0.2s ease;
-
-        &:hover {
-          border-color: #ff5500;
-        }
-
-        .text {
-          margin-top: 10rpx;
-          font-size: 24rpx;
-        }
-      }
-    }
-
-    .menu_item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 100rpx;
-      padding: 0 20rpx;
-      border-bottom: 1rpx solid #f5f5f5;
-      transition: background-color 0.2s ease;
-
-      &.menu_item_active {
-        background: #f5f5f5;
+        font-weight: bold;
         border-left: 4px solid #ff5500;
       }
 
-      .menu_name {
+      .name {
         flex: 1;
-        color: #8d8d8d;
-        font-size: 24rpx;
+        text-align: center;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
       .menu_actions {
+        width: 40rpx;
         display: flex;
-        gap: 20rpx;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.6;
+        transition: opacity 0.2s;
 
-        .uni-icons {
-          cursor: pointer;
-          transition: color 0.2s ease;
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
 
-          &:hover {
-            color: #ff5500;
-          }
+    .add-category {
+      padding: 20rpx;
+
+      .add-box {
+        height: 80rpx;
+        border: 1px dashed #ddd;
+        border-radius: 8rpx;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+
+        .text {
+          color: #999;
+          font-size: 24rpx;
+          margin-left: 10rpx;
         }
       }
     }
@@ -956,55 +984,54 @@ const isStoreOpen = (store) => {
   .right {
     flex: 1;
     min-height: 100rpx;
-    background: #f8f9fa;
-    padding: 20rpx;
+    background: #f5f5f5;
+    padding: 0 20rpx;
 
     .item {
-      border-radius: 12rpx;
       background: #fff;
       margin-bottom: 20rpx;
-      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 
       .title {
         position: sticky;
-        top: 100rpx;
         height: 60rpx;
         line-height: 60rpx;
         background: #fff;
         padding-left: 20rpx;
-        z-index: 1;
         font-size: 28rpx;
         font-weight: bold;
-        color: #333;
       }
 
       .content {
         .product_item {
+          height: 160rpx;
           display: flex;
-          align-items: center;
           padding: 20rpx;
           border-bottom: 1rpx solid #eee;
 
           .product_img {
-            width: 120rpx;
-            height: 120rpx;
+            width: 160rpx;
+            height: 160rpx;
             border-radius: 8rpx;
-            margin-right: 20rpx;
           }
 
           .product_info {
             flex: 1;
+            padding-left: 20rpx;
 
-            .name {
-              font-size: 28rpx;
-              font-weight: 500;
+            .name-status {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
               margin-bottom: 10rpx;
-              color: #333;
-            }
 
-            .status {
-              font-size: 24rpx;
-              margin-bottom: 8rpx;
+              .name {
+                font-size: 28rpx;
+                font-weight: 500;
+              }
+
+              .status {
+                font-size: 24rpx;
+              }
             }
 
             .introduction {
@@ -1029,24 +1056,17 @@ const isStoreOpen = (store) => {
                 gap: 10rpx;
 
                 .btn {
-                  z-index: 1;
                   padding: 8rpx 20rpx;
-                  border-radius: 10rpx;
+                  border-radius: 30rpx;
                   font-size: 24rpx;
                   color: white;
-                  cursor: pointer;
-                  transition: opacity 0.2s ease;
 
                   &.edit {
                     background: #0084ff;
                   }
 
                   &.delete {
-                    background: #FF5500;
-                  }
-
-                  &:hover {
-                    opacity: 0.8;
+                    background: #ff5500;
                   }
                 }
               }
@@ -1055,27 +1075,21 @@ const isStoreOpen = (store) => {
         }
 
         .add-product {
-          height: 240rpx;
           padding: 20rpx;
 
           .add-box {
-            height: 100%;
+            height: 200rpx;
+            border: 1px dashed #ddd;
+            border-radius: 8rpx;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border: 2rpx dashed #ccc;
-            border-radius: 8rpx;
-            color: #ccc;
-            transition: border-color 0.2s ease;
-
-            &:hover {
-              border-color: #ff5500;
-            }
 
             .text {
-              margin-top: 10rpx;
+              color: #999;
               font-size: 24rpx;
+              margin-top: 10rpx;
             }
           }
         }
