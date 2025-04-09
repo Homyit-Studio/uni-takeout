@@ -54,7 +54,11 @@
                 <uni-icons type="compose" size="28" color="#FF5500" />
                 <text class="text">发布抽奖</text>
             </view>
-            <view class="action-item" @click="handleToManage(`shopRevenue_manage/index`)">
+            <!-- <view class="action-item" @click="handleToManage(`shopRevenue_manage/index`)">
+                <uni-icons type="list" size="28" color="#FF5500" />
+                <text class="text">营收细则</text>
+            </view> -->
+            <view class="action-item" @click="handleToManage(`revenue_details/index`)">
                 <uni-icons type="list" size="28" color="#FF5500" />
                 <text class="text">营收细则</text>
             </view>
@@ -70,10 +74,10 @@
                 <uni-icons type="gift-filled" size="28" color="#FF5500" />
                 <text class="text">进行抽奖</text>
             </view>
-            <view class="action-item" @click="handleToManage(`myLucky/index`)">
+            <!-- <view class="action-item" @click="handleToManage(`myLucky/index`)">
                 <uni-icons type="gift-filled" size="28" color="#FF5500" />
                 <text class="text">我的中奖记录</text>
-            </view>
+            </view> -->
             <view class="action-item" @click="handleToManage(`userLucky/index`)">
                 <uni-icons type="gift-filled" size="28" color="#FF5500" />
                 <text class="text">商铺查询中奖</text>

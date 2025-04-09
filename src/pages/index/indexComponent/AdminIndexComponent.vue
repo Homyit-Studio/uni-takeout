@@ -14,12 +14,12 @@
             <view class="header-content">
                 <view class="quick-stats">
                     <view class="stat-item">
-                        <text class="stat-value">3</text>
-                        <text class="stat-label">待审商家</text>
+                        <text class="stat-value">test3</text>
+                        <text class="stat-label">test待审商家</text>
                     </view>
                     <view class="stat-item">
-                        <text class="stat-value">1,234</text>
-                        <text class="stat-label">注册用户</text>
+                        <text class="stat-value">test1,234</text>
+                        <text class="stat-label">test注册用户</text>
                     </view>
                 </view>
             </view>
@@ -36,12 +36,12 @@
                     </view>
                     <view class="card-body">
                         <view class="analytic-item">
-                            <text class="value">24</text>
-                            <text class="label">商家</text>
+                            <text class="value">test24</text>
+                            <text class="label">test商家</text>
                         </view>
                         <view class="analytic-item">
-                            <text class="value">156</text>
-                            <text class="label">用户</text>
+                            <text class="value">test156</text>
+                            <text class="label">test用户</text>
                         </view>
                     </view>
                 </view>
@@ -82,9 +82,9 @@
                         <view class="icon-wrapper">
                             <uni-icons type="shop" size="36" color="#fff" />
                         </view>
-                        <text class="item-title">商家审核</text>
-                        <text class="item-subtitle">3 条待审申请</text>
-                        <view class="badge">3</view>
+                        <text class="item-title">test商家审核</text>
+                        <text class="item-subtitle">test3 条待审申请</text>
+                        <view class="badge">test</view>
                     </view>
 
                     <!-- <view class="grid-item user-manage" @click="goToManage(``)" @touchstart="handleTouchStart"

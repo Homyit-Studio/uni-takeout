@@ -43,7 +43,6 @@ onShow(async () => {
     if (localUserData && localUserData.role) {
       userRole.value = localUserData.role
       await setTabBarByRole(localUserData.role)
-      showSkeleton.value = false
       return
     }
 
