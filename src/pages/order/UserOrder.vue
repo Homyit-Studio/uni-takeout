@@ -222,7 +222,7 @@ $border-color: #eee;
 
 .header {
     position: sticky;
-    top: -170rpx;
+    top: -160rpx;
     height: 240rpx;
     padding: 0 32rpx;
     z-index: 2;

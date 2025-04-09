@@ -131,6 +131,11 @@ const shopInfo = ref({
   phone: ''
 })
 
+// 添加防抖相关的状态
+const isProcessing = ref(false)
+const debounceTimer = ref(null)
+const DEBOUNCE_DELAY = 500 // 设置防抖延迟时间为500ms
+
 onMounted(() => {
   statusBarHeight.value = uni.getWindowInfo().statusBarHeight
   if (getCurrentPages().length == 1) {
@@ -308,7 +313,7 @@ const fetchShopProducts = async (shopId) => {
 
 // 获取购物车数据
 const fetchCartData = async (shopId) => {
-  console.log('获取购物车数据:', shopId)
+  // console.log('获取购物车数据:', shopId)
   if (!shopId) {
     console.error('shopId is undefined')
     return
@@ -344,6 +349,23 @@ const fetchCartData = async (shopId) => {
 
 // 增加商品数量
 const increaseCount = async (item) => {
+  // 如果正在处理中，显示提示并返回
+  if (isProcessing.value) {
+    uni.showToast({
+      title: '操作太快了，请稍候',
+      icon: 'none'
+    })
+    return
+  }
+
+  // 设置处理状态为true
+  isProcessing.value = true
+
+  // 清除之前的定时器
+  if (debounceTimer.value) {
+    clearTimeout(debounceTimer.value)
+  }
+
   try {
     // 获取正确的 shopId
     const currentShopId = groupType.value === '开团' ?
@@ -390,12 +412,35 @@ const increaseCount = async (item) => {
       title: '操作失败',
       icon: 'none'
     })
+  } finally {
+    // 设置定时器，在指定时间后重置处理状态
+    debounceTimer.value = setTimeout(() => {
+      isProcessing.value = false
+    }, DEBOUNCE_DELAY)
   }
 }
 
 // 减少商品数量
 const decreaseCount = async (item) => {
   if (!item.count) return
+
+  // 如果正在处理中，显示提示并返回
+  if (isProcessing.value) {
+    uni.showToast({
+      title: '操作太快了，请稍候',
+      icon: 'none'
+    })
+    return
+  }
+
+  // 设置处理状态为true
+  isProcessing.value = true
+
+  // 清除之前的定时器
+  if (debounceTimer.value) {
+    clearTimeout(debounceTimer.value)
+  }
+
   try {
     if (item.count === 1) {
       // 最后一个商品，删除购物车项
@@ -429,6 +474,11 @@ const decreaseCount = async (item) => {
       title: '操作失败',
       icon: 'none'
     })
+  } finally {
+    // 设置定时器，在指定时间后重置处理状态
+    debounceTimer.value = setTimeout(() => {
+      isProcessing.value = false
+    }, DEBOUNCE_DELAY)
   }
 }
 
@@ -559,6 +609,9 @@ const startUserNameRotation = (orderList) => {
 onUnmounted(() => {
   if (userRotationTimer) {
     clearInterval(userRotationTimer)
+  }
+  if (debounceTimer.value) {
+    clearTimeout(debounceTimer.value)
   }
 })
 
