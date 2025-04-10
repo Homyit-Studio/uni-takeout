@@ -117,6 +117,7 @@
             min="0"
             max="1"
             step="0.01"
+            @input="validateProbabilityInput"
           />
         </view>
 
@@ -259,6 +260,21 @@ export default {
       }
     },
 
+    // 实时验证概率输入
+    validateProbabilityInput() {
+      const input = this.currentLottery.probability;
+      if (input === "" || input === null) return;
+
+      let value = parseFloat(input);
+      if (isNaN(value)) {
+        this.currentLottery.probability = 0;
+        return;
+      }
+
+      // 强制限制在0-1之间
+      if (value < 0) this.currentLottery.probability = 0;
+      if (value > 1) this.currentLottery.probability = 1;
+    },
     // 添加/编辑抽奖活动
     openAddLotteryDialog() {
       this.isEditing = false;
@@ -290,7 +306,19 @@ export default {
 
     // 保存抽奖活动
     saveLottery() {
+      // 强制转换概率值为数字
+      this.currentLottery.probability =
+        parseFloat(this.currentLottery.probability) || 0;
+
       if (!this.validateForm()) return;
+
+      // 双重验证确保概率在0-1之间
+      if (this.currentLottery.probability < 0) {
+        this.currentLottery.probability = 0;
+      }
+      if (this.currentLottery.probability > 1) {
+        this.currentLottery.probability = 1;
+      }
       if (this.isEditing) {
         this.updateLottery();
       } else {
@@ -320,7 +348,7 @@ export default {
           productName: this.currentLottery.productName,
           introduction: this.currentLottery.introduction,
           totalAmount: this.currentLottery.amount,
-          probability: this.currentLottery.probability || 0.1, // 默认值
+          probability: parseFloat(this.currentLottery.probability),
           startTime: startTime,
           endTime: endTime,
           createTime: formatDateToBackend(new Date()),
