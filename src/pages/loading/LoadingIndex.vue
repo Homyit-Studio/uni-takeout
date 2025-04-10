@@ -24,10 +24,10 @@ onShow(async () => {
     try {
         await login()
         const userInfo = await getUserInfo()
-        if (userInfo.role === 'merchant') {
-            const shopInfo = await getShopInfo()
-            // await initWebSocket(shopInfo.id)
-        }
+        // if (userInfo.role === 'merchant') {
+        //     const shopInfo = await getShopInfo()
+
+        // }
         // 传递用户信息到index页面
         await navigateBack(userInfo)
     } catch (error) {
@@ -39,47 +39,6 @@ onShow(async () => {
         })
     }
 })
-
-// 获取商铺信息
-const getShopInfo = async () => {
-    try {
-        const res = await request({
-            url: '/shop/mershopinfo',
-            method: 'GET'
-        })
-        if (res.code === 200) {
-            return res.data
-        } else {
-            throw new Error('获取商铺信息失败')
-        }
-    } catch (error) {
-        console.error('获取商铺信息失败：', error)
-        throw error
-    }
-}
-
-// 修改WebSocket初始化函数，添加shopId参数
-const initWebSocket = (shopId) => {
-    return new Promise((resolve) => {
-        const ws = new WebSocket({
-            url: `wss://sell.homyit2023.online:9000/ws/${shopId}`,
-            heartMsg: 'ping',
-            onOpen: () => {
-                console.log('WebSocket连接成功')
-                resolve()
-            },
-            onMessage: (data) => {
-                console.log('收到消息:', data)
-            },
-            onClose: () => {
-                console.log('连接关闭')
-            },
-            onError: (err) => {
-                console.error('连接错误:', err)
-            }
-        })
-    })
-}
 
 // 修改返回函数，使用本地存储替代事件通道
 const navigateBack = (data) => {

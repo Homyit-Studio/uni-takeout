@@ -14,12 +14,12 @@
             </view>
             <view class="stats-card">
                 <view class="stat-item">
-                    <text class="stat-value">56</text>
+                    <text class="stat-value">--</text>
                     <text class="stat-label">今日订单</text>
                 </view>
                 <view class="stat-divider"></view>
                 <view class="stat-item">
-                    <text class="stat-value">¥2,890</text>
+                    <text class="stat-value">--</text>
                     <text class="stat-label">今日营收</text>
                 </view>
             </view>
@@ -33,7 +33,7 @@
                     <uni-icons type="shop-filled" size="42" color="#fff" />
                 </view>
                 <text class="panel-title">商品管理</text>
-                <text class="panel-subtitle">已上架12个商品</text>
+                <text class="panel-subtitle">--</text>
                 <uni-icons type="right" size="20" color="rgba(255,255,255,0.8)" class="arrow" />
             </view>
 
@@ -43,7 +43,7 @@
                     <uni-icons type="list" size="42" color="#fff" />
                 </view>
                 <text class="panel-title">订单管理</text>
-                <text class="panel-subtitle">3个待处理订单</text>
+                <text class="panel-subtitle">--</text>
                 <uni-icons type="right" size="20" color="rgba(255,255,255,0.8)" class="arrow" />
             </view>
         </view>

@@ -14,12 +14,12 @@
             <view class="header-content">
                 <view class="quick-stats">
                     <view class="stat-item">
-                        <text class="stat-value">test3</text>
-                        <text class="stat-label">test待审商家</text>
+                        <text class="stat-value">--</text>
+                        <text class="stat-label">待审商家</text>
                     </view>
                     <view class="stat-item">
-                        <text class="stat-value">test1,234</text>
-                        <text class="stat-label">test注册用户</text>
+                        <text class="stat-value">--</text>
+                        <text class="stat-label">注册用户</text>
                     </view>
                 </view>
             </view>
@@ -36,12 +36,12 @@
                     </view>
                     <view class="card-body">
                         <view class="analytic-item">
-                            <text class="value">test24</text>
-                            <text class="label">test商家</text>
+                            <text class="value">--</text>
+                            <text class="label">商家</text>
                         </view>
                         <view class="analytic-item">
-                            <text class="value">test156</text>
-                            <text class="label">test用户</text>
+                            <text class="value">--</text>
+                            <text class="label">用户</text>
                         </view>
                     </view>
                 </view>

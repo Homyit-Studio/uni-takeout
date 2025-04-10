@@ -7,7 +7,7 @@
         </view>
 
         <!-- 订单类型选项卡 -->
-        <scroll-view class="tabs" :style="{ top: statusBarHeight + 40 + 'px' }" scroll-x :scroll-with-animation="true">
+        <scroll-view class="tabs" :style="{ top: statusBarHeight + 38 + 'px' }" scroll-x :scroll-with-animation="true">
             <view class="tab-container">
                 <view class="tab-item" v-for="(tab, index) in tabs" :key="index"
                     :class="{ active: currentTab === index }" @click="switchTab(index)">
@@ -165,13 +165,16 @@ const refreshOrders = () => {
 }
 
 const viewOrderDetail = async (order) => {
+
     if (order) {
         try {
             // 获取商家电话
             const shopInfo = await request({
-                url: '/shop/mershopinfo',
-                method: 'GET',
+                url: '/shop/getshopInfo',
+                method: 'POST',
+                data: { shopid: order.shopId }
             })
+            console.log(shopInfo)
             // 合并订单信息和商家电话
             const orderInfo = {
                 ...order,

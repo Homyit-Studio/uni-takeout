@@ -303,6 +303,7 @@ onLoad(() => {
     height: 44px;
     background-color: transparent;
     color: #fff;
+    z-index: 10;
 
     .nav-back {
       padding: 10rpx 20rpx;
@@ -346,6 +347,7 @@ onLoad(() => {
     }
 
     .status-tip {
+      z-index: -1;
       font-size: 24rpx;
       opacity: 0.9;
     }

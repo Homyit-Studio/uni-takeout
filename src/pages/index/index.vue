@@ -20,6 +20,8 @@ import MerchantIndex from './indexComponent/MerchantIndexComponent.vue'
 import AdminIndex from './indexComponent/AdminIndexComponent.vue'
 import SkeletonIndex from './indexComponent/SkeletonIndex.vue'
 import { onShow, onPageScroll, onLoad } from '@dcloudio/uni-app'
+import { request } from '@/utils/request'
+import WebSocket from '@/utils/websocket'
 
 const userRole = ref('user')
 const scrollTop = ref(0)
@@ -35,38 +37,80 @@ onLoad(async () => {
   await navigateToLoading()
   showSkeleton.value = false
 })
-
 onShow(async () => {
   try {
     // 首先检查本地存储中是否有用户角色信息
-    const localUserData = uni.getStorageSync('userData')
+    const localUserData = uni.getStorageSync('userData');
     if (localUserData && localUserData.role) {
-      userRole.value = localUserData.role
-      await setTabBarByRole(localUserData.role)
-      return
+      userRole.value = localUserData.role;
+      await setTabBarByRole(localUserData.role);
+      return;
     }
 
-    // 检查是否是从loading页面返回
-    const pages = getCurrentPages()
-    const currentPage = pages[pages.length - 1]
-    const prevPage = pages[pages.length - 2]
+    // 获取当前页面栈
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
 
-    if (prevPage && prevPage.route === 'pages/loading/LoadingIndex') {
-      // 从loading页面返回，获取用户数据
-      const userData = uni.getStorageSync('userData')
-      if (showSkeleton.value && userData && userData.role) {
-        userRole.value = userData.role
-        await setTabBarByRole(userData.role)
+    // 判断当前页面是否是主页面（index页面）
+    if (currentPage && currentPage.route === 'pages/index/index') {
+      // 检查是否是从loading页面返回
+      const prevPage = pages[pages.length - 2];
+      if (prevPage && prevPage.route === 'pages/loading/LoadingIndex') {
+        // 从loading页面返回，获取用户数据
+        const userData = uni.getStorageSync('userData');
+        if (showSkeleton.value && userData && userData.role) {
+          userRole.value = userData.role;
+          await setTabBarByRole(userData.role);
+        }
+        // 清除存储的数据
+        uni.removeStorageSync('userData');
+        showSkeleton.value = false;
       }
-      // 清除存储的数据
-      uni.removeStorageSync('userData')
-      showSkeleton.value = false
     }
   } catch (error) {
-    console.error('获取用户角色失败:', error)
-    showSkeleton.value = false
+    console.error('获取用户角色失败:', error);
+    showSkeleton.value = false;
   }
-})
+});
+// 修改WebSocket初始化函数，添加shopId参数
+const initWebSocket = (shopId) => {
+  return new Promise((resolve) => {
+    const ws = new WebSocket({
+      url: `wss://homyit2023.online:9000/ws/${shopId}`,
+      heartMsg: 'ping',
+      onOpen: () => {
+        console.log('WebSocket连接成功')
+        resolve()
+      },
+      onMessage: (data) => {
+        console.log('收到消息:', data)
+      },
+      onClose: () => {
+        console.log('连接关闭')
+      },
+      onError: (err) => {
+        console.error('连接错误:', err)
+      }
+    })
+  })
+}
+// 获取商铺信息
+const getShopInfo = async () => {
+  try {
+    const res = await request({
+      url: '/shop/mershopinfo',
+      method: 'GET'
+    })
+    if (res.code === 200) {
+      return res.data
+    } else {
+      throw new Error('获取商铺信息失败')
+    }
+  } catch (error) {
+    console.error('获取商铺信息失败：', error)
+    throw error
+  }
+}
 
 // 简化导航方法，移除事件相关代码
 const navigateToLoading = () => {
@@ -82,7 +126,6 @@ const navigateToLoading = () => {
 // 添加TabBar设置方法
 const setTabBarByRole = async (role) => {
   if (role === 'admin') {
-    await uni.hideTabBar()
     uni.setTabBarItem({
       index: 2,
       text: '',
@@ -102,7 +145,8 @@ const setTabBarByRole = async (role) => {
       selectedIconPath: ''
     })
   } else if (role === 'merchant') {
-    await uni.hideTabBar()
+    const shopInfo = await getShopInfo()
+    initWebSocket(shopInfo.id)
     uni.setTabBarItem({
       index: 2,
       text: '',

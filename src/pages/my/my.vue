@@ -66,12 +66,18 @@
                     </view>
                     <text>收货地址</text>
                 </view>
-                <view class="func-item" @click="goToPage('/pages/myApprovalList/index')">
+                <view class="func-item" @click="goToPage('/pages/myLucky/index')">
+                    <view class="icon-box address">
+                        <uni-icons type="location-filled" size="32" color="#fff"></uni-icons>
+                    </view>
+                    <text>我的中奖记录</text>
+                </view>
+                <!-- <view class="func-item" @click="goToPage('/pages/myApprovalList/index')">
                     <view class="icon-box approval">
                         <uni-icons type="notification-filled" size="32" color="#fff"></uni-icons>
                     </view>
                     <text>入驻审核</text>
-                </view>
+                </view> -->
             </view>
         </view>
 

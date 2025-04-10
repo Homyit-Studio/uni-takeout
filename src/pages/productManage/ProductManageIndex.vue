@@ -856,7 +856,7 @@ const isStoreOpen = (store) => {
   height: 100rpx;
   background: #fff;
   border-bottom: 1rpx solid #ddd;
-  z-index: 999;
+  z-index: 10;
 
   .tab-list {
     display: flex;

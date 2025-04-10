@@ -5,7 +5,7 @@
 export default class WebSocket {
     constructor(options = {}) {
         const defaultOptions = {
-            url: 'wss://sell.homyit2023.online:9000/ws/0', // 默认值改为0，实际使用时会被传入的url覆盖
+            url: 'wss://homyit2023.online:9000/ws/0', // 默认值改为0，实际使用时会被传入的url覆盖
             // url: `ws://1.15.115.21:8089//ws/${sid}`,
             heartInterval: 30000, // 心跳间隔
             reconnInterval: 5000, // 重连间隔

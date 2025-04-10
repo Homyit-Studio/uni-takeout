@@ -33,7 +33,7 @@
     </view>
 
     <!-- tab切换 -->
-    <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + 38 + 'px' }">
+    <view class="tabs area_height" data-type="2" :style="{ 'top': statusBarHeight + tabHeight + 'px' }">
       <view class="tab-list">
         <view v-for="(item, index) in tabList" :key="index" class="tab-item" :class="{ active: tabIndex === index }"
           @click="onChangeTab(index)">
@@ -102,7 +102,7 @@
     <!-- 菜品区域 -->
     <view id="item-2" class="cate_content">
       <scroll-view scroll-y="true" :scroll-top="leftScrollTop" class="left"
-        :style="{ 'height': scrollHeight + 'px', 'top': stickyTop + 40 + 'px' }">
+        :style="{ 'height': scrollHeight + 'px', 'top': stickyTop + tabHeight + 'px' }">
         <view class="menu_name" :id="'menu_name' + index" :class="{ 'menu_name_active': currentIndex == index }"
           v-for="(item, index) in productList" :key="index" @click="onChangeCate(item, index)">
           {{ item.name }}
@@ -207,6 +207,8 @@ const tabIndex = ref(0)
 const isClick = ref(false)
 const isTabClick = ref(false)
 
+
+const tabHeight = ref(38) // tab的高度
 const tabThreshold = 50 // 滚动阈值
 
 const shopInfo = ref({
@@ -388,12 +390,16 @@ onUnmounted(() => {
   userTimers.value = {}
 
   Object.values(countdownTimers.value).forEach(timer => {
-    clearInterval(timer)
+    clearInterval(countdownTimers.value)
   })
   countdownTimers.value = {}
 
   if (debounceTimer.value) {
     clearTimeout(debounceTimer.value)
+  }
+
+  if (menuDebounceTimer.value) {
+    clearTimeout(menuDebounceTimer.value)
   }
 })
 
@@ -446,18 +452,19 @@ onShow(async () => {
 })
 
 onLoad(async (options) => {
-  console.log('接收到的参数:', options)
-  await fetchShopDetail(options.id)
-  await fetchShopInfo(options.id)
-  await fetchCartData() // 获取购物车数据
-
+  await fetchShopDetail(options.id); // 假设这是异步请求
+  await fetchShopInfo(options.id); // 假设这是异步请求
+  await fetchCartData(); // 假设这是异步请求
+  nextTick(() => {
+    getTop(); // 在数据加载完成后调用
+  });
   // 如果有groupId参数，说明是从拼团进入
   if (options.groupId) {
     await fetchGroupInfo(options.groupId)
   }
 
   await fetchShopGroups()
-})
+});
 
 // 生命周期
 onMounted(() => {
@@ -483,8 +490,11 @@ onPageScroll(({ scrollTop: currentScrollTop }) => {
   if (isTabClick.value) return
   scrollTop.value = currentScrollTop
   updateOpacity(currentScrollTop)
-  updateActiveTab(currentScrollTop)
-  updateMenuActive(currentScrollTop - 40)
+
+  nextTick(() => {
+    updateActiveTab(currentScrollTop)
+    updateMenuActive(currentScrollTop + tabHeight.value)
+  })
 })
 
 const fetchShopInfo = async (id) => {
@@ -544,7 +554,7 @@ const initLayout = () => {
       for (let i = 0; i < data.length; i++) {
         data[i].dataset.type === '1' ? allAreaHeight.value += data[i].height : addHeight += data[i].height
       }
-      scrollHeight.value = windowHeight - allAreaHeight.value + addHeight + 18
+      scrollHeight.value = windowHeight - allAreaHeight.value + addHeight - tabHeight.value
     }
   }).exec()
 
@@ -575,20 +585,20 @@ const getTop = () => {
   const query = uni.createSelectorQuery();
   query.selectAll('.right .item').boundingClientRect();
   query.exec(res => {
+    // console.log('query.exec 返回结果:', res); // 调试信息
     if (res?.[0]) {
       topList.value = res[0].map(item => ({
         top: item.top,
         bottom: item.bottom,
-        height: item.height // 添加高度属性
+        height: item.height
       }));
-      // 初始化rightItemHeight为第一个分类项的高度
       if (res[0].length > 0) {
         rightItemHeight.value = res[0][0].height;
       }
     }
+    // console.log('topList.value:', topList.value);
   });
 };
-
 // 更新透明度
 const updateOpacity = (scrollTop) => {
   const opacity = Math.min(scrollTop / 100, 1)
@@ -636,20 +646,43 @@ const onChangeTab = async (index) => {
   const targetElement = anchorPositions.value[index]
   if (targetElement) {
     uni.pageScrollTo({
-      scrollTop: targetElement.top - stickyTop.value,
+      scrollTop: targetElement.top - stickyTop.value - tabHeight.value,
       duration: 300,
       complete: () => {
-        updateOpacity(targetElement.top - stickyTop.value)
+        updateOpacity(targetElement.top - stickyTop.value - tabHeight.value)
         setTimeout(() => {
           isTabClick.value = false
-        }, 350) // 比滚动时间长一点确保完成
+        }, 400) // 比滚动时间长一点确保完成
       }
     })
   }
 }
 
+// 添加菜单点击防抖相关状态
+const isMenuProcessing = ref(false)
+const menuDebounceTimer = ref(null)
+const MENU_DEBOUNCE_DELAY = 800 // 菜单点击防抖延迟时间
+
+// 修改 onChangeCate 方法
 const onChangeCate = async (item, index) => {
   if (currentIndex.value == index) return
+
+  // 如果正在处理中，显示提示并返回
+  if (isMenuProcessing.value) {
+    uni.showToast({
+      title: '点击太快了，请稍候',
+      icon: 'none'
+    })
+    return
+  }
+
+  // 设置处理状态为true
+  isMenuProcessing.value = true
+
+  // 清除之前的定时器
+  if (menuDebounceTimer.value) {
+    clearTimeout(menuDebounceTimer.value)
+  }
 
   isTabClick.value = true
   currentIndex.value = index
@@ -658,18 +691,25 @@ const onChangeCate = async (item, index) => {
   await nextTick()
 
   const targetElement = topList.value[index]
+
   if (targetElement) {
     uni.pageScrollTo({
-      scrollTop: targetElement.top - stickyTop.value,
+      scrollTop: targetElement.top - stickyTop.value - tabHeight.value,
       duration: 300,
       complete: () => {
         setTimeout(() => {
           isTabClick.value = false
-        }, 350) // 比滚动时间长一点确保完成
+        }, 400)
       },
     })
   }
+
+  // 设置定时器，在指定时间后重置处理状态
+  menuDebounceTimer.value = setTimeout(() => {
+    isMenuProcessing.value = false
+  }, MENU_DEBOUNCE_DELAY)
 }
+
 const updateMenuActive = (currentScrollTop) => {
   if (isTabClick.value) return
   currentScrollTop = parseInt(currentScrollTop) + stickyTop.value
@@ -1159,14 +1199,14 @@ view {
 
   .group-entry {
     margin: 20rpx 20rpx 0;
-    background: #fff1da;
+    background: linear-gradient(90deg, #fff1da, #ffe8c4);
     border-radius: 16rpx;
     overflow: hidden;
     box-shadow: 0 4rpx 12rpx rgba(255, 153, 0, 0.1);
 
     .entry-header {
       padding: 24rpx;
-      background: linear-gradient(90deg, #fff1da, #ffe8c4);
+      // background: linear-gradient(90deg, #fff1da, #ffe8c4);
 
       .title {
         font-size: 32rpx;
@@ -1206,9 +1246,9 @@ view {
     height: 250rpx;
 
     .group-card {
-      margin: 0 20rpx;
+      // margin: 0 20rpx;
       padding: 20rpx;
-      background: rgba(255, 255, 255, 0.9);
+      // background: rgba(255, 255, 255, 0.9);
       border-radius: 16rpx;
 
       // 添加禁用样式
