@@ -1,6 +1,6 @@
 // 设置请求拦截器，使得自动拼接请求地址，传token等功能
 import { useTokenStore } from "../store/token.js"
-const baseURL = "https://sell.homyit2023.online:9000"
+const baseURL = "https://homyit2023.online/sell"
 const useToken = useTokenStore()
 
 // 添加拦截器

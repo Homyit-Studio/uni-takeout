@@ -26,7 +26,7 @@ onShow(async () => {
         const userInfo = await getUserInfo()
         if (userInfo.role === 'merchant') {
             const shopInfo = await getShopInfo()
-            await initWebSocket(shopInfo.id)
+            // await initWebSocket(shopInfo.id)
         }
         // 传递用户信息到index页面
         await navigateBack(userInfo)
@@ -62,7 +62,7 @@ const getShopInfo = async () => {
 const initWebSocket = (shopId) => {
     return new Promise((resolve) => {
         const ws = new WebSocket({
-            url: `wss://homyit2023.online/sell/ws/${shopId}`,
+            url: `wss://sell.homyit2023.online:9000/ws/${shopId}`,
             heartMsg: 'ping',
             onOpen: () => {
                 console.log('WebSocket连接成功')
