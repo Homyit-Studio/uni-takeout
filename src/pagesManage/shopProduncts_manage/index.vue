@@ -8,7 +8,8 @@
             </view>
 
             <!-- 商户列表项 -->
-            <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item" @click="navigateToDetail(merchant)">
+            <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item"
+                @click="navigateToDetail(merchant)">
                 <image :src="merchant.shopAvatar" class="merchant-avatar"></image>
                 <view class="merchant-info">
                     <text class="shop-name">{{ merchant.shopName }}</text>
@@ -47,7 +48,7 @@ export default {
         // 跳转到商户详情页面
         navigateToDetail(merchant) {
             uni.navigateTo({
-                url: `/pages/product_manage/index?id=${merchant.id}`, // 跳转到商户详情页面，传递商户ID
+                url: `../product_manage/index?id=${merchant.id}`, // 跳转到商户详情页面，传递商户ID
             });
         },
     },

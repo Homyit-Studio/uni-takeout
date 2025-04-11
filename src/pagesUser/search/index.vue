@@ -122,7 +122,7 @@ const filteredGoods = computed(() => {
 // 添加跳转到商家详情的方法
 const goToStoreDetail = (storeId) => {
   uni.navigateTo({
-    url: `/pages/merchantDetail/index?id=${storeId}`
+    url: `../merchantDetail/index?id=${storeId}`
   })
 }
 </script>

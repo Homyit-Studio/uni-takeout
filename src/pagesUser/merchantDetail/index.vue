@@ -371,14 +371,14 @@ const goToGroup = (group) => {
     return
   }
   uni.navigateTo({
-    url: `/pages/productDetail/ProductDetailIndex?id=${group.id}&shopId=${shopInfo.value.id}&type=参团`
+    url: `../../pagesUser/productDetail/ProductDetailIndex?id=${group.id}&shopId=${shopInfo.value.id}&type=参团`
   })
 }
 
 // 创建新拼团
 const createNewGroup = () => {
   uni.navigateTo({
-    url: `/pages/productDetail/ProductDetailIndex?shopId=${shopInfo.value.id}&type=开团`
+    url: `../../pagesUser/productDetail/ProductDetailIndex?shopId=${shopInfo.value.id}&type=开团`
   })
 }
 
@@ -951,7 +951,7 @@ const onSubmit = () => {
   }
 
   uni.setStorageSync('orderData', orderData)
-  uni.navigateTo({ url: '/pages/GoShopping/index' })
+  uni.navigateTo({ url: '../GoShopping/index' })
 }
 
 // 其他方法

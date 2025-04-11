@@ -8,16 +8,9 @@
       </view>
 
       <!-- 商户列表项 -->
-      <view
-        v-for="(merchant, index) in merchantList"
-        :key="index"
-        class="merchant-item"
-        @click="navigateToDetail(merchant)"
-      >
-        <image
-          :src="merchant.avatar || '/static/default-avatar.png'"
-          class="merchant-avatar"
-        ></image>
+      <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item"
+        @click="navigateToDetail(merchant)">
+        <image :src="merchant.avatar" class="merchant-avatar"></image>
         <view class="merchant-info">
           <text class="shop-name">{{ merchant.name }}</text>
         </view>
@@ -29,37 +22,47 @@
 
 <script>
 import { request } from "@/utils/request";
-
 export default {
   data() {
     return {
-      merchantList: [],
-      isLoading: false,
+      // 商户列表数据
+      merchantList: [
+        // {
+        //   id: 1,
+        //   shopName: "拼小圈",
+        //   shopAvatar: "/static/merchant_pic.jpg",
+        // },
+        // {
+        //   id: 2,
+        //   shopName: "美食坊",
+        //   shopAvatar: "/static/merchant_pic.jpg",
+        // },
+        // {
+        //   id: 3,
+        //   shopName: "饮品店",
+        //   shopAvatar: "/static/merchant_pic.jpg",
+        // },
+      ],
     };
   },
   onLoad() {
-    this.fetchMerchantList();
+    // 获取商户列表数据
+    this.fetchLuckyList();
   },
   methods: {
-    // 获取商户列表
-    async fetchMerchantList() {
+    // 获取商户列表数据
+    async fetchLuckyList() {
       try {
         this.isLoading = true;
+        // 模拟请求数据
         const response = await request({
-          method: "GET",
           url: "/shop/getshops",
+          method: "GET",
         });
-
-        console.log("获取商户列表成功:", response);
-        if (response && response.data) {
-          this.merchantList = response.data;
-        }
+        console.log("商户列表数据:", response);
+        this.merchantList = response.data;
       } catch (error) {
         console.error("获取商户列表失败:", error);
-        uni.showToast({
-          title: "获取商户列表失败",
-          icon: "none",
-        });
       } finally {
         this.isLoading = false;
       }
@@ -67,7 +70,10 @@ export default {
     // 跳转到商户详情页面
     navigateToDetail(merchant) {
       uni.navigateTo({
-        url: `/pages/userLucky222/index?shopId=${merchant.id}`,
+        url: `../publish_lottery222/index?id=${merchant.id
+          }&name=${encodeURIComponent(merchant.name)}&avatar=${encodeURIComponent(
+            merchant.avatar
+          )}`,
       });
     },
   },
@@ -75,13 +81,13 @@ export default {
 </script>
 
 <style scoped>
-/* 原有样式保持不变 */
 .merchant-list-container {
   padding: 20px;
   background-color: #f5f5f5;
   min-height: 100vh;
 }
 
+/* 商户列表 */
 .merchant-list {
   background-color: #fff;
   border-radius: 8px;
@@ -89,6 +95,7 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 商户列表项 */
 .merchant-item {
   display: flex;
   align-items: center;
@@ -122,11 +129,7 @@ export default {
   font-weight: 500;
 }
 
-.status {
-  font-size: 14px;
-  font-weight: bold;
-}
-
+/* 无数据提示 */
 .empty-tip {
   display: flex;
   justify-content: center;

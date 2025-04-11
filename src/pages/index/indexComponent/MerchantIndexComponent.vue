@@ -172,19 +172,19 @@ const handleTouchEnd = (e) => {
 }
 
 const handleToManage = (url) => {
-    uni.navigateTo({ url: `/pages/${url}` })
+    uni.navigateTo({ url: `../../../pagesManage/${url}` })
 }
 const goToProductManage = (id) => {
-    uni.navigateTo({ url: `/pages/productManage/ProductManageIndex?id=${id}` })
+    uni.navigateTo({ url: `../../../pagesManage/productManage/ProductManageIndex?id=${id}` })
 }
 
 const goToOrderManage = (shopid) => {
-    uni.navigateTo({ url: `/pages/orderAdmin/AdminOrderIndex?shopid=${shopid}` })
+    uni.navigateTo({ url: `../../../pagesManage/orderAdmin/AdminOrderIndex?shopid=${shopid}` })
 }
 
 const goToMerchantConfig = (id) => {
     uni.navigateTo({
-        url: `/pages/merchantConfig/MerchantConfigIndex?id=${id}`
+        url: `../../../pagesManage/merchantConfig/MerchantConfigIndex?id=${id}`
     })
 }
 </script>

@@ -559,7 +559,7 @@ const onSubmit = () => {
   }
 
   uni.setStorageSync('orderData', orderData)
-  uni.navigateTo({ url: '/pages/GoShopping/index' })
+  uni.navigateTo({ url: '../GoShopping/index' })
 }
 
 const onShowCart = () => {

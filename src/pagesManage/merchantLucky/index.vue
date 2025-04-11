@@ -8,13 +8,9 @@
       </view>
 
       <!-- 商户列表项 -->
-      <view
-        v-for="(merchant, index) in merchantList"
-        :key="index"
-        class="merchant-item"
-        @click="navigateToDetail(merchant)"
-      >
-        <image :src="merchant.avatar" class="merchant-avatar"></image>
+      <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item"
+        @click="navigateToDetail(merchant)">
+        <image :src="merchant.avatar || '/static/default-avatar.png'" class="merchant-avatar"></image>
         <view class="merchant-info">
           <text class="shop-name">{{ merchant.name }}</text>
         </view>
@@ -30,53 +26,55 @@ import { request } from "@/utils/request";
 export default {
   data() {
     return {
-      // 商户列表数据
       merchantList: [],
+      isLoading: false,
     };
+  },
+  onLoad() {
+    this.fetchMerchantList();
   },
   methods: {
     // 获取商户列表
     async fetchMerchantList() {
       try {
+        this.isLoading = true;
         const response = await request({
-          method: "POST",
-          url: "/admin/selectallshop",
+          method: "GET",
+          url: "/shop/getshops",
         });
-        console.log(response);
+
+        console.log("获取商户列表成功:", response);
         if (response && response.data) {
           this.merchantList = response.data;
-          console.log(this.merchantList);
         }
       } catch (error) {
-        console.error("获取本地信息失败:", error);
+        console.error("获取商户列表失败:", error);
         uni.showToast({
-          title: "获取本地信息失败",
+          title: "获取商户列表失败",
           icon: "none",
         });
-        this.loading = false;
+      } finally {
+        this.isLoading = false;
       }
     },
     // 跳转到商户详情页面
     navigateToDetail(merchant) {
       uni.navigateTo({
-        url: `/pages/revenue_detail/index?id=${merchant.id}`, // 跳转到商户详情页面，传递商户ID
+        url: `../../pagesUser/userLucky222/index?shopId=${merchant.id}`,
       });
     },
-  },
-  onLoad() {
-    this.fetchMerchantList();
   },
 };
 </script>
 
 <style scoped>
+/* 原有样式保持不变 */
 .merchant-list-container {
   padding: 20px;
   background-color: #f5f5f5;
   min-height: 100vh;
 }
 
-/* 商户列表 */
 .merchant-list {
   background-color: #fff;
   border-radius: 8px;
@@ -84,7 +82,6 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 商户列表项 */
 .merchant-item {
   display: flex;
   align-items: center;
@@ -118,7 +115,11 @@ export default {
   font-weight: 500;
 }
 
-/* 无数据提示 */
+.status {
+  font-size: 14px;
+  font-weight: bold;
+}
+
 .empty-tip {
   display: flex;
   justify-content: center;

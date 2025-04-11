@@ -8,16 +8,9 @@
       </view>
 
       <!-- 商户列表项 -->
-      <view
-        v-for="(merchant, index) in merchantList"
-        :key="index"
-        class="merchant-item"
-        @click="navigateToDetail(merchant)"
-      >
-        <image
-          :src="merchant.shopPhoto || '/static/default-avatar.png'"
-          class="merchant-avatar"
-        ></image>
+      <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item"
+        @click="navigateToDetail(merchant)">
+        <image :src="merchant.shopPhoto || '/static/default-avatar.png'" class="merchant-avatar"></image>
         <view class="merchant-info">
           <text class="shop-name">{{ merchant.shopName }}</text>
           <text :class="['status', getStatusClass(merchant.applicationStatus)]">
@@ -91,7 +84,7 @@ export default {
     // 跳转到商户详情页面
     navigateToDetail(merchant) {
       uni.navigateTo({
-        url: `/pages/merchant_approval/index?id=${merchant.id}`,
+        url: `../merchant_approval/index?id=${merchant.id}`,
       });
     },
   },
@@ -152,19 +145,23 @@ export default {
 }
 
 .status.pending {
-  color: #faad14; /* 待审核：橙色 */
+  color: #faad14;
+  /* 待审核：橙色 */
 }
 
 .status.approved {
-  color: #52c41a; /* 审核通过：绿色 */
+  color: #52c41a;
+  /* 审核通过：绿色 */
 }
 
 .status.rejected {
-  color: #f5222d; /* 审核不通过：红色 */
+  color: #f5222d;
+  /* 审核不通过：红色 */
 }
 
 .status.unknown {
-  color: #999; /* 未知状态：灰色 */
+  color: #999;
+  /* 未知状态：灰色 */
 }
 
 .empty-tip {

@@ -81,7 +81,7 @@ const handleBack = () => {
 // 跳转到订单管理页面
 const goToOrderManage = (shop) => {
     uni.navigateTo({
-        url: `/pages/orderAdmin/AdminOrderIndex?shopid=${shop.id}`
+        url: `../orderAdmin/AdminOrderIndex?shopid=${shop.id}`
     })
 }
 </script>

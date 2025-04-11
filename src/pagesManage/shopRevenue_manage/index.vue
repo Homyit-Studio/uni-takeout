@@ -8,12 +8,8 @@
       </view>
 
       <!-- 商户列表项 -->
-      <view
-        v-for="(merchant, index) in merchantList"
-        :key="index"
-        class="merchant-item"
-        @click="navigateToDetail(merchant)"
-      >
+      <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item"
+        @click="navigateToDetail(merchant)">
         <image :src="merchant.avatar" class="merchant-avatar"></image>
         <view class="merchant-info">
           <text class="shop-name">{{ merchant.name }}</text>
@@ -26,61 +22,45 @@
 
 <script>
 import { request } from "@/utils/request";
+
 export default {
   data() {
     return {
       // 商户列表数据
-      merchantList: [
-        // {
-        //   id: 1,
-        //   shopName: "拼小圈",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-        // {
-        //   id: 2,
-        //   shopName: "美食坊",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-        // {
-        //   id: 3,
-        //   shopName: "饮品店",
-        //   shopAvatar: "/static/merchant_pic.jpg",
-        // },
-      ],
+      merchantList: [],
     };
   },
-  onLoad() {
-    // 获取商户列表数据
-    this.fetchLuckyList();
-  },
   methods: {
-    // 获取商户列表数据
-    async fetchLuckyList() {
+    // 获取商户列表
+    async fetchMerchantList() {
       try {
-        this.isLoading = true;
-        // 模拟请求数据
         const response = await request({
-          url: "/shop/getshops",
-          method: "GET",
+          method: "POST",
+          url: "/admin/selectallshop",
         });
-        console.log("商户列表数据:", response);
-        this.merchantList = response.data;
+        console.log(response);
+        if (response && response.data) {
+          this.merchantList = response.data;
+          console.log(this.merchantList);
+        }
       } catch (error) {
-        console.error("获取商户列表失败:", error);
-      } finally {
-        this.isLoading = false;
+        console.error("获取本地信息失败:", error);
+        uni.showToast({
+          title: "获取本地信息失败",
+          icon: "none",
+        });
+        this.loading = false;
       }
     },
     // 跳转到商户详情页面
     navigateToDetail(merchant) {
       uni.navigateTo({
-        url: `/pages/publish_lottery222/index?id=${
-          merchant.id
-        }&name=${encodeURIComponent(merchant.name)}&avatar=${encodeURIComponent(
-          merchant.avatar
-        )}`,
+        url: `../revenue_detail/index?id=${merchant.id}`, // 跳转到商户详情页面，传递商户ID
       });
     },
+  },
+  onLoad() {
+    this.fetchMerchantList();
   },
 };
 </script>

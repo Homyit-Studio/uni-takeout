@@ -126,7 +126,7 @@ onMounted(() => {
 // 跳转到地址页面
 function goToAddress() {
   uni.navigateTo({
-    url: '/pages/address/index'
+    url: '../address/index'
   })
 }
 

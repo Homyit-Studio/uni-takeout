@@ -8,12 +8,8 @@
       </view>
 
       <!-- 商户列表项 -->
-      <view
-        v-for="(merchant, index) in merchantList"
-        :key="index"
-        class="merchant-item"
-        @click="navigateToDetail(merchant)"
-      >
+      <view v-for="(merchant, index) in merchantList" :key="index" class="merchant-item"
+        @click="navigateToDetail(merchant)">
         <image :src="merchant.shopAvatar" class="merchant-avatar"></image>
         <view class="merchant-info">
           <text class="shop-name">{{ merchant.shopName }}</text>
@@ -76,7 +72,7 @@ export default {
     // 跳转到商户详情页面
     navigateToDetail(merchant) {
       uni.navigateTo({
-        url: `/pages/my_lists/index?id=${merchant.id}`,
+        url: `../../pagesManage/my_lists/index?id=${merchant.id}`,
       });
     },
   },
@@ -138,15 +134,18 @@ export default {
 }
 
 .status.pending {
-  color: #faad14; /* 待审核：橙色 */
+  color: #faad14;
+  /* 待审核：橙色 */
 }
 
 .status.approved {
-  color: #52c41a; /* 已通过：绿色 */
+  color: #52c41a;
+  /* 已通过：绿色 */
 }
 
 .status.rejected {
-  color: #f5222d; /* 已拒绝：红色 */
+  color: #f5222d;
+  /* 已拒绝：红色 */
 }
 
 /* 无数据提示 */

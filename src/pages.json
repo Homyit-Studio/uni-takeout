@@ -33,250 +33,256 @@
 		{
 			"path": "pages/loading/LoadingIndex",
 			"style": {
-				"navigationBarTitleText": "商品详情",
+				"navigationBarTitleText": "加载页",
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": true
 			}
+		}
+	],
+	"subPackages": [
+		{
+			"root": "pagesManage",
+			"pages": [
+				{
+					"path": "productManage/ProductManageIndex",
+					"style": {
+						"navigationStyle": "custom",
+						"enablePullDownRefresh": true,
+						"navigationBarTitleText": "商品管理"
+					}
+				},
+				{
+					"path": "productManage/EnterProductManageIndex",
+					"style": {
+						"navigationStyle": "custom",
+						"enablePullDownRefresh": true,
+						"navigationBarTitleText": "商店商品管理"
+					}
+				},
+				{
+					"path": "orderAdmin/AdminOrderIndex",
+					"style": {
+						"navigationBarTitleText": "订单管理",
+						"enablePullDownRefresh": true,
+						"navigationStyle": "custom"
+					}
+				},
+				{
+					"path": "orderAdmin/EnterAdminOrderIndex",
+					"style": {
+						"navigationBarTitleText": "商家订单管理",
+						"enablePullDownRefresh": true,
+						"navigationStyle": "custom"
+					}
+				},
+				{
+					"path": "merchantConfig/MerchantConfigIndex",
+					"style": {
+						"navigationBarTitleText": "支付配置"
+					}
+				},
+				{
+					"path": "administrator/index",
+					"style": {
+						"navigationBarTitleText": "管理员"
+					}
+				},
+				{
+					"path": "merchant_manage/index",
+					"style": {
+						"navigationBarTitleText": "商铺管理"
+					}
+				},
+				{
+					"path": "banner_manage/index",
+					"style": {
+						"navigationBarTitleText": "管理首页轮播图"
+					}
+				},
+				{
+					"path": "approval_list/index",
+					"style": {
+						"navigationBarTitleText": "商铺申请审核列表"
+					}
+				},
+				{
+					"path": "merchant_approval/index",
+					"style": {
+						"navigationBarTitleText": "商户入驻审核"
+					}
+				},
+				{
+					"path": "launch_lucky/index",
+					"style": {
+						"navigationBarTitleText": "抽奖发布"
+					}
+				},
+				{
+					"path": "publish_lottery/index",
+					"style": {
+						"navigationBarTitleText": "发布抽奖"
+					}
+				},
+				{
+					"path": "publish_lottery222/index",
+					"style": {
+						"navigationBarTitleText": "管理员管理抽奖"
+					}
+				},
+				{
+					"path": "revenue_details/index",
+					"style": {
+						"navigationBarTitleText": "营收细则"
+					}
+				},
+				{
+					"path": "shopProduncts_manage/index",
+					"style": {
+						"navigationBarTitleText": "商户商品管理"
+					}
+				},
+				{
+					"path": "shopLottery_manage/index",
+					"style": {
+						"navigationBarTitleText": "商户抽奖管理"
+					}
+				},
+				{
+					"path": "shopRevenue_manage/index",
+					"style": {
+						"navigationBarTitleText": "商户营收管理"
+					}
+				},
+				{
+					"path": "myApprovalList/index",
+					"style": {
+						"navigationBarTitleText": "我的入驻审核（暂时不加）"
+					}
+				},
+				{
+					"path": "revenue_detail/index",
+					"style": {
+						"navigationBarTitleText": "管理营收明细"
+					}
+				},
+				{
+					"path": "luckys/index",
+					"style": {
+						"navigationBarTitleText": "抽奖列表"
+					}
+				},
+				{
+					"path": "merchantLucky/index",
+					"style": {
+						"navigationBarTitleText": "抽奖商户列表"
+					}
+				},
+				{
+					"path": "editMerchantInfo/index",
+					"style": {
+						"navigationBarTitleText": "编辑商户信息"
+					}
+				},
+				{
+					"path": "changeMerchantInfo/index",
+					"style": {
+						"navigationBarTitleText": "编辑商户信息"
+					}
+				}
+			]
 		},
 		{
-			"path": "pages/search/index",
-			"style": {
-				"navigationBarTitleText": "搜索"
-			}
-		},
-		{
-			"path": "pages/coupon/index",
-			"style": {
-				"navigationBarTitleText": "优惠券列表"
-			}
-		},
-		{
-			"path": "pages/address/index",
-			"style": {
-				"navigationBarTitleText": "地址管理"
-			}
-		},
-		{
-			"path": "pages/merchant/index",
-			"style": {
-				"navigationBarTitleText": "商铺入驻"
-			}
-		},
-		{
-			"path": "pages/administrator/index",
-			"style": {
-				"navigationBarTitleText": "管理员"
-			}
-		},
-		{
-			"path": "pages/merchantDetail/index",
-			"style": {
-				"navigationBarTitleText": "商铺详情",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
-			}
-		},
-		{
-			"path": "pages/GoShopping/index",
-			"style": {
-				"navigationBarTitleText": "确认订单"
-			}
-		},
-		{
-			"path": "pages/merchant_manage/index",
-			"style": {
-				"navigationBarTitleText": "商铺管理"
-			}
-		},
-		{
-			"path": "pages/launch_lucky/index",
-			"style": {
-				"navigationBarTitleText": "抽奖发布"
-			}
-		},
-		{
-			"path": "pages/product_manage/index",
-			"style": {
-				"navigationBarTitleText": "商品管理"
-			}
-		},
-		{
-			"path": "pages/publish_lottery/index",
-			"style": {
-				"navigationBarTitleText": "发布抽奖"
-			}
-		},
-		{
-			"path": "pages/revenue_details/index",
-			"style": {
-				"navigationBarTitleText": "营收细则"
-			}
-		},
-		{
-			"path": "pages/merchant_approval/index",
-			"style": {
-				"navigationBarTitleText": "商户入驻审核"
-			}
-		},
-		{
-			"path": "pages/GetUserPhone/GetUserPhoneIndex",
-			"style": {
-				"navigationBarTitleText": "手机登录/注册"
-			}
-		},
-		{
-			"path": "pages/approval_list/index",
-			"style": {
-				"navigationBarTitleText": "商铺申请审核列表"
-			}
-		},
-		{
-			"path": "pages/orderDetail/OrderDetailIndex",
-			"style": {
-				"navigationBarTitleText": "订单详情",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/productManage/ProductManageIndex",
-			"style": {
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true,
-				"navigationBarTitleText": "商品管理"
-			}
-		},
-		{
-			"path": "pages/productManage/EnterProductManageIndex",
-			"style": {
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true,
-				"navigationBarTitleText": "商店商品管理"
-			}
-		},
-		{
-			"path": "pages/orderAdmin/AdminOrderIndex",
-			"style": {
-				"navigationBarTitleText": "订单管理",
-				"enablePullDownRefresh": true,
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/orderAdmin/EnterAdminOrderIndex",
-			"style": {
-				"navigationBarTitleText": "商家订单管理",
-				"enablePullDownRefresh": true,
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/productDetail/ProductDetailIndex",
-			"style": {
-				"navigationBarTitleText": "拼团详情",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/shopProduncts_manage/index",
-			"style": {
-				"navigationBarTitleText": "商户商品管理"
-			}
-		},
-		{
-			"path": "pages/shopLottery_manage/index",
-			"style": {
-				"navigationBarTitleText": "商户抽奖管理"
-			}
-		},
-		{
-			"path": "pages/shopRevenue_manage/index",
-			"style": {
-				"navigationBarTitleText": "商户营收管理"
-			}
-		},
-		{
-			"path": "pages/editPersonalInfo/index",
-			"style": {
-				"navigationBarTitleText": "修改个人信息"
-			}
-		},
-		{
-			"path": "pages/banner_manage/index",
-			"style": {
-				"navigationBarTitleText": "管理首页轮播图"
-			}
-		},
-		{
-			"path": "pages/myApprovalList/index",
-			"style": {
-				"navigationBarTitleText": "我的入驻审核（暂时不加）"
-			}
-		},
-		{
-			"path": "pages/my_lists/index",
-			"style": {
-				"navigationBarTitleText": "我的商铺审核"
-			}
-		},
-		{
-			"path": "pages/revenue_detail/index",
-			"style": {
-				"navigationBarTitleText": "管理营收明细"
-			}
-		},
-		{
-			"path": "pages/luckys/index",
-			"style": {
-				"navigationBarTitleText": "抽奖列表"
-			}
-		},
-		{
-			"path": "pages/publish_lottery222/index",
-			"style": {
-				"navigationBarTitleText": "管理员管理抽奖"
-			}
-		},
-		{
-			"path": "pages/myLucky/index",
-			"style": {
-				"navigationBarTitleText": "我的中奖记录"
-			}
-		},
-		{
-			"path": "pages/userLucky/index",
-			"style": {
-				"navigationBarTitleText": "抽奖历史"
-			}
-		},
-		{
-			"path": "pages/merchantLucky/index",
-			"style": {
-				"navigationBarTitleText": "抽奖商户列表"
-			}
-		},
-		{
-			"path": "pages/merchantConfig/MerchantConfigIndex",
-			"style": {
-				"navigationBarTitleText": "支付配置"
-			}
-		},
-		{
-			"path": "pages/userLucky222/index",
-			"style": {
-				"navigationBarTitleText": "中奖历史"
-			}
-		},
-		{
-			"path": "pages/editMerchantInfo/index",
-			"style": {
-				"navigationBarTitleText": "编辑商户信息"
-			}
-		},
-		{
-			"path": "pages/changeMerchantInfo/index",
-			"style": {
-				"navigationBarTitleText": "编辑商户信息"
-			}
+			"root": "pagesUser",
+			"pages": [
+				{
+					"path": "merchantDetail/index",
+					"style": {
+						"navigationBarTitleText": "商铺详情",
+						"navigationStyle": "custom",
+						"enablePullDownRefresh": true
+					}
+				},
+				{
+					"path": "GoShopping/index",
+					"style": {
+						"navigationBarTitleText": "确认订单"
+					}
+				},
+				{
+					"path": "search/index",
+					"style": {
+						"navigationBarTitleText": "搜索"
+					}
+				},
+				{
+					"path": "address/index",
+					"style": {
+						"navigationBarTitleText": "地址管理"
+					}
+				},
+				{
+					"path": "GetUserPhone/GetUserPhoneIndex",
+					"style": {
+						"navigationBarTitleText": "手机登录/注册"
+					}
+				},
+				{
+					"path": "orderDetail/OrderDetailIndex",
+					"style": {
+						"navigationBarTitleText": "订单详情",
+						"navigationStyle": "custom"
+					}
+				},
+				{
+					"path": "productDetail/ProductDetailIndex",
+					"style": {
+						"navigationBarTitleText": "拼团详情",
+						"navigationStyle": "custom"
+					}
+				},
+				{
+					"path": "editPersonalInfo/index",
+					"style": {
+						"navigationBarTitleText": "修改个人信息"
+					}
+				},
+				{
+					"path": "merchant/index",
+					"style": {
+						"navigationBarTitleText": "商铺入驻"
+					}
+				},
+				{
+					"path": "my_lists/index",
+					"style": {
+						"navigationBarTitleText": "我的商铺审核"
+					}
+				},
+				{
+					"path": "coupon/index",
+					"style": {
+						"navigationBarTitleText": "优惠券列表"
+					}
+				},
+				{
+					"path": "userLucky222/index",
+					"style": {
+						"navigationBarTitleText": "中奖历史"
+					}
+				},
+				{
+					"path": "myLucky/index",
+					"style": {
+						"navigationBarTitleText": "我的中奖记录"
+					}
+				},
+				{
+					"path": "userLucky/index",
+					"style": {
+						"navigationBarTitleText": "抽奖历史"
+					}
+				}
+			]
 		}
 	],
 	"globalStyle": {

@@ -298,14 +298,14 @@ const viewOrderDetail = async (order) => {
             // 存储到本地
             uni.setStorageSync('orderDetail', orderInfo)
             uni.navigateTo({
-                url: `/pages/orderDetail/OrderDetailIndex?id=${order.id}`
+                url: `../../pagesUser/orderDetail/OrderDetailIndex?id=${order.id}`
             })
         } catch (error) {
             console.error('获取商家信息失败:', error)
             // 即使获取商家电话失败也允许查看订单详情
             uni.setStorageSync('orderDetail', order)
             uni.navigateTo({
-                url: `/pages/orderDetail/OrderDetailIndex?id=${order.id}`
+                url: `../../pagesUser/orderDetail/OrderDetailIndex?id=${order.id}`
             })
         }
     }

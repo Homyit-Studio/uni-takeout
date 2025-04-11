@@ -8,21 +8,11 @@
       </view>
 
       <!-- 商户列表项 -->
-      <view
-        v-for="(merchant, index) in activeMerchants"
-        :key="index"
-        class="merchant-item"
-        @click="navigateToDetail(merchant)"
-      >
-        <image
-          src="/static/抽奖.png"
-          class="merchant-avatar"
-          mode="'fixed'"
-        ></image>
+      <view v-for="(merchant, index) in activeMerchants" :key="index" class="merchant-item"
+        @click="navigateToDetail(merchant)">
+        <image src="/static/抽奖.png" class="merchant-avatar" mode="'fixed'"></image>
         <view class="merchant-info">
-          <text class="shop-name" style="font-weight: bold"
-            >{{ merchant.shopName }} --- {{ merchant.name }}</text
-          >
+          <text class="shop-name" style="font-weight: bold">{{ merchant.shopName }} --- {{ merchant.name }}</text>
           <!-- <text class="time-range"
             >活动时间: {{ formatTime(merchant.startTime) }} 至
             {{ formatTime(merchant.endTime) }}</text
@@ -89,7 +79,7 @@ export default {
       getApp().globalData.tempMerchant = merchant;
 
       uni.navigateTo({
-        url: "/pages/launch_lucky/index",
+        url: "../launch_lucky/index",
       });
     },
     // 格式化时间显示
@@ -99,9 +89,9 @@ export default {
       return `${date.getFullYear()}-${(date.getMonth() + 1)
         .toString()
         .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${date
-        .getHours()
-        .toString()
-        .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
     },
   },
 };

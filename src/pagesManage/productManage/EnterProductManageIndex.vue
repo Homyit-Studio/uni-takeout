@@ -89,7 +89,7 @@ const handleBack = () => {
 // 跳转到商品管理页面
 const goToProductManage = (shop) => {
     uni.navigateTo({
-        url: `/pages/productManage/ProductManageIndex?id=${shop.id}`
+        url: `../productManage/ProductManageIndex?id=${shop.id}`
     })
 }
 

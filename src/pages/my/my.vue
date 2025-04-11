@@ -54,19 +54,19 @@
                     </view>
                     <text>全部订单</text>
                 </view>
-                <view class="func-item" @click="goToPage('/pages/coupon/index')">
+                <view class="func-item" @click="goToPage('../../pagesUser/coupon/index')">
                     <view class="icon-box coupon">
                         <uni-icons type="gift-filled" size="32" color="#fff"></uni-icons>
                     </view>
                     <text>优惠券</text>
                 </view>
-                <view class="func-item" @click="goToPage('/pages/address/index')">
+                <view class="func-item" @click="goToPage('../../pagesUser/address/index')">
                     <view class="icon-box address">
                         <uni-icons type="location-filled" size="32" color="#fff"></uni-icons>
                     </view>
                     <text>收货地址</text>
                 </view>
-                <view class="func-item" @click="goToPage('/pages/myLucky/index')">
+                <view class="func-item" @click="goToPage('../../pagesUser/myLucky/index')">
                     <view class="icon-box address">
                         <uni-icons type="location-filled" size="32" color="#fff"></uni-icons>
                     </view>

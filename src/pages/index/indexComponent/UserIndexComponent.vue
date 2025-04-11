@@ -198,7 +198,7 @@
                             <view class="store-desc-wrapper">
                                 <text class="store-desc">{{ store.shopIntroduction || '暂无介绍' }}</text>
                                 <text class="delivery-fee">起送 ¥{{ store.minDeliveryFee }} | 打包费 ¥{{ store.packageAmount
-                                    }}</text>
+                                }}</text>
                             </view>
                             <view class="store-address">
                                 <uni-icons type="location-filled" color="#999" size="24" />
@@ -576,31 +576,31 @@ const isStoreOpen = (store) => {
 // 跳转到地址页面
 const goToAddress = () => {
     uni.navigateTo({
-        url: '/pages/address/index'
+        url: '../../../pagesUser/address/index'
     })
 }
 // 跳转到搜索页面
 const goToSearch = () => {
     uni.navigateTo({
-        url: '/pages/search/index'
+        url: '../../../pagesUser/search/index'
     })
 }
 const goToLaunchLucky = () => {
     uni.navigateTo({
-        url: '/pages/luckys/index'
+        url: '../../../pagesUser/luckys/index'
     })
 }
 // 跳转到商家详情
 const goToStoreDetail = (storeId) => {
     uni.navigateTo({
-        url: `/pages/merchantDetail/index?id=${storeId}`
+        url: `../../../pagesUser/merchantDetail/index?id=${storeId}`
     })
 }
 
 // 添加跳转到商品详情的方法
 const goToProduct = (productId, shopId, type) => {
     uni.navigateTo({
-        url: `/pages/productDetail/ProductDetailIndex?id=${productId}&shopId=${shopId}&type=${type}`
+        url: `../../../pagesUser/productDetail/ProductDetailIndex?id=${productId}&shopId=${shopId}&type=${type}`
     })
 }
 

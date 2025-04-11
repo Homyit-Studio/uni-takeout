@@ -6,12 +6,7 @@
         <image :src="shopAvatar" class="shop-avatar"></image>
       </view>
       <view class="shop-info">
-        <input
-          v-model="shopName"
-          class="shop-name-input"
-          placeholder="请输入店铺名称"
-          @focus="showNameEditModal"
-        />
+        <input v-model="shopName" class="shop-name-input" placeholder="请输入店铺名称" @focus="showNameEditModal" />
         <text class="shop-status" :class="{ closed: !isOpen }">
           {{ isOpen ? "营业中" : "已打烊" }}
         </text>
@@ -63,21 +58,11 @@
       <view class="section-title">
         营业时间
         <view class="edit-icon-container">
-          <uni-icons
-            type="edit"
-            size="16"
-            color="#bacce0"
-            @click="showEditBusinessHoursModal"
-            >编辑</uni-icons
-          >
+          <uni-icons type="edit" size="16" color="#bacce0" @click="showEditBusinessHoursModal">编辑</uni-icons>
         </view>
       </view>
       <view class="time-list">
-        <view
-          v-for="(time, index) in businessHours"
-          :key="index"
-          class="time-item"
-        >
+        <view v-for="(time, index) in businessHours" :key="index" class="time-item">
           <text>{{ time.start }} - {{ time.end }}</text>
         </view>
         <view v-if="businessHours.length === 0" class="no-time">
@@ -91,19 +76,10 @@
       <view class="edit-business-hours-modal">
         <view class="modal-header">
           <text class="modal-title">编辑营业时间</text>
-          <uni-icons
-            type="close"
-            size="20"
-            color="#999"
-            @click="closeEditBusinessHoursModal"
-          ></uni-icons>
+          <uni-icons type="close" size="20" color="#999" @click="closeEditBusinessHoursModal"></uni-icons>
         </view>
         <view class="time-picker-list">
-          <view
-            v-for="(time, index) in tempBusinessHours"
-            :key="index"
-            class="time-picker-item"
-          >
+          <view v-for="(time, index) in tempBusinessHours" :key="index" class="time-picker-item">
             <picker mode="time" @change="(e) => setTempStartTime(index, e)">
               <view class="time-picker">
                 <text>开始时间：{{ time.start }}</text>
@@ -114,12 +90,7 @@
                 <text>结束时间：{{ time.end }}</text>
               </view>
             </picker>
-            <uni-icons
-              type="trash"
-              size="20"
-              color="#ff6347"
-              @click="removeTempTime(index)"
-            ></uni-icons>
+            <uni-icons type="trash" size="20" color="#ff6347" @click="removeTempTime(index)"></uni-icons>
           </view>
         </view>
         <view class="btn-row">
@@ -314,31 +285,31 @@ export default {
       let url = "";
       switch (section) {
         case "manageProducts":
-          url = "/pages/product_manage/index";
+          url = "../product_manage/index";
           break;
         case "publishLottery":
-          url = "/pages/publish_lottery/index";
+          url = "../publish_lottery/index";
           break;
         case "revenueDetails":
-          url = "/pages/revenue_details/index";
+          url = "../revenue_details/index";
           break;
         case "launchLuckying":
-          url = "/pages/launch_lucky/index";
+          url = "../launch_lucky/index";
           break;
         case "userLucky":
-          url = "/pages/userLucky/index";
+          url = "../userLucky/index";
           break;
         case "personalInfo":
-          url = "/pages/editPersonalInfo/index";
+          url = "../editPersonalInfo/index";
           break;
         case "LuckyLists":
-          url = "/pages/luckys/index";
+          url = "../luckys/index";
           break;
         case "myLucky":
-          url = "/pages/myLucky/index";
+          url = "../myLucky/index";
           break;
         case "merchantInfo":
-          url = "/pages/editMerchantInfo/index";
+          url = "../editMerchantInfo/index";
           break;
       }
       uni.navigateTo({

@@ -169,7 +169,7 @@ const handleTouchEnd = (e) => {
 
 
 const goToManage = (url) => {
-    uni.navigateTo({ url: `/pages/${url}` })
+    uni.navigateTo({ url: `../../../pagesManage/${url}` })
 }
 const goToMerchantList = () => {
     uni.navigateTo({ url: '/pages/shopProduncts_manage/index' })
